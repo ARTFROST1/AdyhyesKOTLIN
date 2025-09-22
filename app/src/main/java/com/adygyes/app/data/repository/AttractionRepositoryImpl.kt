@@ -4,7 +4,9 @@ import android.content.Context
 import com.adygyes.app.data.local.dao.AttractionDao
 import com.adygyes.app.data.mapper.AttractionMapper.toDomainModel
 import com.adygyes.app.data.mapper.AttractionMapper.toDomainModels
+import com.adygyes.app.data.mapper.AttractionMapper.toEntitiesFromDto
 import com.adygyes.app.data.mapper.AttractionMapper.toEntity
+import com.adygyes.app.data.remote.dto.AttractionsResponse
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.domain.model.AttractionCategory
 import com.adygyes.app.domain.repository.AttractionRepository
@@ -66,22 +68,52 @@ class AttractionRepositoryImpl @Inject constructor(
                 return
             }
             
-            // Load from JSON file in raw resources
-            val jsonString = context.assets.open("attractions.json").bufferedReader().use { it.readText() }
+            // Load from JSON file in assets
+            val jsonString = try {
+                context.assets.open("attractions.json").bufferedReader().use { it.readText() }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to read attractions.json from assets")
+                // Fallback to sample data if JSON file not found
+                loadSampleData()
+                return
+            }
             
             // Parse JSON and insert into database
-            // Note: We'll need to create the JSON parsing logic
             Timber.d("Loading initial attraction data from JSON")
             
-            // For now, let's create some sample data
+            val attractionsResponse = try {
+                json.decodeFromString<AttractionsResponse>(jsonString)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to parse attractions JSON")
+                // Fallback to sample data if parsing fails
+                loadSampleData()
+                return
+            }
+            
+            // Convert DTOs to entities and insert into database
+            val entities = attractionsResponse.attractions.toEntitiesFromDto()
+            attractionDao.insertAttractions(entities)
+            
+            Timber.d("Initial data loaded: ${entities.size} attractions from JSON (version ${attractionsResponse.version})")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to load initial data")
+            // Fallback to sample data
+            loadSampleData()
+        }
+    }
+    
+    /**
+     * Load sample data as fallback when JSON loading fails
+     */
+    private suspend fun loadSampleData() {
+        try {
             val sampleAttractions = createSampleAttractions()
             sampleAttractions.forEach { attraction ->
                 attractionDao.insertAttraction(attraction.toEntity())
             }
-            
-            Timber.d("Initial data loaded: ${sampleAttractions.size} attractions")
+            Timber.d("Loaded ${sampleAttractions.size} sample attractions as fallback")
         } catch (e: Exception) {
-            Timber.e(e, "Failed to load initial data")
+            Timber.e(e, "Failed to load sample data")
         }
     }
     

@@ -1,6 +1,7 @@
 package com.adygyes.app.data.mapper
 
 import com.adygyes.app.data.local.entities.AttractionEntity
+import com.adygyes.app.data.remote.dto.AttractionDto
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.domain.model.AttractionCategory
 import com.adygyes.app.domain.model.ContactInfo
@@ -80,6 +81,82 @@ object AttractionMapper {
      * Convert list of Attraction domain models to list of AttractionEntity
      */
     fun List<Attraction>.toEntities(): List<AttractionEntity> {
+        return map { it.toEntity() }
+    }
+    
+    /**
+     * Convert AttractionDto to Attraction domain model
+     */
+    fun AttractionDto.toDomainModel(): Attraction {
+        return Attraction(
+            id = id,
+            name = name,
+            description = description,
+            category = try {
+                AttractionCategory.valueOf(category)
+            } catch (e: IllegalArgumentException) {
+                AttractionCategory.NATURE // Default category if unknown
+            },
+            location = Location(
+                latitude = latitude,
+                longitude = longitude,
+                address = address,
+                directions = directions
+            ),
+            images = images,
+            rating = rating,
+            workingHours = workingHours,
+            contactInfo = if (phoneNumber != null || email != null || website != null) {
+                ContactInfo(
+                    phone = phoneNumber,
+                    email = email,
+                    website = website
+                )
+            } else null,
+            isFavorite = isFavorite,
+            tags = tags,
+            priceInfo = priceInfo,
+            amenities = amenities
+        )
+    }
+    
+    /**
+     * Convert AttractionDto to AttractionEntity
+     */
+    fun AttractionDto.toEntity(): AttractionEntity {
+        return AttractionEntity(
+            id = id,
+            name = name,
+            description = description,
+            category = category,
+            latitude = latitude,
+            longitude = longitude,
+            address = address,
+            directions = directions,
+            images = images,
+            rating = rating,
+            workingHours = workingHours,
+            phoneNumber = phoneNumber,
+            email = email,
+            website = website,
+            isFavorite = isFavorite,
+            tags = tags,
+            priceInfo = priceInfo,
+            amenities = amenities
+        )
+    }
+    
+    /**
+     * Convert list of AttractionDto to list of Attraction domain models
+     */
+    fun List<AttractionDto>.toDomainModelsFromDto(): List<Attraction> {
+        return map { it.toDomainModel() }
+    }
+    
+    /**
+     * Convert list of AttractionDto to list of AttractionEntity
+     */
+    fun List<AttractionDto>.toEntitiesFromDto(): List<AttractionEntity> {
         return map { it.toEntity() }
     }
 }

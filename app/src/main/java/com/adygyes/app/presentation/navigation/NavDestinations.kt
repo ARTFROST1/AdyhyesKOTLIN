@@ -6,30 +6,30 @@ package com.adygyes.app.presentation.navigation
 sealed class NavDestination(val route: String) {
     
     // Main screens
-    object Map : NavDestination("map")
-    object Search : NavDestination("search")
-    object Favorites : NavDestination("favorites")
-    object Settings : NavDestination("settings")
+    data object Map : NavDestination("map")
+    data object Search : NavDestination("search")
+    data object Favorites : NavDestination("favorites")
+    data object Settings : NavDestination("settings")
     
     // Detail screens
-    object AttractionDetail : NavDestination("attraction/{attractionId}") {
+    data object AttractionDetail : NavDestination("attraction/{attractionId}") {
         fun createRoute(attractionId: String) = "attraction/$attractionId"
     }
     
     // Category filter
-    object CategoryFilter : NavDestination("category_filter")
+    data object CategoryFilter : NavDestination("category_filter")
     
     // Photo gallery
-    object PhotoGallery : NavDestination("photo_gallery/{attractionId}/{photoIndex}") {
+    data object PhotoGallery : NavDestination("photo_gallery/{attractionId}/{photoIndex}") {
         fun createRoute(attractionId: String, photoIndex: Int) = "photo_gallery/$attractionId/$photoIndex"
     }
     
     // Settings sub-screens
-    object LanguageSettings : NavDestination("settings/language")
-    object ThemeSettings : NavDestination("settings/theme")
-    object AboutScreen : NavDestination("settings/about")
-    object PrivacyPolicy : NavDestination("settings/privacy")
-    object TermsOfUse : NavDestination("settings/terms")
+    data object LanguageSettings : NavDestination("settings/language")
+    data object ThemeSettings : NavDestination("settings/theme")
+    data object AboutScreen : NavDestination("settings/about")
+    data object PrivacyPolicy : NavDestination("settings/privacy")
+    data object TermsOfUse : NavDestination("settings/terms")
 }
 
 /**

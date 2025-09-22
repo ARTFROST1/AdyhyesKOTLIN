@@ -376,6 +376,87 @@ Modified files:
 - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenWithYandex.kt`
 - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapStyleProvider.kt`
 
+## BUG-013: DataSyncManager SyncState Type Mismatch
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** High
+**Component:** Data Sync
+
+### Issue:
+Build failed with Kotlin compilation errors in DataSyncManager.kt due to type mismatch when assigning SyncState enum values to MutableStateFlow.
+
+### Error Messages:
+```
+Assignment type mismatch: actual type is 'com.adygyes.app.data.sync.DataSyncManager.SyncState.SYNCING', but 'com.adygyes.app.data.sync.DataSyncManager.SyncState.IDLE' was expected.
+Assignment type mismatch: actual type is 'com.adygyes.app.data.sync.DataSyncManager.SyncState.SUCCESS', but 'com.adygyes.app.data.sync.DataSyncState.IDLE' was expected.
+Assignment type mismatch: actual type is 'com.adygyes.app.data.sync.DataSyncManager.SyncState.ERROR', but 'com.adygyes.app.data.sync.DataSyncManager.SyncState.IDLE' was expected.
+```
+
+### Root Cause:
+The SyncState sealed class was defined with `object` declarations instead of `data object`, which caused type inference issues with StateFlow in modern Kotlin versions.
+
+### Solution:
+1. Changed SyncState sealed class objects to use `data object` instead of `object`:
+```kotlin
+sealed class SyncState {
+    data object IDLE : SyncState()
+    data object SYNCING : SyncState()
+    data object SUCCESS : SyncState()
+    data class ERROR(val message: String) : SyncState()
+}
+```
+
+2. Added explicit type parameter to MutableStateFlow to resolve type inference:
+```kotlin
+private val _syncState = MutableStateFlow<SyncState>(SyncState.IDLE)
+```
+
+### Prevention:
+- Use `data object` for sealed class objects in modern Kotlin
+- Test compilation after implementing sealed classes with StateFlow
+
+### Modified Files:
+- `/app/src/main/java/com/adygyes/app/data/sync/DataSyncManager.kt`
+
+## BUG-014: AttractionMapper JVM Signature Conflicts
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** High
+**Component:** Data Mapping
+
+### Issue:
+Build failed with JVM signature conflicts in AttractionMapper.kt due to duplicate extension function names that have the same signature after type erasure.
+
+### Error Messages:
+```
+Platform declaration clash: The following declarations have the same JVM signature (toDomainModels(Ljava/util/List;)Ljava/util/List;):
+    fun List<AttractionEntity>.toDomainModels(): List<Attraction>
+    fun List<AttractionDto>.toDomainModels(): List<Attraction>
+
+Platform declaration clash: The following declarations have the same JVM signature (toEntities(Ljava/util/List;)Ljava/util/List;):
+    fun List<AttractionDto>.toEntities(): List<AttractionEntity>
+    fun List<Attraction>.toEntities(): List<AttractionEntity>
+```
+
+### Root Cause:
+Extension functions with the same name on different generic types (`List<AttractionEntity>` vs `List<AttractionDto>`) result in identical JVM signatures after type erasure, causing compilation conflicts.
+
+### Solution:
+Renamed conflicting extension functions to have unique names:
+1. `List<AttractionDto>.toDomainModels()` → `List<AttractionDto>.toDomainModelsFromDto()`
+2. `List<AttractionDto>.toEntities()` → `List<AttractionDto>.toEntitiesFromDto()`
+
+Updated usage in AttractionRepositoryImpl.kt to use the new function names.
+
+### Prevention:
+- Avoid extension functions with identical names on different generic types
+- Use descriptive names that indicate the source type when dealing with similar conversions
+- Test compilation after adding new mapper functions
+
+### Modified Files:
+- `/app/src/main/java/com/adygyes/app/data/mapper/AttractionMapper.kt`
+- `/app/src/main/java/com/adygyes/app/data/repository/AttractionRepositoryImpl.kt`
+
 ---
 
 *Last Updated: 2025-09-22*

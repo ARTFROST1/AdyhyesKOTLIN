@@ -1,9 +1,13 @@
 package com.adygyes.app.di.module
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.room.Room
+import com.adygyes.app.data.local.cache.CacheManager
 import com.adygyes.app.data.local.dao.AttractionDao
 import com.adygyes.app.data.local.database.AdygyesDatabase
+import com.adygyes.app.data.local.preferences.PreferencesManager
 import com.adygyes.app.data.repository.AttractionRepositoryImpl
 import com.adygyes.app.domain.repository.AttractionRepository
 import dagger.Module
@@ -30,7 +34,8 @@ object DatabaseModule {
             AdygyesDatabase::class.java,
             AdygyesDatabase.DATABASE_NAME
         )
-            .fallbackToDestructiveMigration()
+            .addMigrations(*AdygyesDatabase.getMigrations())
+            .fallbackToDestructiveMigration() // Fallback only if no migration path
             .build()
     }
     
@@ -47,5 +52,21 @@ object DatabaseModule {
         @ApplicationContext context: Context
     ): AttractionRepository {
         return AttractionRepositoryImpl(attractionDao, context)
+    }
+    
+    @Provides
+    @Singleton
+    fun providePreferencesManager(
+        dataStore: DataStore<Preferences>
+    ): PreferencesManager {
+        return PreferencesManager(dataStore)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideCacheManager(
+        preferencesManager: PreferencesManager
+    ): CacheManager {
+        return CacheManager(preferencesManager)
     }
 }
