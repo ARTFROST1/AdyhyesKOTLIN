@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.domain.model.AttractionCategory
 import com.adygyes.app.domain.repository.AttractionRepository
+import com.adygyes.app.domain.usecase.GetLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -16,7 +17,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val attractionRepository: AttractionRepository
+    private val attractionRepository: AttractionRepository,
+    private val getLocationUseCase: GetLocationUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(MapUiState())
@@ -114,11 +116,43 @@ class MapViewModel @Inject constructor(
     
     fun onLocationPermissionGranted() {
         _uiState.update { it.copy(hasLocationPermission = true) }
-        // TODO: Start location tracking
+        startLocationTracking()
     }
     
     fun onLocationPermissionDenied() {
         _uiState.update { it.copy(hasLocationPermission = false) }
+    }
+    
+    private fun startLocationTracking() {
+        viewModelScope.launch {
+            getLocationUseCase.getLocationUpdates(5000L)
+                .catch { error ->
+                    Timber.e(error, "Error getting location updates")
+                }
+                .collect { location ->
+                    location?.let {
+                        _uiState.update { state ->
+                            state.copy(
+                                userLocation = Pair(location.latitude, location.longitude)
+                            )
+                        }
+                        Timber.d("User location updated: ${location.latitude}, ${location.longitude}")
+                    }
+                }
+        }
+    }
+    
+    fun getCurrentLocation() {
+        viewModelScope.launch {
+            val location = getLocationUseCase.getCurrentLocation()
+            location?.let {
+                _uiState.update { state ->
+                    state.copy(
+                        userLocation = Pair(location.latitude, location.longitude)
+                    )
+                }
+            }
+        }
     }
 }
 

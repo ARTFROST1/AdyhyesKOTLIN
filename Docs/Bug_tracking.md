@@ -252,5 +252,131 @@ Use this template for all bug reports
 
 ---
 
-*Last Updated: 2024-12-22*
+## BUG-009: Dependency Version Compatibility Issues
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** High
+**Component:** Build System
+
+### Issue:
+Build failed with AAR metadata check errors - newer AndroidX libraries (core-ktx 1.17.0, activity-compose 1.11.0) required Android SDK 36 and AGP 8.9.1, but project used SDK 35 and AGP 8.7.3.
+
+### Error Messages:
+```
+Dependency 'androidx.core:core:1.17.0' requires libraries and applications that depend on it to compile against version 36 or later
+Dependency 'androidx.activity:activity-compose:1.11.0' requires Android Gradle plugin 8.9.1 or higher
+```
+
+### Root Cause:
+Version mismatch between AndroidX libraries and Android build tools.
+
+### Solution:
+Downgraded AndroidX libraries to compatible versions:
+- androidx.core:core-ktx from 1.17.0 to 1.13.1
+- androidx.activity:activity-compose from 1.11.0 to 1.9.3
+
+Modified files:
+- `/gradle/libs.versions.toml`
+
+---
+
+## BUG-010: MapScreenWithYandex Compilation Errors
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** High
+**Component:** Map Feature
+
+### Issue:
+Multiple compilation errors in MapScreenWithYandex.kt:
+1. Try-catch not supported around composable function invocations
+2. MapObjectVisitor type mismatch
+3. PointF unresolved references
+4. userData property access issues
+
+### Error Messages:
+```
+Try catch is not supported around composable function invocations
+Unresolved reference 'PointF'
+Argument type mismatch: actual type is 'kotlin.Function1', but 'MapObjectVisitor' was expected
+```
+
+### Root Cause:
+1. Incorrect error handling in Compose LaunchedEffect
+2. Missing imports and wrong API usage for Yandex MapKit
+
+### Solution:
+1. Removed try-catch from composable context
+2. Added correct imports:
+   - `import com.yandex.mapkit.map.MapObjectVisitor`
+   - `import com.yandex.mapkit.geometry.PointF`
+3. Implemented proper MapObjectVisitor interface for traversing map objects
+4. Fixed all PointF references to use correct import
+
+Modified files:
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenWithYandex.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapStyleProvider.kt`
+
+---
+
+## BUG-011: MainActivity NavHost Parameters Missing
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** Medium
+**Component:** Navigation
+
+### Issue:
+AdygyesNavHost called without required parameters (navController, paddingValues).
+
+### Error Messages:
+```
+No value passed for parameter 'navController'
+No value passed for parameter 'paddingValues'
+```
+
+### Root Cause:
+MainActivity was not providing required navigation parameters to AdygyesNavHost composable.
+
+### Solution:
+Created AdygyesApp composable with Scaffold that provides:
+- NavController via rememberNavController()
+- PaddingValues from Scaffold's innerPadding
+
+Modified files:
+- `/app/src/main/java/com/adygyes/app/MainActivity.kt`
+
+---
+
+## BUG-012: Additional MapScreenWithYandex Issues
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** High
+**Component:** Map Feature
+
+### Issue:
+Additional compilation errors after initial fixes:
+1. PointF class still unresolved in multiple locations
+2. @Composable function called from non-composable context (MapStyleProvider.applyMapStyle)
+
+### Error Messages:
+```
+Unresolved reference 'PointF'
+@Composable invocations can only happen from the context of a @Composable function
+```
+
+### Root Cause:
+1. PointF class doesn't exist in com.yandex.mapkit.geometry package
+2. MapStyleProvider.applyMapStyle was marked as @Composable but called from LaunchedEffect
+
+### Solution:
+1. Removed PointF usage entirely - IconStyle anchor property is optional
+2. Removed @Composable annotation from MapStyleProvider.applyMapStyle function
+3. Simplified IconStyle configuration to only use scale property
+
+Modified files:
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenWithYandex.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapStyleProvider.kt`
+
+---
+
+*Last Updated: 2025-09-22*
 *Version: 1.0.0*

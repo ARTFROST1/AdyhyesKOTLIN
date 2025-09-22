@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -14,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
@@ -23,6 +26,10 @@ import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.map.PlacemarkMapObject
+import com.yandex.mapkit.map.ClusterListener
+import com.yandex.mapkit.map.Cluster
+import com.yandex.mapkit.map.IconStyle
+import com.yandex.mapkit.map.MapObjectVisitor
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.runtime.image.ImageProvider
@@ -31,6 +38,7 @@ import timber.log.Timber
 /**
  * Map screen with Yandex MapKit integration
  */
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MapScreenWithYandex(
     onAttractionClick: (String) -> Unit,
@@ -42,6 +50,33 @@ fun MapScreenWithYandex(
     val attractions by viewModel.attractions.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedAttraction by viewModel.selectedAttraction.collectAsStateWithLifecycle()
+    val isDarkTheme = isSystemInDarkTheme()
+    
+    // Location permissions
+    val locationPermissionsState = rememberMultiplePermissionsState(
+        listOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+    
+    // Request permissions on first launch
+    LaunchedEffect(locationPermissionsState) {
+        if (!locationPermissionsState.allPermissionsGranted) {
+            locationPermissionsState.launchMultiplePermissionRequest()
+        } else {
+            viewModel.onLocationPermissionGranted()
+        }
+    }
+    
+    // Handle permission result
+    LaunchedEffect(locationPermissionsState.allPermissionsGranted) {
+        if (locationPermissionsState.allPermissionsGranted) {
+            viewModel.onLocationPermissionGranted()
+        } else {
+            viewModel.onLocationPermissionDenied()
+        }
+    }
     
     // Remember map lifecycle
     DisposableEffect(Unit) {
@@ -53,46 +88,120 @@ fun MapScreenWithYandex(
     
     LaunchedEffect(mapView) {
         mapView?.let { map ->
-            try {
-                MapKitFactory.getInstance().onStart()
-                map.onStart()
-                
-                // Center map on Adygea region (Maykop - capital city)
-                val adygeaCenter = Point(44.6098, 40.1006) // Coordinates of Maykop
-                map.map.move(
-                    CameraPosition(adygeaCenter, 10.0f, 0.0f, 0.0f),
-                    Animation(Animation.Type.SMOOTH, 2f),
-                    null
-                )
-                
-                // Enable zoom controls
-                map.map.isZoomGesturesEnabled = true
-                map.map.isScrollGesturesEnabled = true
-                map.map.isRotateGesturesEnabled = true
-                map.map.isTiltGesturesEnabled = true
-                
-                Timber.d("Map initialized and centered on Adygea")
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to initialize map")
+            MapKitFactory.getInstance().onStart()
+            map.onStart()
+            
+            // Center map on Adygea region (Maykop - capital city)
+            val adygeaCenter = Point(44.6098, 40.1006) // Coordinates of Maykop
+            map.map.move(
+                CameraPosition(adygeaCenter, 10.0f, 0.0f, 0.0f),
+                Animation(Animation.Type.SMOOTH, 2f),
+                null
+            )
+            
+            // Apply map style and configure interactions
+            MapStyleProvider.applyMapStyle(map, isDarkTheme)
+            MapStyleProvider.configureMapInteraction(map)
+            
+            Timber.d("Map initialized and centered on Adygea")
+        }
+    }
+    
+    // Add user location marker
+    LaunchedEffect(mapView, uiState.userLocation) {
+        mapView?.let { map ->
+            uiState.userLocation?.let { location ->
+                try {
+                    // Remove old user location marker if exists
+                    val userMarkerTag = "user_location_marker"
+                    map.map.mapObjects.traverse(object : MapObjectVisitor {
+                        override fun onPlacemarkVisited(placemark: PlacemarkMapObject) {
+                            if (placemark.userData == userMarkerTag) {
+                                map.map.mapObjects.remove(placemark)
+                            }
+                        }
+                        override fun onPolylineVisited(polyline: com.yandex.mapkit.map.PolylineMapObject) {}
+                        override fun onPolygonVisited(polygon: com.yandex.mapkit.map.PolygonMapObject) {}
+                        override fun onCircleVisited(circle: com.yandex.mapkit.map.CircleMapObject) {}
+                        override fun onCollectionVisitStart(collection: com.yandex.mapkit.map.MapObjectCollection): Boolean = true
+                        override fun onCollectionVisitEnd(collection: com.yandex.mapkit.map.MapObjectCollection) {}
+                        override fun onClusterizedCollectionVisitStart(collection: com.yandex.mapkit.map.ClusterizedPlacemarkCollection): Boolean = true
+                        override fun onClusterizedCollectionVisitEnd(collection: com.yandex.mapkit.map.ClusterizedPlacemarkCollection) {}
+                    })
+                    
+                    // Add new user location marker
+                    val userPoint = Point(location.first, location.second)
+                    val userMarker = map.map.mapObjects.addPlacemark(userPoint)
+                    userMarker.setIcon(
+                        ImageProvider.fromResource(context, R.drawable.ic_user_location),
+                        IconStyle().apply {
+                            scale = 1.0f
+                        }
+                    )
+                    userMarker.userData = userMarkerTag
+                    
+                    Timber.d("User location marker added: ${location.first}, ${location.second}")
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to add user location marker")
+                }
             }
         }
     }
     
-    // Add markers for attractions
+    // Add markers for attractions with clustering
     LaunchedEffect(mapView, attractions) {
         mapView?.let { map ->
             try {
                 // Clear existing markers
                 map.map.mapObjects.clear()
                 
-                // Add markers for each attraction
+                // Create clustered collection
+                val clusterizedCollection = map.map.mapObjects.addClusterizedPlacemarkCollection(
+                    object : ClusterListener {
+                        override fun onClusterAdded(cluster: Cluster) {
+                            // Update cluster appearance to show number of items
+                            val text = cluster.size.toString()
+                            cluster.appearance.setIcon(
+                                TextImageProvider(text, context)
+                            )
+                            cluster.appearance.setIconStyle(
+                                IconStyle().apply {
+                                    scale = 1f
+                                }
+                            )
+                            cluster.addClusterTapListener { _ ->
+                                // Zoom in when cluster is tapped
+                                map.map.move(
+                                    CameraPosition(
+                                        cluster.appearance.geometry,
+                                        map.map.cameraPosition.zoom + 1,
+                                        0.0f, 0.0f
+                                    ),
+                                    Animation(Animation.Type.SMOOTH, 0.5f),
+                                    null
+                                )
+                                true
+                            }
+                        }
+                    }
+                )
+                
+                // Add placemarks to the clustered collection
                 attractions.forEach { attraction ->
                     val point = Point(attraction.location.latitude, attraction.location.longitude)
-                    val placemark = map.map.mapObjects.addPlacemark(point)
+                    val placemark = clusterizedCollection.addPlacemark(point)
                     
-                    // Set marker style based on category
+                    // Set marker style based on category with themed colors
+                    val markerIcon = CategoryMarkerProvider.getMarkerForCategory(
+                        context = context,
+                        category = attraction.category,
+                        isDarkTheme = isDarkTheme
+                    )
                     placemark.setIcon(
-                        ImageProvider.fromResource(context, R.drawable.ic_map_marker)
+                        markerIcon,
+                        IconStyle().apply {
+                            scale = 0.8f
+                        }
                     )
                     
                     // Add tap listener
@@ -101,11 +210,14 @@ fun MapScreenWithYandex(
                         true
                     })
                     
-                    // Store attraction ID as user data
-                    placemark.userData = attraction.id
+                    // Store attraction data
+                    placemark.userData = attraction
                 }
                 
-                Timber.d("Added ${attractions.size} markers to map")
+                // Cluster the placemarks
+                clusterizedCollection.clusterPlacemarks(60.0, 15)
+                
+                Timber.d("Added ${attractions.size} markers with clustering")
             } catch (e: Exception) {
                 Timber.e(e, "Failed to add markers")
             }
@@ -159,7 +271,25 @@ fun MapScreenWithYandex(
         // Location FAB
         FloatingActionButton(
             onClick = { 
-                // TODO: Implement location centering
+                if (locationPermissionsState.allPermissionsGranted) {
+                    // Center on user location
+                    uiState.userLocation?.let { location ->
+                        mapView?.map?.move(
+                            CameraPosition(
+                                Point(location.first, location.second),
+                                14.0f,
+                                0.0f,
+                                0.0f
+                            ),
+                            Animation(Animation.Type.SMOOTH, 0.5f),
+                            null
+                        )
+                    } ?: run {
+                        viewModel.getCurrentLocation()
+                    }
+                } else {
+                    locationPermissionsState.launchMultiplePermissionRequest()
+                }
                 Timber.d("Location button clicked")
             },
             modifier = Modifier
