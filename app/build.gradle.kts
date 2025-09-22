@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,13 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+}
+
+// Load local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -22,6 +31,9 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        
+        // Add API keys to BuildConfig
+        buildConfigField("String", "YANDEX_MAPKIT_API_KEY", "\"${localProperties.getProperty("YANDEX_MAPKIT_API_KEY", "")}\"")
         
         // Room schema export
         ksp {
