@@ -6,6 +6,7 @@ import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
@@ -18,7 +19,20 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        initializeMapKit()
         initializeTimber()
+    }
+
+    /**
+     * Initialize Yandex MapKit SDK
+     */
+    private fun initializeMapKit() {
+        try {
+            MapKitFactory.setApiKey(BuildConfig.YANDEX_MAPKIT_API_KEY)
+            Timber.d("MapKit initialized successfully")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to initialize MapKit")
+        }
     }
 
     /**

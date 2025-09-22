@@ -44,6 +44,7 @@
     <string name="favorites_explore">Исследовать</string>
     
     <!-- Search Screen -->
+    <string name="search_placeholder">Поиск мест и достопримечательностей</string>
     <string name="search_hint">Введите название или категорию...</string>
     <string name="search_recent">Недавние поиски</string>
     <string name="search_popular">Популярные места</string>

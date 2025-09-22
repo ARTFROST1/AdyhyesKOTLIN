@@ -2,9 +2,9 @@
 # Core Android
 agp = "8.7.3"
 kotlin = "2.0.21"
-coreKtx = "1.17.0"
+coreKtx = "1.13.1"
 lifecycleRuntimeKtx = "2.9.4"
-activityCompose = "1.11.0"
+activityCompose = "1.9.3"
 
 # Compose
 composeBom = "2024.12.01"
@@ -82,8 +82,8 @@ accompanist-systemuicontroller = { group = "com.google.accompanist", name = "acc
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
 
-# Maps (will be added in Stage 2)
-# yandex-mapkit-full = { group = "com.yandex.android", name = "maps.mobile", version.ref = "yandexMapkit" }
+# Maps
+yandex-mapkit-full = { group = "com.yandex.android", name = "maps.mobile", version.ref = "yandexMapkit" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 # Networking

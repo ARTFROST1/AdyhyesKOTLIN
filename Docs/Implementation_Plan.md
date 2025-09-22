@@ -2,13 +2,13 @@
 
 ## 📊 Current Status
 **Last Updated:** September 22, 2025  
-**Current Stage:** Stage 1 - Foundation & Setup ✅ COMPLETE  
-**Progress:** 12/12 tasks completed (100%)  
-**Next Stage:** Stage 2 - Core Map Features  
+**Current Stage:** Stage 2 - Core Map Features (In Progress)  
+**Progress:** 21/99 tasks completed (21.2%)  
+**Next Stage:** Stage 3 - Data Layer Implementation  
 
 ### Stage Completion Status:
 - ✅ **Stage 1:** Foundation & Setup (100% complete - 12/12 tasks) ✅
-- ⏳ **Stage 2:** Core Map Features (0% complete - 0/12 tasks)
+- 🚧 **Stage 2:** Core Map Features (75% complete - 9/12 tasks)
 - ⏳ **Stage 3:** Data Layer Implementation (0% complete - 0/10 tasks)
 - ⏳ **Stage 4:** UI Features & Screens (0% complete - 0/11 tasks)
 - ⏳ **Stage 5:** Core Business Logic (0% complete - 0/10 tasks)
@@ -16,7 +16,7 @@
 - ⏳ **Stage 7:** Polish & Optimization (0% complete - 0/12 tasks)
 - ⏳ **Stage 8:** Pre-Launch Preparation (0% complete - 0/12 tasks)
 
-**Overall Progress:** 12/99 tasks completed (12.1%)
+**Overall Progress:** 21/99 tasks completed (21.2%)
 
 ---
 
@@ -145,17 +145,17 @@
 **Timeline:** Week 3-5
 
 #### Sub-steps:
-- [ ] Integrate Yandex MapKit SDK
-- [ ] Configure MapKit API key management
-- [ ] Implement basic map display on main screen
-- [ ] Create custom map markers for POIs
+- [x] Integrate Yandex MapKit SDK
+- [x] Configure MapKit API key management
+- [x] Implement basic map display on main screen
+- [x] Create custom map markers for POIs
 - [ ] Implement marker clustering for performance
 - [ ] Add user location tracking and centering
-- [ ] Implement map gesture controls (zoom, pan)
-- [ ] Create POI data model and domain entities
-- [ ] Load POI data from local JSON file
-- [ ] Display POI markers on map
-- [ ] Implement marker click handling
+- [x] Implement map gesture controls (zoom, pan)
+- [x] Create POI data model and domain entities
+- [x] Load POI data from local JSON file
+- [x] Display POI markers on map
+- [x] Implement marker click handling
 - [ ] Add map style customization
 
 ### Stage 3: Data Layer Implementation

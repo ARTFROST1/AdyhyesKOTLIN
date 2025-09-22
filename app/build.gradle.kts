@@ -156,6 +156,9 @@ dependencies {
     // Location Services
     implementation(libs.play.services.location)
     
+    // Maps
+    implementation(libs.yandex.mapkit.full)
+    
     // Development Tools
     implementation(libs.timber)
     debugImplementation(libs.leakcanary)
