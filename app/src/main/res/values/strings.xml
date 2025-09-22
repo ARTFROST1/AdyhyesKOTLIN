@@ -1,3 +1,88 @@
 <resources>
-    <string name="app_name">Adygyes</string>
+    <string name="app_name">Адыгэес</string>
+    
+    <!-- Navigation -->
+    <string name="nav_map">Карта</string>
+    <string name="nav_favorites">Избранное</string>
+    <string name="nav_search">Поиск</string>
+    <string name="nav_settings">Настройки</string>
+    
+    <!-- Map Screen -->
+    <string name="map_search_hint">Поиск достопримечательностей...</string>
+    <string name="map_my_location">Моё местоположение</string>
+    <string name="map_zoom_in">Приблизить</string>
+    <string name="map_zoom_out">Отдалить</string>
+    <string name="map_loading">Загрузка карты...</string>
+    <string name="map_error">Ошибка загрузки карты</string>
+    <string name="map_retry">Повторить</string>
+    
+    <!-- Categories -->
+    <string name="category_all">Все</string>
+    <string name="category_nature">Природа</string>
+    <string name="category_culture">Культура</string>
+    <string name="category_history">История</string>
+    <string name="category_adventure">Приключения</string>
+    <string name="category_recreation">Отдых</string>
+    <string name="category_gastronomy">Гастрономия</string>
+    
+    <!-- Attraction Details -->
+    <string name="detail_description">Описание</string>
+    <string name="detail_how_to_get">Как добраться</string>
+    <string name="detail_working_hours">Часы работы</string>
+    <string name="detail_contacts">Контакты</string>
+    <string name="detail_rating">Рейтинг</string>
+    <string name="detail_reviews">Отзывы</string>
+    <string name="detail_photos">Фотографии</string>
+    <string name="detail_build_route">Построить маршрут</string>
+    <string name="detail_share">Поделиться</string>
+    <string name="detail_add_to_favorites">Добавить в избранное</string>
+    <string name="detail_remove_from_favorites">Удалить из избранного</string>
+    
+    <!-- Favorites Screen -->
+    <string name="favorites_empty">У вас пока нет избранных мест</string>
+    <string name="favorites_empty_description">Добавляйте интересные места в избранное, чтобы быстро к ним возвращаться</string>
+    <string name="favorites_explore">Исследовать</string>
+    
+    <!-- Search Screen -->
+    <string name="search_hint">Введите название или категорию...</string>
+    <string name="search_recent">Недавние поиски</string>
+    <string name="search_popular">Популярные места</string>
+    <string name="search_no_results">Ничего не найдено</string>
+    <string name="search_try_different">Попробуйте изменить запрос</string>
+    <string name="search_clear">Очистить</string>
+    
+    <!-- Settings Screen -->
+    <string name="settings_language">Язык</string>
+    <string name="settings_language_ru">Русский</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Тёмная</string>
+    <string name="settings_theme_system">Системная</string>
+    <string name="settings_notifications">Уведомления</string>
+    <string name="settings_cache">Кэш</string>
+    <string name="settings_clear_cache">Очистить кэш</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_version">Версия</string>
+    <string name="settings_privacy">Политика конфиденциальности</string>
+    <string name="settings_terms">Условия использования</string>
+    
+    <!-- Common -->
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Отмена</string>
+    <string name="common_save">Сохранить</string>
+    <string name="common_delete">Удалить</string>
+    <string name="common_edit">Редактировать</string>
+    <string name="common_close">Закрыть</string>
+    <string name="common_loading">Загрузка...</string>
+    <string name="common_error">Ошибка</string>
+    <string name="common_retry">Повторить</string>
+    <string name="common_offline">Нет подключения к интернету</string>
+    
+    <!-- Accessibility -->
+    <string name="a11y_back_button">Кнопка назад</string>
+    <string name="a11y_menu_button">Кнопка меню</string>
+    <string name="a11y_favorite_button">Кнопка избранного</string>
+    <string name="a11y_share_button">Кнопка поделиться</string>
+    <string name="a11y_map_marker">Маркер на карте</string>
 </resources>

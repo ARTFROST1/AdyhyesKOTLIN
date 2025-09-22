@@ -1,0 +1,88 @@
+<resources>
+    <string name="app_name">Adygyes</string>
+    
+    <!-- Navigation -->
+    <string name="nav_map">Map</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- Map Screen -->
+    <string name="map_search_hint">Search attractions...</string>
+    <string name="map_my_location">My location</string>
+    <string name="map_zoom_in">Zoom in</string>
+    <string name="map_zoom_out">Zoom out</string>
+    <string name="map_loading">Loading map...</string>
+    <string name="map_error">Map loading error</string>
+    <string name="map_retry">Retry</string>
+    
+    <!-- Categories -->
+    <string name="category_all">All</string>
+    <string name="category_nature">Nature</string>
+    <string name="category_culture">Culture</string>
+    <string name="category_history">History</string>
+    <string name="category_adventure">Adventure</string>
+    <string name="category_recreation">Recreation</string>
+    <string name="category_gastronomy">Gastronomy</string>
+    
+    <!-- Attraction Details -->
+    <string name="detail_description">Description</string>
+    <string name="detail_how_to_get">How to get there</string>
+    <string name="detail_working_hours">Working hours</string>
+    <string name="detail_contacts">Contacts</string>
+    <string name="detail_rating">Rating</string>
+    <string name="detail_reviews">Reviews</string>
+    <string name="detail_photos">Photos</string>
+    <string name="detail_build_route">Build route</string>
+    <string name="detail_share">Share</string>
+    <string name="detail_add_to_favorites">Add to favorites</string>
+    <string name="detail_remove_from_favorites">Remove from favorites</string>
+    
+    <!-- Favorites Screen -->
+    <string name="favorites_empty">You have no favorite places yet</string>
+    <string name="favorites_empty_description">Add interesting places to favorites to quickly return to them</string>
+    <string name="favorites_explore">Explore</string>
+    
+    <!-- Search Screen -->
+    <string name="search_hint">Enter name or category...</string>
+    <string name="search_recent">Recent searches</string>
+    <string name="search_popular">Popular places</string>
+    <string name="search_no_results">Nothing found</string>
+    <string name="search_try_different">Try a different query</string>
+    <string name="search_clear">Clear</string>
+    
+    <!-- Settings Screen -->
+    <string name="settings_language">Language</string>
+    <string name="settings_language_ru">Русский</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_privacy">Privacy Policy</string>
+    <string name="settings_terms">Terms of Use</string>
+    
+    <!-- Common -->
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_close">Close</string>
+    <string name="common_loading">Loading...</string>
+    <string name="common_error">Error</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_offline">No internet connection</string>
+    
+    <!-- Accessibility -->
+    <string name="a11y_back_button">Back button</string>
+    <string name="a11y_menu_button">Menu button</string>
+    <string name="a11y_favorite_button">Favorite button</string>
+    <string name="a11y_share_button">Share button</string>
+    <string name="a11y_map_marker">Map marker</string>
+</resources>

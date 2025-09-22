@@ -16,6 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Additional Google Maven repository for compatibility
+        maven { url = uri("https://maven.google.com/") }
+        // Yandex MapKit repository will be added in Stage 2
+        // maven { url = uri("https://artifactory-external.vkpartner.ru/artifactory/maven/") }
     }
 }
 

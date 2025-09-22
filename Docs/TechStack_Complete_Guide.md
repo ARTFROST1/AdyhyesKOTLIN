@@ -7,7 +7,7 @@
 **Architecture:** MVVM + Clean Architecture  
 **Language:** Kotlin  
 **UI Framework:** Jetpack Compose  
-**Build System:** Gradle 8.11.1 with Kotlin DSL  
+**Build System:** Gradle 8.13 with Kotlin DSL  
 
 ---
 
@@ -85,11 +85,14 @@ yandex-mapkit-lite = { group = "com.yandex.android", name = "maps.mobile", versi
 
 **Repository Configuration:**
 ```kotlin
-// Project-level build.gradle.kts
-repositories {
-    google()
-    mavenCentral()
-    maven { url = uri("https://maven.google.com/") }
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://maven.google.com/") }
+    }
 }
 ```
 
@@ -251,9 +254,9 @@ compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-mani
 ```kotlin
 [versions]
 kotlin = "2.0.21"
-agp = "8.10.0"
+agp = "8.7.3"
 coreKtx = "1.17.0"
-lifecycleRuntimeKtx = "2.9.0"
+lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
 
 [libraries]
@@ -514,6 +517,9 @@ android {
 
 ---
 
-*Document Version: 1.0.0*  
-*Last Updated: December 2024*  
+## 📝 Changelog
+- 2025-09-22: Updated Gradle to 8.13 (wrapper), AGP to 8.7.3; aligned lifecycleRuntimeKtx to 2.9.4; documented centralized repositories in settings.gradle.kts.
+
+*Document Version: 1.0.1*  
+*Last Updated: September 22, 2025*  
 *Author: CTO - Adygyes Project*
