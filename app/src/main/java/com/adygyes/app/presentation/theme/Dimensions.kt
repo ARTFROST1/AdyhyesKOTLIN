@@ -51,6 +51,7 @@ object Dimensions {
 
     // Card dimensions
     val CardCornerRadius = 12.dp
+    val CornerRadiusMedium = 12.dp
     val CardImageHeight = 200.dp
     val CardMinHeight = 100.dp
 

@@ -1,67 +1,511 @@
 package com.adygyes.app.presentation.ui.screens.detail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.adygyes.app.R
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
+import com.adygyes.app.presentation.ui.components.*
+import com.adygyes.app.presentation.viewmodel.AttractionDetailViewModel
 
 /**
- * Attraction detail screen placeholder
- * Will be implemented in Stage 4
+ * Detailed attraction information screen
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AttractionDetailScreen(
     attractionId: String,
     onBackClick: () -> Unit,
-    onPhotoClick: (Int) -> Unit,
     onBuildRoute: () -> Unit,
-    onShareClick: () -> Unit
+    onShareClick: () -> Unit,
+    viewModel: AttractionDetailViewModel = hiltViewModel()
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingMedium)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Place,
-                contentDescription = null,
-                modifier = Modifier.size(Dimensions.IconSizeExtraLarge),
-                tint = MaterialTheme.colorScheme.primary
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showPhotoViewer by remember { mutableStateOf(false) }
+    var selectedPhotoIndex by remember { mutableIntStateOf(0) }
+    
+    LaunchedEffect(attractionId) {
+        viewModel.loadAttraction(attractionId)
+    }
+    
+    when (val state = uiState) {
+        is AttractionDetailViewModel.UiState.Loading -> {
+            LoadingIndicator()
+        }
+        
+        is AttractionDetailViewModel.UiState.Error -> {
+            ErrorState(
+                message = state.message,
+                onRetry = { viewModel.loadAttraction(attractionId) }
             )
-            Text(
-                text = "Attraction Details",
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "Attraction ID: $attractionId",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "Detail view will be implemented in Stage 4",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+        }
+        
+        is AttractionDetailViewModel.UiState.Success -> {
+            val attraction = state.attraction
             
-            Button(
-                onClick = onBackClick,
-                modifier = Modifier.padding(top = Dimensions.SpacingLarge)
-            ) {
-                Text("Go Back")
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { },
+                        navigationIcon = {
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Back"
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = onShareClick) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share"
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.toggleFavorite() }
+                            ) {
+                                Icon(
+                                    imageVector = if (attraction.isFavorite) 
+                                        Icons.Default.Favorite 
+                                    else 
+                                        Icons.Default.FavoriteBorder,
+                                    contentDescription = if (attraction.isFavorite) 
+                                        "Remove from favorites" 
+                                    else 
+                                        "Add to favorites",
+                                    tint = if (attraction.isFavorite) 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent
+                        )
+                    )
+                }
+            ) { paddingValues ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    // Photo Gallery
+                    item {
+                        PhotoGallery(
+                            images = attraction.images,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp),
+                            onImageClick = { index ->
+                                selectedPhotoIndex = index
+                                showPhotoViewer = true
+                            }
+                        )
+                    }
+                    
+                    // Main content
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Dimensions.PaddingLarge)
+                        ) {
+                            // Title and category
+                            Text(
+                                text = attraction.name,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CategoryChip(category = attraction.category)
+                                
+                                attraction.rating?.let { rating ->
+                                    RatingBar(
+                                        rating = rating,
+                                        totalReviews = state.reviewCount
+                                    )
+                                }
+                            }
+                            
+                            // Description
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "About",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = attraction.description,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    // Information cards
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = Dimensions.PaddingLarge),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Location card
+                            attraction.location.address?.let { address ->
+                                InfoCard(
+                                    icon = Icons.Default.LocationOn,
+                                    title = "Location",
+                                    content = {
+                                        Text(
+                                            text = address,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        attraction.location.directions?.let { directions ->
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = directions,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                            
+                            // Working hours card
+                            attraction.workingHours?.let { hours ->
+                                InfoCard(
+                                    icon = Icons.Default.Schedule,
+                                    title = "Working Hours",
+                                    content = {
+                                        Text(
+                                            text = hours,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                )
+                            }
+                            
+                            // Price card
+                            attraction.priceInfo?.let { price ->
+                                InfoCard(
+                                    icon = Icons.Default.AttachMoney,
+                                    title = "Price",
+                                    content = {
+                                        Text(
+                                            text = price,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                )
+                            }
+                            
+                            // Contact info card
+                            attraction.contactInfo?.let { contact ->
+                                if (contact.phone != null || contact.email != null || contact.website != null) {
+                                    InfoCard(
+                                        icon = Icons.Default.ContactPhone,
+                                        title = "Contact Information",
+                                        content = {
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                contact.phone?.let { phone ->
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Phone,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(16.dp),
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            text = phone,
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    }
+                                                }
+                                                contact.email?.let { email ->
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Email,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(16.dp),
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            text = email,
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    }
+                                                }
+                                                contact.website?.let { website ->
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Language,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(16.dp),
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            text = website,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Amenities
+                    if (attraction.amenities.isNotEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier.padding(
+                                    horizontal = Dimensions.PaddingLarge,
+                                    vertical = Dimensions.PaddingMedium
+                                )
+                            ) {
+                                Text(
+                                    text = "Amenities",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                AmenitiesGrid(amenities = attraction.amenities)
+                            }
+                        }
+                    }
+                    
+                    // Tags
+                    if (attraction.tags.isNotEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier.padding(
+                                    horizontal = Dimensions.PaddingLarge,
+                                    vertical = Dimensions.PaddingMedium
+                                )
+                            ) {
+                                Text(
+                                    text = "Tags",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                TagsFlow(tags = attraction.tags)
+                            }
+                        }
+                    }
+                }
+                
+                // Bottom action bar
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth(),
+                        shadowElevation = 8.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Dimensions.PaddingLarge),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Button(
+                                onClick = onBuildRoute,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Directions,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Get Directions")
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Photo viewer dialog
+            if (showPhotoViewer) {
+                PhotoViewer(
+                    images = attraction.images,
+                    initialPage = selectedPhotoIndex,
+                    onDismiss = { showPhotoViewer = false },
+                    onShare = { imageUrl ->
+                        // Handle image sharing
+                        onShareClick()
+                    }
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun InfoCard(
+    icon: ImageVector,
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimensions.PaddingMedium),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                content()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AmenitiesGrid(
+    amenities: List<String>,
+    modifier: Modifier = Modifier
+) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        amenities.forEach { amenity ->
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Row(
+                    modifier = Modifier.padding(
+                        horizontal = 12.dp,
+                        vertical = 8.dp
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = getAmenityIcon(amenity),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text(
+                        text = amenity,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TagsFlow(
+    tags: List<String>,
+    modifier: Modifier = Modifier
+) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        tags.forEach { tag ->
+            AssistChip(
+                onClick = { },
+                label = {
+                    Text(
+                        text = tag,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Tag,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            )
+        }
+    }
+}
+
+private fun getAmenityIcon(amenity: String): ImageVector {
+    return when (amenity.lowercase()) {
+        "parking", "парковка" -> Icons.Default.LocalParking
+        "wifi", "wi-fi" -> Icons.Default.Wifi
+        "restaurant", "ресторан", "кафе", "cafe" -> Icons.Default.Restaurant
+        "toilet", "туалет", "restroom" -> Icons.Default.Wc
+        "shop", "магазин", "store" -> Icons.Default.ShoppingCart
+        "guide", "гид", "экскурсия" -> Icons.Default.Person
+        "photo", "фото", "photography" -> Icons.Default.PhotoCamera
+        "disabled", "инвалиды", "accessibility" -> Icons.Default.Accessible
+        else -> Icons.Default.CheckCircle
     }
 }

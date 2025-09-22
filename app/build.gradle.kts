@@ -148,6 +148,7 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
+    implementation(libs.compose.zoomable)
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

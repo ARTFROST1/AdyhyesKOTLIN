@@ -69,12 +69,6 @@ fun AdygyesNavHost(
         // Settings Screen
         composable(NavDestination.Settings.route) {
             SettingsScreen(
-                onLanguageClick = {
-                    navController.navigate(NavDestination.LanguageSettings.route)
-                },
-                onThemeClick = {
-                    navController.navigate(NavDestination.ThemeSettings.route)
-                },
                 onAboutClick = {
                     navController.navigate(NavDestination.AboutScreen.route)
                 },
@@ -98,9 +92,6 @@ fun AdygyesNavHost(
             AttractionDetailScreen(
                 attractionId = attractionId,
                 onBackClick = { navController.popBackStack() },
-                onPhotoClick = { photoIndex ->
-                    navController.navigate(NavDestination.PhotoGallery.createRoute(attractionId, photoIndex))
-                },
                 onBuildRoute = {
                     // Will be implemented when Yandex Maps is integrated
                 },

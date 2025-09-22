@@ -457,6 +457,110 @@ Updated usage in AttractionRepositoryImpl.kt to use the new function names.
 - `/app/src/main/java/com/adygyes/app/data/mapper/AttractionMapper.kt`
 - `/app/src/main/java/com/adygyes/app/data/repository/AttractionRepositoryImpl.kt`
 
+## BUG-015: SettingsViewModel Dependency Injection Failure
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** High
+**Component:** Dependency Injection
+
+### Issue:
+Build failed with KSP (Kotlin Symbol Processing) error when processing SettingsViewModel. Hilt was unable to resolve dependencies due to incorrect import paths.
+
+### Error Messages:
+```
+InjectProcessingStep was unable to process 'SettingsViewModel(error.NonExistentClass,error.NonExistentClass)' because 'error.NonExistentClass' could not be resolved.
+
+Dependency trace:
+    => element (CLASS): com.adygyes.app.presentation.viewmodel.SettingsViewModel
+    => element (CONSTRUCTOR): SettingsViewModel(error.NonExistentClass,error.NonExistentClass)
+    => type (EXECUTABLE constructor): (error.NonExistentClass,error.NonExistentClass)void
+    => type (ERROR parameter type): error.NonExistentClass
+```
+
+### Root Cause:
+SettingsViewModel had incorrect import paths for its dependencies:
+- `PreferencesManager` was imported from `com.adygyes.app.data.local.PreferencesManager` but actual location is `com.adygyes.app.data.local.preferences.PreferencesManager`
+- `CacheManager` was imported from `com.adygyes.app.data.repository.CacheManager` but actual location is `com.adygyes.app.data.local.cache.CacheManager`
+
+### Solution:
+Fixed import statements in SettingsViewModel.kt:
+```kotlin
+// Before (incorrect):
+import com.adygyes.app.data.local.PreferencesManager
+import com.adygyes.app.data.repository.CacheManager
+
+// After (correct):
+import com.adygyes.app.data.local.preferences.PreferencesManager
+import com.adygyes.app.data.local.cache.CacheManager
+```
+
+### Prevention:
+- Verify import paths match actual package structure
+- Use IDE auto-import features to avoid manual import errors
+- Test compilation after adding new dependencies to ViewModels
+
+### Modified Files:
+- `/app/src/main/java/com/adygyes/app/presentation/viewmodel/SettingsViewModel.kt`
+
+## BUG-016: Multiple Stage 4 UI Compilation Errors
+**Date:** 2025-09-22
+**Status:** ✅ Fixed
+**Severity:** Critical
+**Component:** UI Layer
+
+### Issue:
+Multiple compilation errors across Stage 4 UI components due to API mismatches and missing implementations after Stage 4 UI implementation.
+
+### Error Categories:
+1. **Navigation Parameter Mismatches**: SettingsScreen no longer had `onLanguageClick`/`onThemeClick` parameters
+2. **Missing Dimensions**: `CornerRadiusMedium` not defined in Dimensions.kt
+3. **Component Parameter Issues**: FilterChip missing required `enabled` parameter
+4. **PullToRefresh API Changes**: Material 3 PullToRefresh API incompatibility
+5. **ViewModel API Mismatches**: ViewModels expecting Result-based repository API but actual API uses nullable/Flow types
+6. **PreferencesManager API Mismatch**: SettingsViewModel expecting different PreferencesManager API structure
+7. **Composable Context Issues**: @Composable functions called from non-composable contexts
+
+### Root Cause:
+Stage 4 UI components were implemented with assumptions about API structures that didn't match the actual Stage 2/3 implementations. The ViewModels were written expecting a Result-based repository pattern, but the actual repository uses Flow/nullable patterns.
+
+### Solution:
+1. **Fixed Navigation**: Removed non-existent parameters from SettingsScreen calls
+2. **Added Missing Dimensions**: Added `CornerRadiusMedium = 12.dp` to Dimensions.kt
+3. **Fixed Component Parameters**: Added required `enabled = true` to FilterChip
+4. **Removed PullToRefresh**: Temporarily removed incompatible PullToRefresh implementation
+5. **Updated ViewModels**: Rewrote ViewModels to use actual repository API (Flow-based instead of Result-based)
+6. **Fixed PreferencesManager Integration**: Updated SettingsViewModel to use actual PreferencesManager.userPreferencesFlow
+7. **Fixed Composable Context**: Used proper nullable callback handling in TopAppBar navigationIcon
+
+### Key Changes:
+- **SettingsViewModel.kt**: Complete rewrite to use PreferencesManager.userPreferencesFlow
+- **AttractionDetailViewModel.kt**: Changed from Result-based to try-catch with nullable repository calls
+- **FavoritesViewModel.kt**: Updated to collect from Flow instead of Result handling
+- **SearchViewModel.kt**: Fixed to collect from getAllAttractions() Flow
+- **AdygyesNavHost.kt**: Removed non-existent navigation parameters
+- **Dimensions.kt**: Added missing CornerRadiusMedium property
+- **CategoryChip.kt**: Added required FilterChip parameters
+- **FavoritesScreen.kt**: Removed PullToRefresh functionality temporarily
+- **SettingsScreen.kt**: Fixed navigationIcon composable context issue
+
+### Prevention:
+- Ensure ViewModels match actual repository API contracts
+- Test compilation after each major component addition
+- Verify component parameter requirements before usage
+- Check API compatibility when using Material 3 components
+
+### Modified Files:
+- `/app/src/main/java/com/adygyes/app/presentation/viewmodel/SettingsViewModel.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/viewmodel/AttractionDetailViewModel.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/viewmodel/FavoritesViewModel.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/viewmodel/SearchViewModel.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/navigation/AdygyesNavHost.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/theme/Dimensions.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/components/CategoryChip.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/favorites/FavoritesScreen.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/settings/SettingsScreen.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/search/SearchScreen.kt`
+
 ---
 
 *Last Updated: 2025-09-22*
