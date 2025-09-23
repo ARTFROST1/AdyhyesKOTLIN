@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Background circle -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M100,20 C144.18,20 180,55.82 180,100 C180,144.18 144.18,180 100,180 C55.82,180 20,144.18 20,100 C20,55.82 55.82,20 100,20 Z" />
+    
+    <!-- Mountain silhouette -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M40,140 L70,80 L100,120 L130,60 L160,140 Z" />
+    
+    <!-- Welcome text placeholder -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M100,100 m-30,0 a30,30 0,1 1,60 0 a30,30 0,1 1,-60 0" />
+    
+</vector>

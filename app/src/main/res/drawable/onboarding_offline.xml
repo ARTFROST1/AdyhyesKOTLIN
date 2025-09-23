@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Background -->
+    <path
+        android:fillColor="#607D8B"
+        android:pathData="M20,20 L180,20 L180,180 L20,180 Z" />
+    
+    <!-- Phone outline -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M78,50 L122,50 Q130,50 130,58 L130,142 Q130,150 122,150 L78,150 Q70,150 70,142 L70,58 Q70,50 78,50 Z" />
+    
+    <!-- Screen -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M75,60 L125,60 L125,130 L75,130 Z" />
+    
+    <!-- Offline symbol -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M85,80 L115,110 M115,80 L85,110" />
+    
+    <!-- Download arrow -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M100,70 L100,90 M95,85 L100,90 L105,85" />
+    
+</vector>

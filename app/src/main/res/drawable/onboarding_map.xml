@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Background -->
+    <path
+        android:fillColor="#03A9F4"
+        android:pathData="M20,20 L180,20 L180,180 L20,180 Z" />
+    
+    <!-- Map markers -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M60,52 C64.4,52 68,55.6 68,60 C68,64.4 64.4,68 60,68 C55.6,68 52,64.4 52,60 C52,55.6 55.6,52 60,52 Z" />
+    
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M120,72 C124.4,72 128,75.6 128,80 C128,84.4 124.4,88 120,88 C115.6,88 112,84.4 112,80 C112,75.6 115.6,72 120,72 Z" />
+    
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M140,112 C144.4,112 148,115.6 148,120 C148,124.4 144.4,128 140,128 C135.6,128 132,124.4 132,120 C132,115.6 135.6,112 140,112 Z" />
+    
+    <!-- Map lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M40,40 L160,40 M40,60 L160,60 M40,80 L160,80 M40,100 L160,100 M40,120 L160,120 M40,140 L160,140 M40,160 L160,160" />
+    
+</vector>

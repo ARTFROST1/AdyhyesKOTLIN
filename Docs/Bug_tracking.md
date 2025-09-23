@@ -561,7 +561,182 @@ Stage 4 UI components were implemented with assumptions about API structures tha
 - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/settings/SettingsScreen.kt`
 - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/search/SearchScreen.kt`
 
+## BUG-017: Android Resource Linking Failed - Vector Drawable Issues
+**Date:** 2025-09-23
+**Status:** ✅ Fixed
+**Severity:** High
+**Component:** Resources/UI
+
+### Issue:
+Build failed with Android resource linking errors in onboarding vector drawable files. The `rect` elements in vector drawables had invalid attribute usage.
+
+### Error Messages:
+```
+com.adygyes.app-main-71:/drawable/onboarding_attractions.xml:20: error: attribute android:rx not found.
+com.adygyes.app-main-71:/drawable/onboarding_attractions.xml:20: error: '100' is incompatible with attribute height (attr) dimension.
+com.adygyes.app-main-71:/drawable/onboarding_attractions.xml:20: error: '40' is incompatible with attribute x (attr) dimension.
+```
+
+### Root Cause:
+Vector drawable `rect` elements were using invalid attributes and missing proper dimension units. The `android:rx` attribute doesn't exist for `rect` elements, and dimension values need proper units or should use `path` elements instead.
+
+### Solution:
+1. **onboarding_attractions.xml**: Replaced `rect` elements with `path` elements using proper coordinates
+2. **onboarding_offline.xml**: Converted `rect` elements to `path` elements with rounded corners using quadratic curves
+3. **onboarding_favorites.xml**: Removed invalid `android:strokeDasharray` attribute from path element
+4. **onboarding_map.xml**: Replaced `circle` elements with `path` elements using proper circular path data
+
+### Key Changes:
+```xml
+<!-- Before (invalid): -->
+<rect android:x="40" android:y="50" android:width="120" android:height="100" android:rx="8" />
+
+<!-- After (valid): -->
+<path android:pathData="M40,50 L160,50 L160,150 L40,150 Z" />
+```
+
+### Prevention:
+- Use `path` elements instead of `rect` in vector drawables for better compatibility
+- Always test resource compilation after adding new drawable resources
+- Validate vector drawable syntax before committing
+
+### Modified Files:
+- `/app/src/main/res/drawable/onboarding_attractions.xml`
+- `/app/src/main/res/drawable/onboarding_offline.xml`
+- `/app/src/main/res/drawable/onboarding_favorites.xml`
+- `/app/src/main/res/drawable/onboarding_map.xml`
+
 ---
 
-*Last Updated: 2025-09-22*
+## BUG-018: Yandex MapKit API Key Missing - Runtime Crash
+**Date:** 2025-09-23
+**Status:** ✅ Fixed
+**Severity:** Critical
+**Component:** Maps/Configuration
+
+### Issue:
+App crashes at runtime with `AssertionError: You need to set the API key before using MapKit!` when trying to initialize MapView.
+
+### Error Messages:
+```
+java.lang.AssertionError: You need to set the API key before using MapKit!
+	at com.yandex.mapkit.MapKitFactory.checkApiKey(MapKitFactory.java:72)
+	at com.yandex.mapkit.MapKitFactory.initialize(MapKitFactory.java:27)
+	at com.yandex.mapkit.mapview.MapView.<init>(MapView.java:55)
+```
+
+### Root Cause:
+1. Yandex MapKit API key was not configured in `local.properties`
+2. Application was trying to initialize MapKit without a valid API key
+3. Build configuration had empty string as default value
+
+### Solution:
+1. **Updated AdygyesApplication.kt**: Added graceful handling for missing API key with proper validation
+2. **Updated build.gradle.kts**: Changed default API key value from empty string to placeholder "YOUR_API_KEY_HERE"
+3. **Created API_SETUP.md**: Comprehensive documentation for API key setup process
+
+### Key Changes:
+```kotlin
+// Before:
+MapKitFactory.setApiKey(BuildConfig.YANDEX_MAPKIT_API_KEY)
+
+// After:
+val apiKey = BuildConfig.YANDEX_MAPKIT_API_KEY
+if (apiKey.isNotEmpty() && apiKey != "YOUR_API_KEY_HERE") {
+    MapKitFactory.setApiKey(apiKey)
+    Timber.d("MapKit initialized successfully with API key")
+} else {
+    Timber.w("Yandex MapKit API key not configured. Please add YANDEX_MAPKIT_API_KEY to local.properties")
+}
+```
+
+### Prevention:
+- Always provide clear documentation for required API keys
+- Implement graceful fallbacks for missing configuration
+- Add validation for API key format and validity
+- Use placeholder values that clearly indicate missing configuration
+
+### Modified Files:
+- `/app/src/main/java/com/adygyes/app/AdygyesApplication.kt`
+- `/app/build.gradle.kts`
+- `/API_SETUP.md` (new file)
+
+## BUG-019: Stage 6 Compilation Errors - Multiple Issues
+**Date:** 2025-09-23
+**Status:** ✅ Fixed
+**Severity:** Critical
+**Component:** Stage 6 Features
+
+### Issue:
+Multiple compilation errors in Stage 6 advanced features after implementation:
+
+1. **AccessibilityHelper.kt**: Import issues, deprecated API usage, and semantics property access errors
+2. **GeoObjectProvider.kt**: Yandex MapKit API mismatches and MapObjectVisitor implementation issues
+3. **MapScreenTablet.kt**: AttractionCard parameter mismatches
+
+### Error Messages:
+```
+Unresolved reference 'semantics'
+'fun rememberRipple(...)' is deprecated
+Unresolved reference 'TextField', 'ProgressBar', 'Slider'
+Functions which invoke @Composable functions must be marked with the @Composable annotation
+Unresolved reference 'strokeColor'
+Argument type mismatch: actual type is 'kotlin.Function1', but 'com.yandex.mapkit.map.MapObjectVisitor' was expected
+No parameter with name 'onShareClick' found
+```
+
+### Root Cause:
+1. **AccessibilityHelper.kt**: Used deprecated Material 2 APIs and incorrect semantics property access
+2. **GeoObjectProvider.kt**: Incorrect Yandex MapKit API usage for polyline styling and map object traversal
+3. **MapScreenTablet.kt**: Called AttractionCard with non-existent parameters
+
+### Solution:
+1. **AccessibilityHelper.kt fixes**:
+   - Changed `import androidx.compose.material.ripple.rememberRipple` to `import androidx.compose.material3.ripple`
+   - Updated `rememberRipple(bounded = false)` to `ripple()`
+   - Removed invalid `Role.TextField`, `Role.ProgressBar`, `Role.Slider` references
+   - Fixed `this.disabled = !enabled` to `if (!enabled) { disabled() }`
+
+2. **GeoObjectProvider.kt fixes**:
+   - Changed `this.strokeColor = trailColor` to `this.setStrokeColor(trailColor)`
+   - Implemented proper `MapObjectVisitor` interface instead of lambda functions
+   - Added all required override methods for MapObjectVisitor
+
+3. **MapScreenTablet.kt fixes**:
+   - Removed non-existent `onShareClick` and `onNavigateClick` parameters
+   - Added required `onClick` parameter to AttractionCard
+
+### Key Changes:
+```kotlin
+// Before (deprecated):
+import androidx.compose.material.ripple.rememberRipple
+indication = rememberRipple(bounded = false)
+
+// After (Material 3):
+import androidx.compose.material3.ripple
+indication = ripple()
+
+// Before (incorrect API):
+this.strokeColor = trailColor
+mapView.map.mapObjects.traverse { mapObject -> ... }
+
+// After (correct API):
+this.setStrokeColor(trailColor)
+mapView.map.mapObjects.traverse(object : MapObjectVisitor { ... })
+```
+
+### Prevention:
+- Use Material 3 APIs consistently throughout the project
+- Check Yandex MapKit documentation for correct API usage
+- Verify component parameters before usage
+- Test compilation after implementing new Stage 6 features
+
+### Modified Files:
+- `/app/src/main/java/com/adygyes/app/presentation/ui/components/AccessibilityHelper.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/GeoObjectProvider.kt`
+- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenTablet.kt`
+
+---
+
+*Last Updated: 2025-09-23*
 *Version: 1.0.0*

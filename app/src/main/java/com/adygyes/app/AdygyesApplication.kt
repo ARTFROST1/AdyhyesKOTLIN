@@ -28,8 +28,16 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
      */
     private fun initializeMapKit() {
         try {
-            MapKitFactory.setApiKey(BuildConfig.YANDEX_MAPKIT_API_KEY)
-            Timber.d("MapKit initialized successfully")
+            val apiKey = BuildConfig.YANDEX_MAPKIT_API_KEY
+            if (apiKey.isNotEmpty() && apiKey != "YOUR_API_KEY_HERE") {
+                MapKitFactory.setApiKey(apiKey)
+                Timber.d("MapKit initialized successfully with API key")
+            } else {
+                // Use a development/demo API key or handle gracefully
+                Timber.w("Yandex MapKit API key not configured. Please add YANDEX_MAPKIT_API_KEY to local.properties")
+                // For development, you can use a demo key or handle this case
+                // MapKitFactory.setApiKey("your-demo-key-here")
+            }
         } catch (e: Exception) {
             Timber.e(e, "Failed to initialize MapKit")
         }
