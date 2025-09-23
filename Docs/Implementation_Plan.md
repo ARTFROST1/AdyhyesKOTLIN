@@ -1,10 +1,10 @@
 # Implementation Plan for Adygyes
 
 ## 📊 Current Status
-**Last Updated:** September 23, 2025  
-**Current Stage:** Stage 6 - Advanced Features ✅ COMPLETE  
-**Progress:** 65/99 tasks completed (65.7%)  
-**Next Stage:** Stage 7 - Polish & Optimization  
+**Last Updated:** December 2024  
+**Current Stage:** Stage 9 - Polish & Optimization 🚧 IN PROGRESS  
+**Progress:** 98/120 tasks completed (81.7%)  
+**Next Stage:** Stage 10 - Pre-Launch Preparation  
 
 ### Stage Completion Status:
 - ✅ **Stage 1:** Foundation & Setup (100% complete - 12/12 tasks) ✅
@@ -13,10 +13,12 @@
 - ✅ **Stage 4:** UI Features & Screens (100% complete - 11/11 tasks) ✅
 - ✅ **Stage 5:** Core Business Logic (100% complete - 10/10 tasks) ✅
 - ✅ **Stage 6:** Advanced Features (100% complete - 10/10 tasks) ✅
-- ⏳ **Stage 7:** Polish & Optimization (0% complete - 0/12 tasks)
-- ⏳ **Stage 8:** Pre-Launch Preparation (0% complete - 0/12 tasks)
+- ✅ **Stage 7:** UI Refactoring (100% complete - 17/17 tasks) ✅
+- ✅ **Stage 8:** Bottom Navigation (100% complete - 16/16 tasks) ✅
+- 🚧 **Stage 9:** Polish & Optimization (0% complete - 0/12 tasks)
+- ⏳ **Stage 10:** Pre-Launch Preparation (0% complete - 0/12 tasks)
 
-**Overall Progress:** 65/99 tasks completed (65.7%)
+**Overall Progress:** 98/120 tasks completed (81.7%)
 
 ---
 
@@ -223,9 +225,109 @@
 - [x] Add haptic feedback for interactions
 - [x] Create onboarding flow for first launch
 
-### Stage 7: Polish & Optimization
+### Stage 7: UI Refactoring - Map & Search Integration ✅ COMPLETED
 **Dependencies:** Stage 6 completion
-**Timeline:** Week 15-16
+**Timeline:** Week 15
+**Status:** COMPLETED
+
+#### Sub-steps:
+- [x] **Map Screen Enhancement**:
+  - [x] Add list view toggle button in the top bar (later moved to bottom nav)
+  - [x] Replace "Search places" button with integrated search text field
+  - [x] Implement list view for all attractions (similar to search screen)
+  - [x] Add smooth transition between map and list views
+  - [x] Preserve search/filter state when switching views
+- [x] **Search Experience Refactoring**:
+  - [x] Convert SearchScreen to filter/suggestion overlay
+  - [x] Remove list view from SearchScreen (moved to MapScreen)
+  - [x] Keep category filters and search suggestions
+  - [x] Apply search results directly on MapScreen (both map and list views)
+- [x] **Shared Components Creation**:
+  - [x] Create reusable AttractionsList composable
+  - [x] Implement SearchTextField with filters integration
+  - [x] Build ViewMode toggle component (Map/List)
+- [x] **State Management Updates**:
+  - [x] Unify search state between MapViewModel and SearchViewModel
+  - [x] Implement shared search/filter logic
+  - [x] Add view mode persistence in PreferencesManager
+- [x] **UI/UX Improvements**:
+  - [x] Smooth animations for view transitions
+  - [x] Maintain scroll position in list view
+  - [x] Show applied filters badge on search field
+  - [x] Add result count indicator
+
+#### Completed Features:
+- **MapScreenEnhanced**: Integrated search and list view toggle functionality
+- **AttractionsList Component**: Reusable list component with search highlighting
+- **Real-time Filtering**: Combined search query and category filters with StateFlow
+- **ViewMode System**: Seamless switching between Map and List views
+- **Enhanced Search UX**: Debounced search with instant results and filter badges
+
+#### Files Created/Modified:
+- `MapScreenEnhanced.kt` - Enhanced main screen with integrated search and list view
+- `AttractionsList.kt` - Reusable attractions list component
+- `MapViewModel.kt` - Added search/filter state management
+- `CategoryFilterBottomSheet.kt` - Filter selection interface
+- `strings.xml` - Added search and filter related strings
+
+#### Technical Achievements:
+- Unified search experience across map and list views
+- Real-time filtering with combine() StateFlow operators
+- Smooth animated transitions between view modes
+- Preserved all existing map functionality while adding list view
+- Implemented debounced search for better performance
+
+### Stage 8: Bottom Navigation Implementation ✅ COMPLETED
+**Dependencies:** Stage 7 completion
+**Timeline:** Week 16
+**Status:** COMPLETED
+
+#### Sub-steps:
+- [x] **Bottom Navigation Bar Creation**:
+  - [x] Create BottomNavigationBar composable component (AdygyesBottomNavigation.kt)
+  - [x] Add three navigation items: View Toggle, Favorites, Settings
+  - [x] Implement navigation state management with ViewMode enum
+  - [x] Add icon animations and selected state indicators
+- [x] **Map Screen Restructuring**:
+  - [x] Remove top bar buttons (view toggle, favorites)
+  - [x] Keep only search field with filter button
+  - [x] Remove additional background from search field
+  - [x] Place search field directly above map (floating Surface)
+- [x] **Navigation Integration**:
+  - [x] Connect bottom navigation to navigation controller
+  - [x] Handle screen transitions from bottom nav (Settings, Favorites)
+  - [x] Preserve state between navigation changes
+- [x] **UI Polish**:
+  - [x] Add smooth transitions for bottom nav appearance
+  - [x] Implement proper FAB positioning with bottom nav
+  - [x] Ensure proper insets handling with Scaffold
+  - [x] Add badge support for favorites count
+
+#### Completed Features:
+- **AdygyesBottomNavigation Component**: Three-item bottom navigation with animated view toggle
+- **MapScreenWithBottomNav**: Redesigned main screen with floating search and bottom navigation
+- **Navigation Flow**: Integrated Settings and Favorites access from bottom navigation
+- **UI Improvements**: Cleaner interface with more content space and better thumb reachability
+- **Type Safety**: Resolved ViewMode enum conflicts and compilation errors
+
+#### Files Created/Modified:
+- `AdygyesBottomNavigation.kt` - Bottom navigation bar component
+- `MapScreenWithBottomNav.kt` - Updated main screen with bottom nav
+- `AdygyesNavHost.kt` - Updated navigation routing
+- `strings.xml` - Added nav_list, results_found, clear strings
+- `AppMap_adygyes.md` - Updated UI flow documentation
+
+#### Technical Achievements:
+- Moved navigation controls to bottom for better UX
+- Implemented floating search field without background
+- Added animated view mode transitions
+- Integrated badge system for favorites count
+- Resolved type conflicts between ViewMode enums
+- Maintained all existing functionality while improving UI
+
+### Stage 9: Polish & Optimization
+**Dependencies:** Stage 8 completion
+**Timeline:** Week 17-18
 
 #### Sub-steps:
 - [ ] Conduct comprehensive UI/UX review
@@ -241,9 +343,9 @@
 - [ ] Implement integration tests
 - [ ] Fix all identified bugs and issues
 
-### Stage 8: Pre-Launch Preparation
-**Dependencies:** Stage 7 completion
-**Timeline:** Week 17-18
+### Stage 10: Pre-Launch Preparation
+**Dependencies:** Stage 9 completion
+**Timeline:** Week 19-20
 
 #### Sub-steps:
 - [ ] Prepare Play Store listing content
@@ -260,6 +362,13 @@
 - [ ] Create deployment checklist
 
 ## 🔄 Version Updates (Changelog)
+- 2024-12-XX: **Stage 7 Started** - UI Refactoring for enhanced user experience:
+  - Integrated search field directly into MapScreen replacing "Search places" button
+  - Added toggle button for Map/List view on main screen
+  - Moved attractions list from SearchScreen to MapScreen
+  - Converted SearchScreen to filter/suggestions overlay
+  - Real-time search with instant map/list updates
+  - Unified search and filter state management
 - 2025-09-23: **Stage 6 Complete** - All Advanced Features implemented including:
   - GeoObject domain models for polygons (parks, protected areas, water bodies)
   - TouristTrail domain models with waypoints and difficulty levels

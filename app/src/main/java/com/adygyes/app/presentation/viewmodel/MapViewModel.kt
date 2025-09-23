@@ -40,6 +40,42 @@ class MapViewModel @Inject constructor(
     private val _selectedAttraction = MutableStateFlow<Attraction?>(null)
     val selectedAttraction: StateFlow<Attraction?> = _selectedAttraction.asStateFlow()
     
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    
+    private val _selectedCategories = MutableStateFlow<Set<AttractionCategory>>(emptySet())
+    val selectedCategories: StateFlow<Set<AttractionCategory>> = _selectedCategories.asStateFlow()
+    
+    val filteredAttractions: StateFlow<List<Attraction>> = combine(
+        _attractions,
+        _searchQuery,
+        _selectedCategories
+    ) { attractions, query, categories ->
+        var filtered = attractions
+        
+        // Apply search filter
+        if (query.isNotEmpty()) {
+            filtered = filtered.filter { attraction ->
+                attraction.name.contains(query, ignoreCase = true) ||
+                attraction.description.contains(query, ignoreCase = true) ||
+                attraction.tags.any { it.contains(query, ignoreCase = true) }
+            }
+        }
+        
+        // Apply category filter
+        if (categories.isNotEmpty()) {
+            filtered = filtered.filter { attraction ->
+                categories.contains(attraction.category)
+            }
+        }
+        
+        filtered
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+    
     init {
         loadAttractions()
         checkAndLoadInitialData()
@@ -250,6 +286,43 @@ class MapViewModel @Inject constructor(
                 }
             }
         }
+    }
+    
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+    
+    fun search() {
+        // Filtering is done automatically through the filteredAttractions flow
+        Timber.d("Searching with query: ${_searchQuery.value}")
+    }
+    
+    fun toggleCategory(category: AttractionCategory) {
+        _selectedCategories.update { categories ->
+            if (categories.contains(category)) {
+                categories - category
+            } else {
+                categories + category
+            }
+        }
+    }
+    
+    fun clearFilters() {
+        _selectedCategories.value = emptySet()
+    }
+    
+    fun clearSelection() {
+        _selectedAttraction.value = null
+    }
+    
+    fun navigateToAttractionById(attractionId: String) {
+        val attraction = _attractions.value.find { it.id == attractionId }
+        attraction?.let { navigateToAttraction(it) }
+    }
+    
+    fun shareAttractionById(attractionId: String) {
+        val attraction = _attractions.value.find { it.id == attractionId }
+        attraction?.let { shareAttraction(it) }
     }
 }
 

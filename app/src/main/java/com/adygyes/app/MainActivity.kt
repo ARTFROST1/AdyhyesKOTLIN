@@ -6,9 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.adygyes.app.presentation.navigation.AdygyesNavHost
 import com.adygyes.app.presentation.theme.AdygyesTheme
@@ -36,11 +38,12 @@ fun AdygyesApp() {
     val navController = rememberNavController()
     
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         AdygyesNavHost(
             navController = navController,
-            paddingValues = innerPadding
+            paddingValues = PaddingValues(0.dp)
         )
     }
 }

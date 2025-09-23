@@ -3,6 +3,7 @@
     
     <!-- Navigation -->
     <string name="nav_map">Карта</string>
+    <string name="nav_list">Список</string>
     <string name="nav_favorites">Избранное</string>
     <string name="nav_search">Поиск</string>
     <string name="nav_settings">Настройки</string>
@@ -15,6 +16,23 @@
     <string name="map_loading">Загрузка карты...</string>
     <string name="map_error">Ошибка загрузки карты</string>
     <string name="map_retry">Повторить</string>
+    <string name="switch_to_list_view">Переключить на список</string>
+    <string name="switch_to_map_view">Переключить на карту</string>
+    <string name="search_attractions">Поиск достопримечательностей</string>
+    <string name="my_location">Моё местоположение</string>
+    <string name="filters">Фильтры</string>
+    <string name="clear_search">Очистить поиск</string>
+    <string name="apply_filters">Применить фильтры</string>
+    <string name="clear_all">Очистить всё</string>
+    <string name="search_results_count">%d результатов</string>
+    <string name="filtered_results_count">Найдено: %d</string>
+    <string name="attractions_count">Всего мест: %d</string>
+    <string name="no_results_with_filters">Не найдено мест по запросу \"%s\" с выбранными фильтрами</string>
+    <string name="no_results_for_query">Не найдено мест по запросу \"%s\"</string>
+    <string name="no_results_for_categories">Не найдено мест в выбранных категориях</string>
+    <string name="no_attractions_available">Нет доступных достопримечательностей</string>
+    <string name="add_to_favorites">Добавить в избранное</string>
+    <string name="remove_from_favorites">Удалить из избранного</string>
     
     <!-- Categories -->
     <string name="category_all">Все</string>
@@ -79,6 +97,8 @@
     <string name="common_error">Ошибка</string>
     <string name="common_retry">Повторить</string>
     <string name="common_offline">Нет подключения к интернету</string>
+    <string name="results_found">найдено</string>
+    <string name="clear">Очистить</string>
     
     <!-- Accessibility -->
     <string name="a11y_back_button">Кнопка назад</string>

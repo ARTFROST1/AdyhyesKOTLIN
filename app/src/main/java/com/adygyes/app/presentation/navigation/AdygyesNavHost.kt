@@ -10,7 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.adygyes.app.presentation.ui.screens.map.MapScreen
+import com.adygyes.app.presentation.ui.screens.map.MapScreenWithBottomNav
 import com.adygyes.app.presentation.ui.screens.search.SearchScreen
 import com.adygyes.app.presentation.ui.screens.favorites.FavoritesScreen
 import com.adygyes.app.presentation.ui.screens.settings.SettingsScreen
@@ -28,18 +28,14 @@ fun AdygyesNavHost(
     NavHost(
         navController = navController,
         startDestination = NavDestination.Map.route,
-        modifier = modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier = modifier.fillMaxSize()
     ) {
         // Main Map Screen
         composable(NavDestination.Map.route) {
-            MapScreen(
+            MapScreenWithBottomNav(
+                navController = navController,
                 onAttractionClick = { attractionId ->
                     navController.navigate(NavDestination.AttractionDetail.createRoute(attractionId))
-                },
-                onSearchClick = {
-                    navController.navigate(NavDestination.Search.route)
                 }
             )
         }
@@ -69,6 +65,7 @@ fun AdygyesNavHost(
         // Settings Screen
         composable(NavDestination.Settings.route) {
             SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
                 onAboutClick = {
                     navController.navigate(NavDestination.AboutScreen.route)
                 },
