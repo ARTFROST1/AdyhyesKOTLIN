@@ -1,0 +1,231 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-09-23",
+  "geoObjects": [
+    {
+      "id": "park_1",
+      "name": "Кавказский биосферный заповедник",
+      "description": "Один из крупнейших горно-лесных заповедников Европы, включенный в список Всемирного наследия ЮНЕСКО",
+      "type": "NATURE_RESERVE",
+      "polygon": [
+        {"latitude": 44.0000, "longitude": 39.8000},
+        {"latitude": 44.2000, "longitude": 39.8000},
+        {"latitude": 44.2000, "longitude": 40.2000},
+        {"latitude": 44.0000, "longitude": 40.2000}
+      ],
+      "fillColor": "#2E7D32",
+      "strokeColor": "#1B5E20",
+      "strokeWidth": 2.0,
+      "opacity": 0.3,
+      "isVisible": true,
+      "tags": ["заповедник", "ЮНЕСКО", "природа", "горы"],
+      "metadata": {
+        "area": "280335 га",
+        "established": "1924",
+        "website": "https://kavkazzapoved.ru"
+      }
+    },
+    {
+      "id": "park_2",
+      "name": "Природный парк Большой Тхач",
+      "description": "Горный массив с уникальными скальными образованиями и альпийскими лугами",
+      "type": "NATIONAL_PARK",
+      "polygon": [
+        {"latitude": 44.0800, "longitude": 40.0500},
+        {"latitude": 44.1200, "longitude": 40.0500},
+        {"latitude": 44.1200, "longitude": 40.1000},
+        {"latitude": 44.0800, "longitude": 40.1000}
+      ],
+      "fillColor": "#4CAF50",
+      "strokeColor": "#2E7D32",
+      "strokeWidth": 2.0,
+      "opacity": 0.25,
+      "isVisible": true,
+      "tags": ["природный парк", "горы", "скалы", "альпийские луга"],
+      "metadata": {
+        "area": "3064 га",
+        "established": "1997",
+        "maxElevation": "2368 м"
+      }
+    },
+    {
+      "id": "water_1",
+      "name": "Река Белая",
+      "description": "Главная река Адыгеи, популярная для рафтинга и водного туризма",
+      "type": "WATER_BODY",
+      "polygon": [
+        {"latitude": 44.6000, "longitude": 39.9000},
+        {"latitude": 44.5500, "longitude": 40.0000},
+        {"latitude": 44.5000, "longitude": 40.1000},
+        {"latitude": 44.4500, "longitude": 40.1500},
+        {"latitude": 44.4000, "longitude": 40.2000},
+        {"latitude": 44.3500, "longitude": 40.2500},
+        {"latitude": 44.3000, "longitude": 40.3000},
+        {"latitude": 44.2500, "longitude": 40.3500},
+        {"latitude": 44.2000, "longitude": 40.4000}
+      ],
+      "fillColor": "#03A9F4",
+      "strokeColor": "#0288D1",
+      "strokeWidth": 3.0,
+      "opacity": 0.6,
+      "isVisible": true,
+      "tags": ["река", "рафтинг", "водный туризм"],
+      "metadata": {
+        "length": "273 км",
+        "type": "река"
+      }
+    },
+    {
+      "id": "recreation_1",
+      "name": "Зона отдыха Лаго-Наки",
+      "description": "Высокогорное плато для активного отдыха и туризма",
+      "type": "RECREATIONAL_ZONE",
+      "polygon": [
+        {"latitude": 44.0000, "longitude": 39.9500},
+        {"latitude": 44.0800, "longitude": 39.9500},
+        {"latitude": 44.0800, "longitude": 40.0500},
+        {"latitude": 44.0000, "longitude": 40.0500}
+      ],
+      "fillColor": "#FF9800",
+      "strokeColor": "#F57C00",
+      "strokeWidth": 2.0,
+      "opacity": 0.2,
+      "isVisible": true,
+      "tags": ["плато", "туризм", "активный отдых"],
+      "metadata": {
+        "elevation": "2000-2200 м",
+        "season": "май-октябрь"
+      }
+    }
+  ],
+  "touristTrails": [
+    {
+      "id": "trail_1",
+      "name": "Тропа к водопадам Руфабго",
+      "description": "Пешеходный маршрут к каскаду из 16 водопадов",
+      "difficulty": "EASY",
+      "polyline": [
+        {"latitude": 44.2653, "longitude": 40.1714},
+        {"latitude": 44.2640, "longitude": 40.1720},
+        {"latitude": 44.2620, "longitude": 40.1730},
+        {"latitude": 44.2600, "longitude": 40.1740},
+        {"latitude": 44.2580, "longitude": 40.1750},
+        {"latitude": 44.2560, "longitude": 40.1760}
+      ],
+      "color": "#4CAF50",
+      "width": 3.0,
+      "length": 2.5,
+      "duration": "1-2 часа",
+      "isVisible": true,
+      "waypoints": [
+        {
+          "id": "wp_1",
+          "name": "Начало тропы",
+          "description": "Касса и информационный центр",
+          "location": {"latitude": 44.2653, "longitude": 40.1714},
+          "type": "START"
+        },
+        {
+          "id": "wp_2",
+          "name": "Первый водопад",
+          "description": "Водопад Шум высотой 15 метров",
+          "location": {"latitude": 44.2620, "longitude": 40.1730},
+          "type": "VIEWPOINT"
+        },
+        {
+          "id": "wp_3",
+          "name": "Смотровая площадка",
+          "description": "Панорамный вид на ущелье",
+          "location": {"latitude": 44.2580, "longitude": 40.1750},
+          "type": "PHOTO_SPOT"
+        }
+      ],
+      "tags": ["водопады", "пешие прогулки", "природа"]
+    },
+    {
+      "id": "trail_2",
+      "name": "Маршрут на плато Лаго-Наки",
+      "description": "Горный маршрут к высокогорному плато с альпийскими лугами",
+      "difficulty": "MODERATE",
+      "polyline": [
+        {"latitude": 44.0536, "longitude": 39.9939},
+        {"latitude": 44.0550, "longitude": 39.9950},
+        {"latitude": 44.0580, "longitude": 39.9970},
+        {"latitude": 44.0620, "longitude": 40.0000},
+        {"latitude": 44.0650, "longitude": 40.0020},
+        {"latitude": 44.0680, "longitude": 40.0040}
+      ],
+      "color": "#FF9800",
+      "width": 3.5,
+      "length": 8.0,
+      "duration": "4-6 часов",
+      "isVisible": true,
+      "waypoints": [
+        {
+          "id": "wp_4",
+          "name": "Стартовая точка",
+          "description": "Парковка у подножия плато",
+          "location": {"latitude": 44.0536, "longitude": 39.9939},
+          "type": "START"
+        },
+        {
+          "id": "wp_5",
+          "name": "Место отдыха",
+          "description": "Оборудованная стоянка с навесом",
+          "location": {"latitude": 44.0580, "longitude": 39.9970},
+          "type": "REST_AREA"
+        },
+        {
+          "id": "wp_6",
+          "name": "Плато Лаго-Наки",
+          "description": "Высокогорное плато с панорамными видами",
+          "location": {"latitude": 44.0680, "longitude": 40.0040},
+          "type": "FINISH"
+        }
+      ],
+      "tags": ["горы", "плато", "альпийские луга", "панорама"]
+    },
+    {
+      "id": "trail_3",
+      "name": "Экстремальный маршрут к пику Фишт",
+      "description": "Сложный альпинистский маршрут к одной из высочайших вершин региона",
+      "difficulty": "EXTREME",
+      "polyline": [
+        {"latitude": 43.9500, "longitude": 39.8800},
+        {"latitude": 43.9520, "longitude": 39.8820},
+        {"latitude": 43.9550, "longitude": 39.8850},
+        {"latitude": 43.9580, "longitude": 39.8880},
+        {"latitude": 43.9600, "longitude": 39.8900}
+      ],
+      "color": "#9C27B0",
+      "width": 4.0,
+      "length": 15.0,
+      "duration": "2-3 дня",
+      "isVisible": true,
+      "waypoints": [
+        {
+          "id": "wp_7",
+          "name": "Базовый лагерь",
+          "description": "Место для установки палаток",
+          "location": {"latitude": 43.9500, "longitude": 39.8800},
+          "type": "START"
+        },
+        {
+          "id": "wp_8",
+          "name": "Опасный участок",
+          "description": "Крутой подъем по скалам",
+          "location": {"latitude": 43.9550, "longitude": 39.8850},
+          "type": "DANGER"
+        },
+        {
+          "id": "wp_9",
+          "name": "Пик Фишт",
+          "description": "Вершина высотой 2867 метров",
+          "location": {"latitude": 43.9600, "longitude": 39.8900},
+          "type": "FINISH"
+        }
+      ],
+      "tags": ["альпинизм", "экстрим", "горы", "вершина"]
+    }
+  ]
+}

@@ -33,7 +33,7 @@ android {
         }
         
         // Add API keys to BuildConfig
-        buildConfigField("String", "YANDEX_MAPKIT_API_KEY", "\"${localProperties.getProperty("YANDEX_MAPKIT_API_KEY", "")}\"")
+        buildConfigField("String", "YANDEX_MAPKIT_API_KEY", "\"${localProperties.getProperty("YANDEX_MAPKIT_API_KEY", "YOUR_API_KEY_HERE")}\"")
         
         // Room schema export
         ksp {

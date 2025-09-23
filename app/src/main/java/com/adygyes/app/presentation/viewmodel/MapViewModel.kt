@@ -6,6 +6,12 @@ import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.domain.model.AttractionCategory
 import com.adygyes.app.domain.repository.AttractionRepository
 import com.adygyes.app.domain.usecase.GetLocationUseCase
+import com.adygyes.app.domain.usecase.NavigationUseCase
+import com.adygyes.app.domain.usecase.ShareUseCase
+import com.adygyes.app.domain.usecase.NetworkUseCase
+import com.adygyes.app.domain.usecase.AttractionDisplayUseCase
+import com.adygyes.app.domain.usecase.SortCriteria
+import com.adygyes.app.domain.usecase.NetworkStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -18,7 +24,11 @@ import javax.inject.Inject
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val attractionRepository: AttractionRepository,
-    private val getLocationUseCase: GetLocationUseCase
+    private val getLocationUseCase: GetLocationUseCase,
+    private val navigationUseCase: NavigationUseCase,
+    private val shareUseCase: ShareUseCase,
+    private val networkUseCase: NetworkUseCase,
+    private val attractionDisplayUseCase: AttractionDisplayUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(MapUiState())
@@ -154,6 +164,93 @@ class MapViewModel @Inject constructor(
             }
         }
     }
+    
+    fun navigateToAttraction(attraction: Attraction) {
+        val userLocation = _uiState.value.userLocation
+        if (userLocation != null) {
+            navigationUseCase.buildRouteFromCurrentLocation(
+                attraction = attraction,
+                userLatitude = userLocation.first,
+                userLongitude = userLocation.second
+            )
+        } else {
+            navigationUseCase.buildRouteToAttraction(attraction)
+        }
+    }
+    
+    fun shareAttraction(attraction: Attraction) {
+        shareUseCase.shareAttraction(attraction)
+    }
+    
+    fun shareAttractionLocation(attraction: Attraction) {
+        shareUseCase.shareAttractionLocation(attraction)
+    }
+    
+    fun openAttractionInMaps(attraction: Attraction) {
+        navigationUseCase.openAttractionInMaps(attraction)
+    }
+    
+    fun filterAttractionsByDistance(maxDistanceKm: Float) {
+        val userLocation = _uiState.value.userLocation
+        if (userLocation != null) {
+            viewModelScope.launch {
+                attractionRepository.getAllAttractions()
+                    .collect { allAttractions ->
+                        val filteredAttractions = attractionDisplayUseCase.filterAttractionsForDisplay(
+                            attractions = allAttractions,
+                            userLatitude = userLocation.first,
+                            userLongitude = userLocation.second,
+                            maxDistance = maxDistanceKm
+                        )
+                        _attractions.value = filteredAttractions
+                    }
+            }
+        }
+    }
+    
+    fun sortAttractions(sortBy: SortCriteria) {
+        val userLocation = _uiState.value.userLocation
+        val currentAttractions = _attractions.value
+        
+        val sortedAttractions = attractionDisplayUseCase.sortAttractionsByRelevance(
+            attractions = currentAttractions,
+            userLatitude = userLocation?.first,
+            userLongitude = userLocation?.second,
+            sortBy = sortBy
+        )
+        
+        _attractions.value = sortedAttractions
+    }
+    
+    fun getRecommendedAttractions(limit: Int = 5): List<Attraction> {
+        viewModelScope.launch {
+            val allAttractions = _attractions.value
+            val favorites = attractionRepository.getFavoriteAttractions().first()
+            
+            val recommended = attractionDisplayUseCase.getRecommendedAttractions(
+                allAttractions = allAttractions,
+                favoriteAttractions = favorites,
+                recentlyViewed = emptyList(), // TODO: Implement recently viewed tracking
+                limit = limit
+            )
+            
+            _uiState.update { it.copy(recommendedAttractions = recommended) }
+        }
+        return emptyList()
+    }
+    
+    fun checkNetworkStatus() {
+        viewModelScope.launch {
+            networkUseCase.getNetworkStatus().collect { status ->
+                _uiState.update { 
+                    it.copy(
+                        isOnline = status is NetworkStatus.Connected,
+                        networkStatus = status
+                    )
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -165,5 +262,8 @@ data class MapUiState(
     val selectedCategory: AttractionCategory? = null,
     val showAttractionDetail: Boolean = false,
     val hasLocationPermission: Boolean = false,
-    val userLocation: Pair<Double, Double>? = null
+    val userLocation: Pair<Double, Double>? = null,
+    val isOnline: Boolean = true,
+    val networkStatus: NetworkStatus? = null,
+    val recommendedAttractions: List<Attraction> = emptyList()
 )

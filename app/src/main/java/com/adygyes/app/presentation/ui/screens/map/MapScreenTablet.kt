@@ -21,6 +21,7 @@ import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.viewmodel.MapViewModel
+import com.adygyes.app.presentation.ui.components.AttractionCard
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
@@ -36,11 +37,11 @@ import com.yandex.runtime.image.ImageProvider
 import timber.log.Timber
 
 /**
- * Map screen with Yandex MapKit integration
+ * Tablet-optimized map screen with side panel for attraction details
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MapScreenWithYandex(
+fun MapScreenTablet(
     onAttractionClick: (String) -> Unit,
     onSearchClick: () -> Unit,
     viewModel: MapViewModel = hiltViewModel()
@@ -103,7 +104,7 @@ fun MapScreenWithYandex(
             MapStyleProvider.applyMapStyle(map, isDarkTheme)
             MapStyleProvider.configureMapInteraction(map)
             
-            Timber.d("Map initialized and centered on Adygea")
+            Timber.d("Tablet map initialized and centered on Adygea")
         }
     }
     
@@ -148,29 +149,12 @@ fun MapScreenWithYandex(
         }
     }
     
-    // Add geo-objects and trails
-    LaunchedEffect(mapView, isDarkTheme) {
-        mapView?.let { map ->
-            try {
-                // Load and add geo-objects (polygons for parks)
-                // This would typically come from a repository/ViewModel
-                // For now, we'll add them directly
-                // GeoObjectProvider.addGeoObjects(map, geoObjects, isDarkTheme)
-                // GeoObjectProvider.addTouristTrails(map, touristTrails, isDarkTheme)
-                
-                Timber.d("Geo-objects and trails integration ready")
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to add geo-objects and trails")
-            }
-        }
-    }
-    
     // Add markers for attractions with clustering
     LaunchedEffect(mapView, attractions) {
         mapView?.let { map ->
             try {
-                // Clear existing attraction markers only
-                // Keep geo-objects and trails
+                // Clear existing markers
+                map.map.mapObjects.clear()
                 
                 // Create clustered collection
                 val clusterizedCollection = map.map.mapObjects.addClusterizedPlacemarkCollection(
@@ -234,90 +218,137 @@ fun MapScreenWithYandex(
                 // Cluster the placemarks
                 clusterizedCollection.clusterPlacemarks(60.0, 15)
                 
-                Timber.d("Added ${attractions.size} markers with clustering")
+                Timber.d("Added ${attractions.size} markers with clustering to tablet map")
             } catch (e: Exception) {
-                Timber.e(e, "Failed to add markers")
+                Timber.e(e, "Failed to add markers to tablet map")
             }
         }
     }
     
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Map View
-        AndroidView(
-            factory = { ctx ->
-                MapView(ctx).also { map ->
-                    mapView = map
-                    Timber.d("MapView created")
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-        
-        // Search Bar at the top
-        Card(
+    Row(modifier = Modifier.fillMaxSize()) {
+        // Map View (takes 2/3 of screen)
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.SpacingMedium)
-                .align(Alignment.TopCenter),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                .weight(2f)
+                .fillMaxHeight()
         ) {
-            Row(
+            AndroidView(
+                factory = { ctx ->
+                    MapView(ctx).also { map ->
+                        mapView = map
+                        Timber.d("Tablet MapView created")
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+            
+            // Search Bar at the top
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(Dimensions.SpacingMedium),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(Dimensions.SpacingMedium)
+                    .align(Alignment.TopCenter),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Dimensions.SpacingMedium),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = stringResource(R.string.nav_search),
+                        modifier = Modifier.padding(end = Dimensions.SpacingSmall)
+                    )
+                    TextButton(
+                        onClick = onSearchClick,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.search_placeholder),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            
+            // Location FAB
+            FloatingActionButton(
+                onClick = { 
+                    if (locationPermissionsState.allPermissionsGranted) {
+                        // Center on user location
+                        uiState.userLocation?.let { location ->
+                            mapView?.map?.move(
+                                CameraPosition(
+                                    Point(location.first, location.second),
+                                    14.0f,
+                                    0.0f,
+                                    0.0f
+                                ),
+                                Animation(Animation.Type.SMOOTH, 0.5f),
+                                null
+                            )
+                        } ?: run {
+                            viewModel.getCurrentLocation()
+                        }
+                    } else {
+                        locationPermissionsState.launchMultiplePermissionRequest()
+                    }
+                    Timber.d("Location button clicked on tablet")
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(Dimensions.SpacingMedium)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = stringResource(R.string.nav_search),
-                    modifier = Modifier.padding(end = Dimensions.SpacingSmall)
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "My Location"
                 )
-                TextButton(
-                    onClick = onSearchClick,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = stringResource(R.string.search_placeholder),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
         }
         
-        // Location FAB
-        FloatingActionButton(
-            onClick = { 
-                if (locationPermissionsState.allPermissionsGranted) {
-                    // Center on user location
-                    uiState.userLocation?.let { location ->
-                        mapView?.map?.move(
-                            CameraPosition(
-                                Point(location.first, location.second),
-                                14.0f,
-                                0.0f,
-                                0.0f
-                            ),
-                            Animation(Animation.Type.SMOOTH, 0.5f),
-                            null
-                        )
-                    } ?: run {
-                        viewModel.getCurrentLocation()
-                    }
-                } else {
-                    locationPermissionsState.launchMultiplePermissionRequest()
-                }
-                Timber.d("Location button clicked")
-            },
+        // Side Panel (takes 1/3 of screen)
+        Card(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(Dimensions.SpacingMedium)
-                .padding(bottom = 80.dp) // Account for bottom navigation
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(Dimensions.SpacingSmall),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = "My Location"
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Dimensions.PaddingMedium)
+            ) {
+                Text(
+                    text = "Информация",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = Dimensions.PaddingMedium)
+                )
+                
+                selectedAttraction?.let { attraction ->
+                    AttractionCard(
+                        attraction = attraction,
+                        onClick = { /* Handle attraction click */ },
+                        onFavoriteClick = { viewModel.toggleFavorite(attraction.id) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } ?: run {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Выберите достопримечательность на карте",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }

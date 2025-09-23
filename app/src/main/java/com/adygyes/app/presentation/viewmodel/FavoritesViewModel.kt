@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.domain.repository.AttractionRepository
+import com.adygyes.app.domain.usecase.ShareUseCase
+import com.adygyes.app.domain.usecase.NavigationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -14,7 +16,9 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
-    private val repository: AttractionRepository
+    private val repository: AttractionRepository,
+    private val shareUseCase: ShareUseCase,
+    private val navigationUseCase: NavigationUseCase
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -101,6 +105,28 @@ class FavoritesViewModel @Inject constructor(
             SortBy.RATING -> attractions.sortedByDescending { it.rating ?: 0f }
             SortBy.DATE_ADDED -> attractions // Already sorted by date added from repository
         }
+    }
+    
+    fun shareAttraction(attraction: Attraction) {
+        shareUseCase.shareAttraction(attraction)
+    }
+    
+    fun shareFavoritesCollection() {
+        val currentState = _uiState.value
+        if (currentState is UiState.Success && currentState.favorites.isNotEmpty()) {
+            shareUseCase.shareAttractionCollection(
+                attractions = currentState.favorites,
+                collectionName = "Мои избранные места в Адыгее"
+            )
+        }
+    }
+    
+    fun navigateToAttraction(attraction: Attraction) {
+        navigationUseCase.buildRouteToAttraction(attraction)
+    }
+    
+    fun openAttractionInMaps(attraction: Attraction) {
+        navigationUseCase.openAttractionInMaps(attraction)
     }
     
     sealed interface UiState {

@@ -10,13 +10,16 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     
+    <!-- Haptic feedback permission -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    
     <application
         android:name="com.adygyes.app.AdygyesApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="Adyghyes"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Adygyes"
@@ -24,7 +27,8 @@
         <activity
             android:name="com.adygyes.app.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="unspecified"
             android:theme="@style/Theme.Adygyes">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
