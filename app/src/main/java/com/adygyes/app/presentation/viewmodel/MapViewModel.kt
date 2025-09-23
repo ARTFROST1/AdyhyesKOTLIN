@@ -122,6 +122,7 @@ class MapViewModel @Inject constructor(
     }
     
     fun selectAttraction(attraction: Attraction) {
+        Timber.d("Selecting attraction: ${attraction.name}")
         _selectedAttraction.value = attraction
         _uiState.update { it.copy(showAttractionDetail = true) }
     }
@@ -312,7 +313,9 @@ class MapViewModel @Inject constructor(
     }
     
     fun clearSelection() {
+        Timber.d("Clearing attraction selection")
         _selectedAttraction.value = null
+        _uiState.update { it.copy(showAttractionDetail = false) }
     }
     
     fun navigateToAttractionById(attractionId: String) {

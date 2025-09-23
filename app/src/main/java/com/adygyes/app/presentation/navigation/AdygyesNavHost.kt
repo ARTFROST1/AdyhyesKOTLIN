@@ -10,7 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.adygyes.app.presentation.ui.screens.map.MapScreenWithBottomNav
+import com.adygyes.app.presentation.ui.screens.map.MapScreenReliable
 import com.adygyes.app.presentation.ui.screens.search.SearchScreen
 import com.adygyes.app.presentation.ui.screens.favorites.FavoritesScreen
 import com.adygyes.app.presentation.ui.screens.settings.SettingsScreen
@@ -32,7 +32,7 @@ fun AdygyesNavHost(
     ) {
         // Main Map Screen
         composable(NavDestination.Map.route) {
-            MapScreenWithBottomNav(
+            MapScreenReliable(
                 navController = navController,
                 onAttractionClick = { attractionId ->
                     navController.navigate(NavDestination.AttractionDetail.createRoute(attractionId))

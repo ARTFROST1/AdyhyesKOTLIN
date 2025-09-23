@@ -1,0 +1,453 @@
+package com.adygyes.app.presentation.ui.screens.map
+
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.adygyes.app.R
+import com.adygyes.app.domain.model.Attraction
+import com.adygyes.app.presentation.theme.Dimensions
+import com.adygyes.app.presentation.viewmodel.MapViewModel
+import com.adygyes.app.presentation.ui.components.*
+import com.adygyes.app.presentation.ui.components.ViewMode
+import com.adygyes.app.presentation.navigation.NavDestination
+import com.yandex.mapkit.Animation
+import com.yandex.mapkit.geometry.Point
+import com.yandex.mapkit.map.*
+import com.yandex.mapkit.mapview.MapView
+import com.yandex.mapkit.MapKitFactory
+import com.yandex.runtime.image.ImageProvider
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+/**
+ * Reliable Map screen with improved marker tap handling
+ */
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun MapScreenReliable(
+    navController: NavController,
+    onAttractionClick: (String) -> Unit,
+    viewModel: MapViewModel = hiltViewModel()
+) {
+    val context = LocalContext.current
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+    
+    // State collection
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedAttraction by viewModel.selectedAttraction.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
+    val filteredAttractions by viewModel.filteredAttractions.collectAsStateWithLifecycle()
+    val isDarkTheme = isSystemInDarkTheme()
+    
+    // View mode state
+    var viewMode by remember { mutableStateOf(ViewMode.MAP) }
+    
+    // Filter sheet state
+    var showFilterSheet by remember { mutableStateOf(false) }
+    
+    // Map state
+    var isMapReady by remember { mutableStateOf(false) }
+    var markersCollection by remember { mutableStateOf<ClusterizedPlacemarkCollection?>(null) }
+    
+    // Search debouncing
+    val scope = rememberCoroutineScope()
+    var searchJob by remember { mutableStateOf<Job?>(null) }
+    
+    // Location permissions
+    val locationPermissionsState = rememberMultiplePermissionsState(
+        listOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+    
+    // Initialize map
+    DisposableEffect(Unit) {
+        Timber.d("MapScreenReliable: Initializing MapKit")
+        MapKitFactory.getInstance().onStart()
+        
+        onDispose {
+            Timber.d("MapScreenReliable: Disposing MapKit")
+            mapView?.onStop()
+            MapKitFactory.getInstance().onStop()
+        }
+    }
+    
+    // Request permissions
+    LaunchedEffect(locationPermissionsState) {
+        if (!locationPermissionsState.allPermissionsGranted) {
+            locationPermissionsState.launchMultiplePermissionRequest()
+        } else {
+            viewModel.onLocationPermissionGranted()
+        }
+    }
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Main content - Map or List
+        AnimatedContent(
+            targetState = viewMode,
+            transitionSpec = {
+                if (targetState == ViewMode.MAP) {
+                    slideInHorizontally { width -> width } + fadeIn() togetherWith
+                    slideOutHorizontally { width -> -width } + fadeOut()
+                } else {
+                    slideInHorizontally { width -> -width } + fadeIn() togetherWith
+                    slideOutHorizontally { width -> width } + fadeOut()
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { mode ->
+            when (mode) {
+                ViewMode.MAP -> {
+                    // Map View
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AndroidView(
+                            factory = { ctx ->
+                                Timber.d("Creating MapView")
+                                MapView(ctx).apply {
+                                    this.onStart()
+                                    mapView = this
+                                    
+                                    // Apply styles to MapView
+                                    MapStyleProvider.applyMapStyle(this, isDarkTheme)
+                                    MapStyleProvider.configureMapInteraction(this)
+                                    
+                                    // Initialize map
+                                    this.map.apply {
+                                        // Center on Adygea
+                                        move(
+                                            CameraPosition(Point(44.6098, 40.1006), 10.0f, 0.0f, 0.0f),
+                                            Animation(Animation.Type.SMOOTH, 2f),
+                                            null
+                                        )
+                                        
+                                        isMapReady = true
+                                        Timber.d("Map initialized and ready")
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                            update = { view ->
+                                Timber.d("Updating MapView with ${filteredAttractions.size} attractions")
+                                
+                                if (isMapReady) {
+                                    // Clear old markers
+                                    view.map.mapObjects.clear()
+                                    markersCollection = null
+                                    
+                                    if (filteredAttractions.isNotEmpty()) {
+                                        // Create new clustered collection
+                                        val collection = view.map.mapObjects.addClusterizedPlacemarkCollection(
+                                            object : ClusterListener {
+                                                override fun onClusterAdded(cluster: Cluster) {
+                                                    cluster.appearance.setIcon(
+                                                        TextImageProvider(cluster.size.toString(), context)
+                                                    )
+                                                    cluster.addClusterTapListener { _ ->
+                                                        view.map.move(
+                                                            CameraPosition(
+                                                                cluster.appearance.geometry,
+                                                                view.map.cameraPosition.zoom + 1,
+                                                                0.0f, 0.0f
+                                                            ),
+                                                            Animation(Animation.Type.SMOOTH, 0.5f),
+                                                            null
+                                                        )
+                                                        true
+                                                    }
+                                                }
+                                            }
+                                        )
+                                        
+                                        // Add markers for each attraction
+                                        filteredAttractions.forEach { attraction ->
+                                            val placemark = collection.addPlacemark(
+                                                Point(attraction.location.latitude, attraction.location.longitude)
+                                            )
+                                            
+                                            // Set icon
+                                            placemark.setIcon(
+                                                CategoryMarkerProvider.getMarkerForCategory(
+                                                    context = context,
+                                                    category = attraction.category,
+                                                    isDarkTheme = isDarkTheme
+                                                ),
+                                                IconStyle().apply { scale = 0.8f }
+                                            )
+                                            
+                                            // CRITICAL: Set userData BEFORE adding listener
+                                            placemark.userData = attraction
+                                            
+                                            // Add tap listener
+                                            placemark.addTapListener { mapObject, _ ->
+                                                val tappedAttraction = mapObject.userData as? Attraction
+                                                if (tappedAttraction != null) {
+                                                    Timber.d("✅ Marker tapped: ${tappedAttraction.name}")
+                                                    scope.launch {
+                                                        viewModel.selectAttraction(tappedAttraction)
+                                                    }
+                                                    true
+                                                } else {
+                                                    Timber.e("❌ No userData for tapped marker")
+                                                    false
+                                                }
+                                            }
+                                        }
+                                        
+                                        // Cluster the markers
+                                        collection.clusterPlacemarks(60.0, 15)
+                                        markersCollection = collection
+                                        
+                                        Timber.d("✅ Added ${filteredAttractions.size} markers to map")
+                                    }
+                                }
+                            }
+                        )
+                        
+                        // Location FAB
+                        FloatingActionButton(
+                            onClick = { 
+                                if (locationPermissionsState.allPermissionsGranted) {
+                                    uiState.userLocation?.let { location ->
+                                        mapView?.map?.move(
+                                            CameraPosition(
+                                                Point(location.first, location.second),
+                                                14.0f, 0.0f, 0.0f
+                                            ),
+                                            Animation(Animation.Type.SMOOTH, 0.5f),
+                                            null
+                                        )
+                                    } ?: viewModel.getCurrentLocation()
+                                } else {
+                                    locationPermissionsState.launchMultiplePermissionRequest()
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(Dimensions.SpacingMedium)
+                                .padding(bottom = 80.dp), // Space for bottom nav
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MyLocation,
+                                contentDescription = stringResource(R.string.my_location),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
+                
+                ViewMode.LIST -> {
+                    // List View
+                    AttractionsList(
+                        attractions = filteredAttractions,
+                        onAttractionClick = onAttractionClick,
+                        onFavoriteClick = { viewModel.toggleFavorite(it) },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+                            .padding(top = 64.dp), // Space for search
+                        isLoading = uiState.isLoading,
+                        searchQuery = searchQuery,
+                        selectedCategories = selectedCategories.map { it.displayName }.toSet(),
+                        showResultCount = true
+                    )
+                }
+            }
+        }
+        
+        // Search field - floating at top
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+                .padding(horizontal = Dimensions.PaddingMedium)
+                .padding(top = Dimensions.PaddingSmall)
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                shadowElevation = 8.dp
+            ) {
+                ReliableSearchTextField(
+                    value = searchQuery,
+                    onValueChange = { query: String ->
+                        viewModel.updateSearchQuery(query)
+                        searchJob?.cancel()
+                        searchJob = scope.launch {
+                            delay(300)
+                            viewModel.search()
+                        }
+                    },
+                    placeholder = stringResource(R.string.search_attractions),
+                    onFilterClick = { showFilterSheet = true },
+                    hasActiveFilters = selectedCategories.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+        
+        // Bottom navigation
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        ) {
+            AdygyesBottomNavigation(
+                currentViewMode = viewMode,
+                onViewModeToggle = { 
+                    viewMode = if (viewMode == ViewMode.MAP) ViewMode.LIST else ViewMode.MAP
+                },
+                onFavoritesClick = {
+                    navController.navigate(NavDestination.Favorites.route)
+                },
+                onSettingsClick = {
+                    navController.navigate(NavDestination.Settings.route)
+                },
+                showBadgeOnFavorites = filteredAttractions.any { it.isFavorite },
+                favoritesCount = filteredAttractions.count { it.isFavorite }
+            )
+        }
+        
+        // IMPORTANT: Bottom sheet should be last to render on top
+        selectedAttraction?.let { attraction ->
+            Timber.d("🎯 Showing BottomSheet for: ${attraction.name}")
+            
+            AttractionBottomSheet(
+                attraction = attraction,
+                onDismiss = { 
+                    Timber.d("Dismissing BottomSheet")
+                    viewModel.clearSelection() 
+                },
+                onBuildRoute = { 
+                    viewModel.navigateToAttractionById(attraction.id) 
+                },
+                onShare = { 
+                    viewModel.shareAttractionById(attraction.id) 
+                },
+                onToggleFavorite = { 
+                    viewModel.toggleFavorite(attraction.id) 
+                },
+                onNavigateToDetail = { 
+                    onAttractionClick(attraction.id) 
+                }
+            )
+        }
+    }
+    
+    // Filter bottom sheet
+    if (showFilterSheet) {
+        CategoryFilterBottomSheet(
+            selectedCategories = selectedCategories,
+            onCategoryToggle = { viewModel.toggleCategory(it) },
+            onApply = {
+                showFilterSheet = false
+                viewModel.search()
+            },
+            onDismiss = { showFilterSheet = false },
+            onClearAll = { viewModel.clearFilters() }
+        )
+    }
+}
+
+/**
+ * Search text field for reliable map screen
+ */
+@Composable
+fun ReliableSearchTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    onFilterClick: () -> Unit,
+    hasActiveFilters: Boolean,
+    modifier: Modifier = Modifier
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        placeholder = { 
+            Text(
+                text = placeholder,
+                style = MaterialTheme.typography.bodyMedium
+            ) 
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        trailingIcon = {
+            Row {
+                // Clear button
+                AnimatedVisibility(visible = value.isNotEmpty()) {
+                    IconButton(
+                        onClick = { onValueChange("") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear_search)
+                        )
+                    }
+                }
+                
+                // Filter button with badge
+                BadgedBox(
+                    badge = {
+                        if (hasActiveFilters) {
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                ) {
+                    IconButton(onClick = onFilterClick) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = stringResource(R.string.filters)
+                        )
+                    }
+                }
+            }
+        },
+        singleLine = true,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        )
+    )
+}

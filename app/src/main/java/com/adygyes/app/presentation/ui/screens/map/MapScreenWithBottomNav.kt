@@ -68,6 +68,15 @@ fun MapScreenWithBottomNav(
     val attractions by viewModel.attractions.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedAttraction by viewModel.selectedAttraction.collectAsStateWithLifecycle()
+    
+    // Debug logging for selectedAttraction changes
+    LaunchedEffect(selectedAttraction) {
+        if (selectedAttraction != null) {
+            Timber.d("Selected attraction changed to: ${selectedAttraction?.name} (ID: ${selectedAttraction?.id})")
+        } else {
+            Timber.d("Selected attraction cleared")
+        }
+    }
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
     val filteredAttractions by viewModel.filteredAttractions.collectAsStateWithLifecycle()
@@ -134,73 +143,90 @@ fun MapScreenWithBottomNav(
         }
     }
     
+    // Remember previous attractions to avoid unnecessary marker recreation
+    var previousAttractions by remember { mutableStateOf<List<Attraction>>(emptyList()) }
+    
     // Add markers for filtered attractions
     LaunchedEffect(mapView, filteredAttractions, viewMode) {
         if (viewMode == com.adygyes.app.presentation.ui.components.ViewMode.MAP) {
             mapView?.let { map ->
-                try {
-                    // Clear existing markers
-                    map.map.mapObjects.clear()
-                    
-                    // Create clustered collection
-                    val clusterizedCollection = map.map.mapObjects.addClusterizedPlacemarkCollection(
-                        object : ClusterListener {
-                            override fun onClusterAdded(cluster: Cluster) {
-                                val text = cluster.size.toString()
-                                cluster.appearance.setIcon(
-                                    TextImageProvider(text, context)
+                // Only update markers if attractions actually changed
+                if (filteredAttractions != previousAttractions) {
+                    try {
+                        Timber.d("Updating markers for ${filteredAttractions.size} attractions")
+                        // Clear existing markers
+                        map.map.mapObjects.clear()
+                        
+                        if (filteredAttractions.isNotEmpty()) {
+                            // Create clustered collection
+                            val clusterizedCollection = map.map.mapObjects.addClusterizedPlacemarkCollection(
+                                object : ClusterListener {
+                                    override fun onClusterAdded(cluster: Cluster) {
+                                        val text = cluster.size.toString()
+                                        cluster.appearance.setIcon(
+                                            TextImageProvider(text, context)
+                                        )
+                                        cluster.appearance.setIconStyle(
+                                            IconStyle().apply {
+                                                scale = 1f
+                                            }
+                                        )
+                                        cluster.addClusterTapListener { _ ->
+                                            map.map.move(
+                                                CameraPosition(
+                                                    cluster.appearance.geometry,
+                                                    map.map.cameraPosition.zoom + 1,
+                                                    0.0f, 0.0f
+                                                ),
+                                                Animation(Animation.Type.SMOOTH, 0.5f),
+                                                null
+                                            )
+                                            true
+                                        }
+                                    }
+                                }
+                            )
+                            
+                            // Add placemarks
+                            filteredAttractions.forEach { attraction ->
+                                val point = Point(attraction.location.latitude, attraction.location.longitude)
+                                val placemark = clusterizedCollection.addPlacemark(point)
+                                
+                                val markerIcon = CategoryMarkerProvider.getMarkerForCategory(
+                                    context = context,
+                                    category = attraction.category,
+                                    isDarkTheme = isDarkTheme
                                 )
-                                cluster.appearance.setIconStyle(
+                                placemark.setIcon(
+                                    markerIcon,
                                     IconStyle().apply {
-                                        scale = 1f
+                                        scale = 0.8f
                                     }
                                 )
-                                cluster.addClusterTapListener { _ ->
-                                    map.map.move(
-                                        CameraPosition(
-                                            cluster.appearance.geometry,
-                                            map.map.cameraPosition.zoom + 1,
-                                            0.0f, 0.0f
-                                        ),
-                                        Animation(Animation.Type.SMOOTH, 0.5f),
-                                        null
-                                    )
-                                    true
-                                }
+                                
+                                // Improved tap listener with better error handling
+                                placemark.addTapListener(MapObjectTapListener { mapObject, point ->
+                                    try {
+                                        Timber.d("Marker tapped for attraction: ${attraction.name} (ID: ${attraction.id})")
+                                        viewModel.selectAttraction(attraction)
+                                        true
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Error handling marker tap for ${attraction.name}")
+                                        false
+                                    }
+                                })
+                                
+                                placemark.userData = attraction
                             }
+                            
+                            clusterizedCollection.clusterPlacemarks(60.0, 15)
                         }
-                    )
-                    
-                    // Add placemarks
-                    filteredAttractions.forEach { attraction ->
-                        val point = Point(attraction.location.latitude, attraction.location.longitude)
-                        val placemark = clusterizedCollection.addPlacemark(point)
                         
-                        val markerIcon = CategoryMarkerProvider.getMarkerForCategory(
-                            context = context,
-                            category = attraction.category,
-                            isDarkTheme = isDarkTheme
-                        )
-                        placemark.setIcon(
-                            markerIcon,
-                            IconStyle().apply {
-                                scale = 0.8f
-                            }
-                        )
-                        
-                        placemark.addTapListener(MapObjectTapListener { _, _ ->
-                            viewModel.selectAttraction(attraction)
-                            true
-                        })
-                        
-                        placemark.userData = attraction
+                        previousAttractions = filteredAttractions
+                        Timber.d("Successfully added ${filteredAttractions.size} markers")
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to add markers")
                     }
-                    
-                    clusterizedCollection.clusterPlacemarks(60.0, 15)
-                    
-                    Timber.d("Added ${filteredAttractions.size} markers")
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to add markers")
                 }
             }
         }
@@ -294,14 +320,35 @@ fun MapScreenWithBottomNav(
                             
                             // Selected attraction bottom sheet
                             selectedAttraction?.let { attraction ->
-                                AttractionBottomSheet(
-                                    attraction = attraction,
-                                    onDismiss = { viewModel.clearSelection() },
-                                    onBuildRoute = { viewModel.navigateToAttractionById(attraction.id) },
-                                    onShare = { viewModel.shareAttractionById(attraction.id) },
-                                    onToggleFavorite = { viewModel.toggleFavorite(attraction.id) },
-                                    onNavigateToDetail = { onAttractionClick(attraction.id) }
-                                )
+                                LaunchedEffect(attraction.id) {
+                                    Timber.d("Showing bottom sheet for: ${attraction.name} (ID: ${attraction.id})")
+                                }
+                                
+                                key(attraction.id) {
+                                    AttractionBottomSheet(
+                                        attraction = attraction,
+                                        onDismiss = { 
+                                            Timber.d("Bottom sheet dismissed for: ${attraction.name}")
+                                            viewModel.clearSelection() 
+                                        },
+                                        onBuildRoute = { 
+                                            Timber.d("Build route clicked for: ${attraction.name}")
+                                            viewModel.navigateToAttractionById(attraction.id) 
+                                        },
+                                        onShare = { 
+                                            Timber.d("Share clicked for: ${attraction.name}")
+                                            viewModel.shareAttractionById(attraction.id) 
+                                        },
+                                        onToggleFavorite = { 
+                                            Timber.d("Toggle favorite clicked for: ${attraction.name}")
+                                            viewModel.toggleFavorite(attraction.id) 
+                                        },
+                                        onNavigateToDetail = { 
+                                            Timber.d("Navigate to detail clicked for: ${attraction.name}")
+                                            onAttractionClick(attraction.id) 
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
