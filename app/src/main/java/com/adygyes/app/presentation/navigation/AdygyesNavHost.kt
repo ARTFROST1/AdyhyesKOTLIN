@@ -58,7 +58,8 @@ fun AdygyesNavHost(
                 },
                 onExploreClick = {
                     navController.navigate(NavDestination.Map.route)
-                }
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         

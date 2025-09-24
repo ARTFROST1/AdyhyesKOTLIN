@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 fun FavoritesScreen(
     onAttractionClick: (String) -> Unit,
     onExploreClick: () -> Unit,
+    onNavigateBack: (() -> Unit)? = null,
     viewModel: FavoritesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -49,6 +50,16 @@ fun FavoritesScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.nav_favorites)) },
+                navigationIcon = {
+                    if (onNavigateBack != null) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+                },
                 actions = {
                     // View mode toggle
                     IconButton(
