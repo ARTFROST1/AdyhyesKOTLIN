@@ -30,6 +30,13 @@ sealed class NavDestination(val route: String) {
     data object AboutScreen : NavDestination("settings/about")
     data object PrivacyPolicy : NavDestination("settings/privacy")
     data object TermsOfUse : NavDestination("settings/terms")
+    
+    // Developer Mode screens
+    data object DeveloperMode : NavDestination("developer")
+    data object AttractionEditor : NavDestination("developer/editor?attractionId={attractionId}") {
+        fun createRoute(attractionId: String? = null) = 
+            if (attractionId != null) "developer/editor?attractionId=$attractionId" else "developer/editor"
+    }
 }
 
 /**

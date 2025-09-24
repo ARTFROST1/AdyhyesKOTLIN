@@ -15,6 +15,8 @@ import com.adygyes.app.presentation.ui.screens.search.SearchScreen
 import com.adygyes.app.presentation.ui.screens.favorites.FavoritesScreen
 import com.adygyes.app.presentation.ui.screens.settings.SettingsScreen
 import com.adygyes.app.presentation.ui.screens.detail.AttractionDetailScreen
+import com.adygyes.app.presentation.ui.screens.developer.DeveloperScreen
+import com.adygyes.app.presentation.ui.screens.developer.AttractionEditorScreen
 
 /**
  * Main navigation host for Adygyes app
@@ -75,6 +77,9 @@ fun AdygyesNavHost(
                 },
                 onTermsClick = {
                     navController.navigate(NavDestination.TermsOfUse.route)
+                },
+                onDeveloperModeClick = {
+                    navController.navigate(NavDestination.DeveloperMode.route)
                 }
             )
         }
@@ -131,6 +136,38 @@ fun AdygyesNavHost(
         
         composable(NavDestination.TermsOfUse.route) {
             // TermsOfUseScreen will be implemented
+        }
+        
+        // Developer Mode Screen
+        composable(NavDestination.DeveloperMode.route) {
+            DeveloperScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEditor = { attractionId ->
+                    if (attractionId != null) {
+                        navController.navigate(NavDestination.AttractionEditor.createRoute(attractionId))
+                    } else {
+                        navController.navigate(NavDestination.AttractionEditor.createRoute())
+                    }
+                }
+            )
+        }
+        
+        // Attraction Editor Screen
+        composable(
+            route = NavDestination.AttractionEditor.route,
+            arguments = listOf(
+                navArgument("attractionId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val attractionId = backStackEntry.arguments?.getString("attractionId")
+            AttractionEditorScreen(
+                attractionId = attractionId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

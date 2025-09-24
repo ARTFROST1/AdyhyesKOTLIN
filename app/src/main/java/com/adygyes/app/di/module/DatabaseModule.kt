@@ -7,6 +7,7 @@ import androidx.room.Room
 import com.adygyes.app.data.local.cache.CacheManager
 import com.adygyes.app.data.local.dao.AttractionDao
 import com.adygyes.app.data.local.database.AdygyesDatabase
+import com.adygyes.app.data.local.JsonFileManager
 import com.adygyes.app.data.local.preferences.PreferencesManager
 import com.adygyes.app.data.repository.AttractionRepositoryImpl
 import com.adygyes.app.domain.repository.AttractionRepository
@@ -68,5 +69,13 @@ object DatabaseModule {
         preferencesManager: PreferencesManager
     ): CacheManager {
         return CacheManager(preferencesManager)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideJsonFileManager(
+        @ApplicationContext context: Context
+    ): JsonFileManager {
+        return JsonFileManager(context)
     }
 }

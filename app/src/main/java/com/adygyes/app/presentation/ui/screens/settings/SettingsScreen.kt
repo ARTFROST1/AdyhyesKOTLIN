@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,9 +31,11 @@ fun SettingsScreen(
     onAboutClick: () -> Unit,
     onPrivacyClick: () -> Unit,
     onTermsClick: () -> Unit,
+    onDeveloperModeClick: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val developerModeEnabled by viewModel.developerModeEnabled.collectAsStateWithLifecycle()
     val context = LocalContext.current
     
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -207,7 +210,10 @@ fun SettingsScreen(
                     icon = Icons.Default.Info,
                     title = "About Adygyes",
                     subtitle = "Version ${uiState.appVersion}",
-                    onClick = onAboutClick
+                    onClick = {
+                        viewModel.onVersionClick()
+                        onAboutClick()
+                    }
                 )
             }
             
@@ -245,6 +251,26 @@ fun SettingsScreen(
                     subtitle = "Recommend Adygyes to friends",
                     onClick = { /* Share app link */ }
                 )
+            }
+            
+            // Developer Mode Section (only visible when enabled)
+            if (developerModeEnabled) {
+                item {
+                    Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
+                }
+                
+                item {
+                    SettingsSectionHeader(title = "Developer Mode")
+                }
+                
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Code,
+                        title = "Developer Tools",
+                        subtitle = "Manage attractions and data",
+                        onClick = onDeveloperModeClick
+                    )
+                }
             }
             
             item {

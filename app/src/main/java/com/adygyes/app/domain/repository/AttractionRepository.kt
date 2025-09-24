@@ -48,4 +48,24 @@ interface AttractionRepository {
      * Check if initial data is loaded
      */
     suspend fun isDataLoaded(): Boolean
+    
+    /**
+     * Add a new attraction (Developer Mode)
+     */
+    suspend fun addAttraction(attraction: Attraction): Boolean
+    
+    /**
+     * Update an existing attraction (Developer Mode)
+     */
+    suspend fun updateAttraction(attraction: Attraction): Boolean
+    
+    /**
+     * Delete an attraction (Developer Mode)
+     */
+    suspend fun deleteAttraction(attractionId: String): Boolean
+    
+    /**
+     * Reload data from JSON (Developer Mode)
+     */
+    suspend fun reloadFromJson(): Boolean
 }
