@@ -10,8 +10,23 @@ import kotlin.math.sqrt
 /**
  * Utility class for converting between geographic coordinates and screen pixels
  * Essential for positioning overlay markers correctly on the map
+ * Optimized for high-frequency updates with caching
  */
 object MapCoordinateConverter {
+    
+    // Cache for high-frequency coordinate conversions
+    private data class CacheKey(val lat: Double, val lng: Double, val cameraHash: Int)
+    private val positionCache = mutableMapOf<CacheKey, Offset?>()
+    private var lastCameraHash = 0
+    
+    private fun getCameraHash(mapView: MapView): Int {
+        return try {
+            val pos = mapView.map.cameraPosition
+            "${pos.target.latitude}_${pos.target.longitude}_${pos.zoom}".hashCode()
+        } catch (e: Exception) {
+            0
+        }
+    }
     
     /**
      * Convert geographic coordinates to screen pixels
@@ -26,25 +41,39 @@ object MapCoordinateConverter {
         longitude: Double
     ): Offset? {
         if (mapView == null) {
-            Timber.w("MapView is null, cannot convert coordinates")
             return null
         }
         
         return try {
             // Check if map is properly initialized
             if (mapView.mapWindow == null) {
-                Timber.w("MapWindow is null, map not ready yet")
                 return null
             }
             
+            // Use caching for high-frequency updates
+            val currentCameraHash = getCameraHash(mapView)
+            val cacheKey = CacheKey(latitude, longitude, currentCameraHash)
+            
+            // Clear cache if camera changed significantly
+            if (currentCameraHash != lastCameraHash) {
+                positionCache.clear()
+                lastCameraHash = currentCameraHash
+            }
+            
+            // Check cache first
+            positionCache[cacheKey]?.let { return it }
+            
+            // Calculate new position
             val geoPoint = Point(latitude, longitude)
             val screenPoint = mapView.mapWindow.worldToScreen(geoPoint)
             
-            screenPoint?.let {
-                Offset(it.x, it.y)
-            }
+            val result = screenPoint?.let { Offset(it.x, it.y) }
+            
+            // Cache result
+            positionCache[cacheKey] = result
+            
+            result
         } catch (e: Exception) {
-            Timber.e(e, "Error converting geo to screen coordinates")
             null
         }
     }

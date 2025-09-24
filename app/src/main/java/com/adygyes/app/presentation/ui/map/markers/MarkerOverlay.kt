@@ -10,6 +10,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalView
+import android.view.Choreographer
 import com.adygyes.app.domain.model.Attraction
 import com.yandex.mapkit.map.CameraListener
 import com.yandex.mapkit.mapview.MapView
@@ -31,9 +33,13 @@ fun MarkerOverlay(
     animationDuration: Int = 300
 ) {
     val density = LocalDensity.current
+    val view = LocalView.current
     
     // Track camera position changes WITHOUT delay for tight binding
     var cameraVersion by remember { mutableStateOf(0) }
+    
+    // High-frequency update system for ultra-smooth marker binding
+    var frameUpdateCounter by remember { mutableStateOf(0) }
     
     // Use derivedStateOf for instant recalculation on camera change
     val markerPositions by remember(mapView, attractions) {
@@ -41,8 +47,9 @@ fun MarkerOverlay(
             if (mapView == null || attractions.isEmpty()) {
                 emptyMap()
             } else {
-                // Force recalculation on every frame for tight binding
-                cameraVersion // Reference to trigger recomposition
+                // Force recalculation on every frame for ultra-smooth binding
+                cameraVersion // Camera-based updates
+                frameUpdateCounter // Frame-based updates for maximum smoothness
                 attractions.associateWith { attraction ->
                     MapCoordinateConverter.geoToScreen(
                         mapView = mapView,
@@ -59,6 +66,37 @@ fun MarkerOverlay(
         if (mapView != null && attractions.isNotEmpty()) {
             cameraVersion++ // Trigger marker position recalculation
             Timber.d("🔄 Force marker update: ${attractions.size} attractions loaded")
+        }
+    }
+    
+    // Ultra-smooth 60 FPS marker updates using Choreographer
+    DisposableEffect(mapView) {
+        var isUpdating = false
+        
+        val frameCallback = object : Choreographer.FrameCallback {
+            override fun doFrame(frameTimeNanos: Long) {
+                if (!isUpdating && mapView != null) {
+                    isUpdating = true
+                    // Trigger marker position recalculation on every frame
+                    frameUpdateCounter++
+                    if (frameUpdateCounter % 2 == 0) { // Update every 2nd frame (30 FPS) for performance
+                        cameraVersion++
+                    }
+                    isUpdating = false
+                }
+                // Schedule next frame
+                Choreographer.getInstance().postFrameCallback(this)
+            }
+        }
+        
+        if (mapView != null) {
+            Choreographer.getInstance().postFrameCallback(frameCallback)
+            Timber.d("🎬 Started 60 FPS marker updates")
+        }
+        
+        onDispose {
+            Choreographer.getInstance().removeFrameCallback(frameCallback)
+            Timber.d("🎬 Stopped 60 FPS marker updates")
         }
     }
     
