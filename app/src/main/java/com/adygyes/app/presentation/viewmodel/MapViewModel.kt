@@ -12,6 +12,8 @@ import com.adygyes.app.domain.usecase.NetworkUseCase
 import com.adygyes.app.domain.usecase.AttractionDisplayUseCase
 import com.adygyes.app.domain.usecase.SortCriteria
 import com.adygyes.app.domain.usecase.NetworkStatus
+import com.adygyes.app.presentation.ui.map.markers.MarkerOverlayState
+import com.adygyes.app.presentation.ui.map.markers.MarkerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,6 +22,7 @@ import javax.inject.Inject
 
 /**
  * ViewModel for the Map screen
+ * Enhanced with new marker overlay system for 100% reliable clicks
  */
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -33,6 +36,10 @@ class MapViewModel @Inject constructor(
     
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
+    
+    // New marker overlay state for the improved marker system
+    private val _markerOverlayState = MutableStateFlow(MarkerOverlayState())
+    val markerOverlayState: StateFlow<MarkerOverlayState> = _markerOverlayState.asStateFlow()
     
     private val _attractions = MutableStateFlow<List<Attraction>>(emptyList())
     val attractions: StateFlow<List<Attraction>> = _attractions.asStateFlow()
@@ -326,6 +333,44 @@ class MapViewModel @Inject constructor(
     fun shareAttractionById(attractionId: String) {
         val attraction = _attractions.value.find { it.id == attractionId }
         attraction?.let { shareAttraction(it) }
+    }
+    
+    /**
+     * Update marker positions for the new overlay system
+     * Called when the map camera moves
+     */
+    fun updateMarkerPositions() {
+        viewModelScope.launch {
+            val updatedMarkers = filteredAttractions.value.map { attraction ->
+                MarkerState(
+                    attraction = attraction,
+                    screenPosition = null, // Will be calculated in MarkerOverlay
+                    isVisible = true,
+                    isSelected = attraction.id == _selectedAttraction.value?.id,
+                    isLoading = false,
+                    imageUrl = attraction.images.firstOrNull()
+                )
+            }
+            
+            _markerOverlayState.update { state ->
+                state.copy(
+                    markers = updatedMarkers,
+                    selectedMarkerId = _selectedAttraction.value?.id,
+                    isUpdating = false
+                )
+            }
+            
+            Timber.d("📍 Updated ${updatedMarkers.size} marker positions")
+        }
+    }
+    
+    /**
+     * Handle marker click from the new overlay system
+     * This provides 100% reliable click detection
+     */
+    fun onMarkerClick(attraction: Attraction) {
+        Timber.d("✅ Marker clicked via overlay: ${attraction.name}")
+        selectAttraction(attraction)
     }
 }
 

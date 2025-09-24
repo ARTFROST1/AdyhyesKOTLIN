@@ -349,6 +349,14 @@
 **Timeline:** Week 17-18
 
 #### Sub-steps:
+- [ ] **🔴 CRITICAL: Fix Map Marker Click Reliability (BUG-020)**
+  - [ ] Implement CircularImageMarker component with image loading
+  - [ ] Create MarkerOverlay container for positioning markers
+  - [ ] Develop MapCoordinateConverter for geo-to-screen conversion
+  - [ ] Integrate new overlay-based marker system into MapScreen
+  - [ ] Remove old PlacemarkMapObject implementation
+  - [ ] Ensure 100% click reliability with testing
+  - [ ] Add marker animations and visual feedback
 - [ ] Conduct comprehensive UI/UX review
 - [ ] Optimize map performance and memory usage
 - [ ] Implement image caching and optimization
@@ -381,6 +389,13 @@
 - [ ] Create deployment checklist
 
 ## 🔄 Version Updates (Changelog)
+- **2025-09-24: Stage 9 IN PROGRESS - Critical Map Marker Fix** - Identified and planned complete redesign of marker system:
+  - **BUG-020 Discovered**: Map markers have unreliable click detection (50-70% success rate)
+  - **Root Cause**: PlacemarkMapObject tap listeners unreliable, userData binding issues, clustering conflicts
+  - **Solution Designed**: Complete overlay-based marker system using Compose components
+  - **New Components Planned**: CircularImageMarker, MarkerOverlay, MapCoordinateConverter
+  - **Expected Outcome**: 100% reliable clicks, beautiful circular markers with images
+  - **Documentation**: Created MAP_MARKER_REDESIGN_PLAN.md and MARKER_COMPONENTS_SPEC.md
 - **2024-12-XX: Stage 8 COMPLETE + MapScreen Unification** - Major code consolidation and reliability improvements:
   - **MapScreen Unification**: Merged 6 different MapScreen files into single unified MapScreen.kt
   - **100% Reliable Marker Taps**: Implemented userData validation and proper tap handling

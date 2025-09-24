@@ -28,12 +28,16 @@ import androidx.navigation.NavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.adygyes.app.R
-import com.adygyes.app.domain.model.Attraction
-import com.adygyes.app.presentation.theme.Dimensions
-import com.adygyes.app.presentation.viewmodel.MapViewModel
 import com.adygyes.app.presentation.ui.components.*
+import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
+import com.adygyes.app.presentation.ui.components.AdygyesBottomNavigation
 import com.adygyes.app.presentation.ui.components.ViewMode
+import com.adygyes.app.presentation.ui.map.markers.MarkerOverlay
+import com.adygyes.app.presentation.viewmodel.MapViewModel
+import com.adygyes.app.presentation.viewmodel.MapUiState
 import com.adygyes.app.presentation.navigation.NavDestination
+import com.adygyes.app.presentation.theme.Dimensions
+import com.adygyes.app.domain.model.Attraction
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
@@ -96,6 +100,14 @@ fun MapScreen(
             Timber.d("🎯 Selected attraction: ${selectedAttraction?.name} (ID: ${selectedAttraction?.id})")
         } else {
             Timber.d("🎯 Selected attraction cleared")
+        }
+    }
+    
+    // Force marker update when attractions are loaded
+    LaunchedEffect(filteredAttractions.size, isMapReady) {
+        if (isMapReady && filteredAttractions.isNotEmpty()) {
+            viewModel.updateMarkerPositions()
+            Timber.d("🔄 Attractions loaded: ${filteredAttractions.size}, updating markers")
         }
     }
     
@@ -166,81 +178,34 @@ fun MapScreen(
                                 )
                                 
                                 isMapReady = true
-                                Timber.d("✅ Map initialized and ready")
+                                // Force marker update after map initialization
+                                viewModel.updateMarkerPositions()
+                                Timber.d("✅ Map initialized and ready, markers updated")
                             }
                         },
                         modifier = Modifier.fillMaxSize(),
                         update = { view ->
-                            if (isMapReady && filteredAttractions.isNotEmpty()) {
-                                Timber.d("🔄 Updating ${filteredAttractions.size} markers")
-                                
-                                // Clear existing markers
-                                view.map.mapObjects.clear()
-                                
-                                // Create clustered collection
-                                val collection = view.map.mapObjects.addClusterizedPlacemarkCollection(
-                                    object : ClusterListener {
-                                        override fun onClusterAdded(cluster: Cluster) {
-                                            cluster.appearance.setIcon(
-                                                TextImageProvider(cluster.size.toString(), context)
-                                            )
-                                            cluster.addClusterTapListener { _ ->
-                                                view.map.move(
-                                                    CameraPosition(
-                                                        cluster.appearance.geometry,
-                                                        view.map.cameraPosition.zoom + 1,
-                                                        0.0f, 0.0f
-                                                    ),
-                                                    Animation(Animation.Type.SMOOTH, 0.5f),
-                                                    null
-                                                )
-                                                true
-                                            }
-                                        }
-                                    }
-                                )
-                                
-                                // Add markers with reliable tap handling
-                                filteredAttractions.forEach { attraction ->
-                                    val placemark = collection.addPlacemark(
-                                        Point(attraction.location.latitude, attraction.location.longitude)
-                                    )
-                                    
-                                    // Set icon
-                                    placemark.setIcon(
-                                        CategoryMarkerProvider.getMarkerForCategory(
-                                            context = context,
-                                            category = attraction.category,
-                                            isDarkTheme = isDarkTheme
-                                        ),
-                                        IconStyle().apply { scale = 0.8f }
-                                    )
-                                    
-                                    // CRITICAL: Set userData BEFORE adding listener
-                                    placemark.userData = attraction
-                                    
-                                    // Reliable tap listener
-                                    placemark.addTapListener { mapObject, _ ->
-                                        val tappedAttraction = mapObject.userData as? Attraction
-                                        if (tappedAttraction != null) {
-                                            Timber.d("✅ Marker tapped: ${tappedAttraction.name}")
-                                            scope.launch {
-                                                viewModel.selectAttraction(tappedAttraction)
-                                            }
-                                            true
-                                        } else {
-                                            Timber.e("❌ No userData for tapped marker")
-                                            false
-                                        }
-                                    }
-                                }
-                                
-                                // Cluster markers
-                                collection.clusterPlacemarks(60.0, 15)
-                                Timber.d("✅ Added ${filteredAttractions.size} markers")
-                            }
+                            // Store latest mapView reference for instant marker updates
+                            mapView = view
+                            // Force immediate recomposition on any map change
+                            viewModel.updateMarkerPositions()
                         }
                     )
+                    
+                    // NEW: Overlay-based markers for 100% reliable clicks
+                    if (mapView != null) {
+                        MarkerOverlay(
+                            mapView = mapView,
+                            attractions = filteredAttractions,
+                            selectedAttraction = selectedAttraction,
+                            onMarkerClick = { attraction ->
+                                Timber.d("🎯 NEW MARKER SYSTEM: Clicked ${attraction.name}")
+                                viewModel.onMarkerClick(attraction)
+                            },
+                            enableClustering = false, // Can be enabled later
+                            animationDuration = 300
+                        )
+                    }
                 }
                 
                 ViewMode.LIST -> {
