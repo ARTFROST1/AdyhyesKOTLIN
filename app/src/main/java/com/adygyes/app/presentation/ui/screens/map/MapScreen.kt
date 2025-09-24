@@ -32,7 +32,7 @@ import com.adygyes.app.presentation.ui.components.*
 import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
 import com.adygyes.app.presentation.ui.components.AdygyesBottomNavigation
 import com.adygyes.app.presentation.ui.components.ViewMode
-import com.adygyes.app.presentation.ui.map.markers.MarkerOverlay
+import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
 import com.adygyes.app.presentation.viewmodel.MapViewModel
 import com.adygyes.app.presentation.viewmodel.MapUiState
 import com.adygyes.app.presentation.navigation.NavDestination
@@ -158,53 +158,59 @@ fun MapScreen(
         ) { mode ->
             when (mode) {
                 ViewMode.MAP -> {
-                    // Map View with reliable marker handling
-                    AndroidView(
-                        factory = { ctx ->
-                            Timber.d("🗺️ Creating MapView")
-                            MapView(ctx).apply {
-                                this.onStart()
-                                mapView = this
-                                
-                                // Apply styles immediately
-                                MapStyleProvider.applyMapStyle(this, isDarkTheme)
-                                MapStyleProvider.configureMapInteraction(this)
-                                
-                                // Initialize map position
-                                this.map.move(
-                                    CameraPosition(Point(44.6098, 40.1006), 10.0f, 0.0f, 0.0f),
-                                    Animation(Animation.Type.SMOOTH, 2f),
-                                    null
-                                )
-                                
-                                isMapReady = true
-                                // Force marker update after map initialization
-                                viewModel.updateMarkerPositions()
-                                Timber.d("✅ Map initialized and ready, markers updated")
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                        update = { view ->
-                            // Store latest mapView reference for instant marker updates
-                            mapView = view
-                            // Force immediate recomposition on any map change
-                            viewModel.updateMarkerPositions()
-                        }
-                    )
-                    
-                    // NEW: Overlay-based markers for 100% reliable clicks
-                    if (mapView != null) {
-                        MarkerOverlay(
-                            mapView = mapView,
-                            attractions = filteredAttractions,
-                            selectedAttraction = selectedAttraction,
-                            onMarkerClick = { attraction ->
-                                Timber.d("🎯 NEW MARKER SYSTEM: Clicked ${attraction.name}")
-                                viewModel.onMarkerClick(attraction)
+                    // CRITICAL: Box ensures proper layering
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Layer 1: Map View (bottom) - DISABLE TOUCH for markers to work
+                        AndroidView(
+                            factory = { ctx ->
+                                Timber.d("🗺️ Creating MapView")
+                                MapView(ctx).apply {
+                                    this.onStart()
+                                    mapView = this
+                                    
+                                    // Apply styles immediately
+                                    MapStyleProvider.applyMapStyle(this, isDarkTheme)
+                                    MapStyleProvider.configureMapInteraction(this)
+                                    
+                                    // Keep map interactive for pan/zoom
+                                    
+                                    // Initialize map position
+                                    this.map.move(
+                                        CameraPosition(Point(44.6098, 40.1006), 10.0f, 0.0f, 0.0f),
+                                        Animation(Animation.Type.SMOOTH, 2f),
+                                        null
+                                    )
+                                    
+                                    isMapReady = true
+                                    // Force marker update after map initialization
+                                    viewModel.updateMarkerPositions()
+                                    Timber.d("✅ Map initialized and ready, markers updated")
+                                }
                             },
-                            enableClustering = false, // Can be enabled later
-                            animationDuration = 300
+                            modifier = Modifier.fillMaxSize(),
+                            update = { view ->
+                                // Store latest mapView reference for instant marker updates
+                                mapView = view
+                                // Force immediate recomposition on any map change
+                                viewModel.updateMarkerPositions()
+                            }
                         )
+                        
+                        // Layer 2: DUAL-LAYER MARKER SYSTEM (top)
+                        // Native markers for visual (perfect map binding)
+                        // Transparent overlays for clicks (100% reliability)
+                        if (mapView != null && isMapReady) {
+                            DualLayerMarkerSystem(
+                                mapView = mapView,
+                                attractions = filteredAttractions,
+                                selectedAttraction = selectedAttraction,
+                                onMarkerClick = { attraction ->
+                                    Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
+                                    viewModel.onMarkerClick(attraction)
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
                 

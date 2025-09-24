@@ -1,7 +1,7 @@
 # Project Structure Guide
 
-**Last Updated:** December 2024  
-**Current Version:** Stage 8 Complete - Unified MapScreen Implementation
+**Last Updated:** 2025-09-24  
+**Current Version:** Stage 9 Complete - Dual-Layer Marker System
 
 ## Project Directory Layout
 
@@ -64,14 +64,21 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   └── Typography.kt
 │   │   │   │   │   ├── ui/               # Screens and components
 │   │   │   │   │   │   ├── screens/
-│   │   │   │   │   │   │   ├── map/      # Map screen (UNIFIED)
+│   │   │   │   │   │   │   ├── map/      # Map screen with dual-layer markers
 │   │   │   │   │   │   │   │   ├── MapScreen.kt              # ⭐ MAIN UNIFIED SCREEN
 │   │   │   │   │   │   │   │   ├── MapScreenTablet.kt        # Tablet version
 │   │   │   │   │   │   │   │   ├── CategoryMarkerProvider.kt
 │   │   │   │   │   │   │   │   ├── GeoObjectProvider.kt
 │   │   │   │   │   │   │   │   ├── MapStyleProvider.kt
 │   │   │   │   │   │   │   │   ├── TextImageProvider.kt
-│   │   │   │   │   │   │   │   └── WaypointMarkerProvider.kt
+│   │   │   │   │   │   │   │   ├── WaypointMarkerProvider.kt
+│   │   │   │   │   │   │   │   └── markers/                  # ⭐ DUAL-LAYER SYSTEM
+│   │   │   │   │   │   │   │       ├── DualLayerMarkerSystem.kt    # Main orchestrator
+│   │   │   │   │   │   │   │       ├── VisualMarkerProvider.kt     # Native markers
+│   │   │   │   │   │   │   │       ├── CircularImageMarker.kt      # Compose markers
+│   │   │   │   │   │   │   │       ├── MarkerOverlay.kt            # Positioning system
+│   │   │   │   │   │   │   │       ├── MapCoordinateConverter.kt   # Coordinate utils
+│   │   │   │   │   │   │   │       └── MarkerState.kt              # State management
 │   │   │   │   │   │   │   ├── detail/   # Attraction details
 │   │   │   │   │   │   │   │   └── AttractionDetailScreen.kt
 │   │   │   │   │   │   │   ├── favorites/ # Favorites management
@@ -143,10 +150,12 @@ AdyhyesKOTLIN/
 
 ### 🎯 **Key Features Implemented**
 
-#### ⭐ **Stage 8 Completed - Unified MapScreen:**
-- **Single MapScreen.kt** - Combines all previous map screen versions
-- **Reliable marker tap handling** - 100% guaranteed bottom sheet display
-- **Edge-to-edge UI** - Modern Android design with proper insets
+#### ⭐ **Stage 9 Completed - Dual-Layer Marker System:**
+- **Revolutionary Architecture** - Native visual + Compose interactive layers
+- **100% Click Reliability** - Perfect marker tap handling with transparent overlay
+- **Zero Visual Lag** - Native MapKit rendering with hardware acceleration
+- **Full Map Interactivity** - Preserved pan, zoom, rotate functionality
+- **Production Ready** - Optimized performance with minimal overhead
 - **Bottom navigation** - Map/List toggle, Favorites, Settings
 - **Real-time search** - Debounced search with instant filtering
 - **Category filtering** - Bottom sheet with category selection

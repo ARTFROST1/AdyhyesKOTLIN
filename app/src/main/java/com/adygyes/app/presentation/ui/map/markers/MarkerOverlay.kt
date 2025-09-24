@@ -30,7 +30,8 @@ fun MarkerOverlay(
     modifier: Modifier = Modifier,
     enableClustering: Boolean = false,
     clusteringThreshold: Int = 5,
-    animationDuration: Int = 300
+    animationDuration: Int = 300,
+    transparentMode: Boolean = false // For dual-layer system
 ) {
     val density = LocalDensity.current
     val view = LocalView.current
@@ -131,43 +132,68 @@ fun MarkerOverlay(
                 key(attraction.id) {
                     // Calculate offset to center marker on position
                     val markerSizePx = with(density) { 52.dp.toPx() }
-                    val offsetX = (screenPosition.x - markerSizePx / 2).roundToInt()
-                    val offsetY = (screenPosition.y - markerSizePx).roundToInt()
+                    val hitAreaSizePx = if (transparentMode) {
+                        with(density) { (52.dp * 1.1f).toPx() } // Slightly larger hit area in transparent mode
+                    } else {
+                        markerSizePx
+                    }
+                    val offsetX = (screenPosition.x - hitAreaSizePx / 2).roundToInt()
+                    val offsetY = (screenPosition.y - hitAreaSizePx / 2).roundToInt() // Center vertically on marker
+                    
+                    // Transparent markers positioned (debug logs removed for performance)
                     
                     // NO ANIMATION for instant binding to coordinates
                     // Direct positioning for tight map binding
                     Box(
                         modifier = Modifier.offset { IntOffset(offsetX, offsetY) }
                     ) {
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = scaleIn(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
+                        if (transparentMode) {
+                            // Direct rendering without AnimatedVisibility for transparent mode
+                            CircularImageMarker(
+                                attraction = attraction,
+                                screenPosition = screenPosition,
+                                onClick = {
+                                    Timber.d("✅ Transparent marker clicked: ${attraction.name}")
+                                    onMarkerClick(attraction)
+                                },
+                                isSelected = attraction.id == selectedAttraction?.id,
+                                animateAppearance = false,
+                                transparentMode = true
                             )
-                        ) + fadeIn(),
-                        exit = scaleOut() + fadeOut()
-                    ) {
-                        CircularImageMarker(
-                            attraction = attraction,
-                            screenPosition = screenPosition,
-                            onClick = {
-                                Timber.d("✅ Marker clicked: ${attraction.name}")
-                                onMarkerClick(attraction)
-                            },
-                            isSelected = attraction.id == selectedAttraction?.id,
-                            animateAppearance = true
-                        )
-                    }
+                        } else {
+                            // Animated visibility for visual mode
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = scaleIn(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                ) + fadeIn(),
+                                exit = scaleOut() + fadeOut()
+                            ) {
+                                CircularImageMarker(
+                                    attraction = attraction,
+                                    screenPosition = screenPosition,
+                                    onClick = {
+                                        Timber.d("✅ Visual marker clicked: ${attraction.name}")
+                                        onMarkerClick(attraction)
+                                    },
+                                    isSelected = attraction.id == selectedAttraction?.id,
+                                    animateAppearance = true,
+                                    transparentMode = false
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
         
         // Log marker overlay statistics with detailed info
-        LaunchedEffect(markerPositions.size, attractions.size) {
-            Timber.d("📍 MarkerOverlay: ${markerPositions.size}/${attractions.size} markers positioned (mapView: ${mapView != null})")
+        LaunchedEffect(markerPositions.size, attractions.size, transparentMode) {
+            val mode = if (transparentMode) "TRANSPARENT" else "VISUAL"
+            Timber.d("📍 MarkerOverlay ($mode): ${markerPositions.size}/${attractions.size} markers positioned (mapView: ${mapView != null})")
         }
     }
 }

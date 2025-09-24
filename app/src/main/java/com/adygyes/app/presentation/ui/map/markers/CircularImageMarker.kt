@@ -35,6 +35,10 @@ import timber.log.Timber
 /**
  * Circular marker component with image loading for map attractions
  * Provides 100% reliable click detection and beautiful visual appearance
+ * 
+ * Can operate in two modes:
+ * - Visual mode: Shows the marker with image/emoji (default)
+ * - Transparent mode: Only handles clicks, no visual (for dual-layer system)
  */
 @Composable
 fun CircularImageMarker(
@@ -46,7 +50,8 @@ fun CircularImageMarker(
     size: Dp = MarkerDimensions.DefaultSize,
     borderWidth: Dp = MarkerDimensions.BorderWidth,
     showLoadingIndicator: Boolean = true,
-    animateAppearance: Boolean = true
+    animateAppearance: Boolean = true,
+    transparentMode: Boolean = false // New parameter for transparent click-only mode
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -94,39 +99,61 @@ fun CircularImageMarker(
         borderWidth
     }
     
-    Surface(
-        modifier = modifier
-            .size(size)
-            .scale(finalScale)
-            .testTag("circular_marker_${attraction.id}")
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null // We handle visual feedback ourselves
-            ) {
-                Timber.d("🎯 CircularImageMarker clicked: ${attraction.name}")
-                onClick()
-            },
-        shape = CircleShape,
-        shadowElevation = shadowElevation,
-        color = Color.Transparent
-    ) {
+    // In transparent mode, create an invisible but properly sized clickable area
+    if (transparentMode) {
+        // Use slightly larger hit area for better touch detection
+        val hitAreaSize = size * 1.1f // Slightly larger for better touch
+        
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = MarkerColors.getColorForCategory(
-                        category = attraction.category,
-                        isDark = false // Will be updated with theme
-                    ),
-                    shape = CircleShape
-                )
-                .border(
-                    width = finalBorderWidth,
-                    color = Color.White,
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
+            modifier = modifier
+                .size(hitAreaSize) // Larger hit area for better touch detection
+                .testTag("transparent_marker_${attraction.id}")
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null // No visual feedback
+                ) {
+                    Timber.d("🎯 TRANSPARENT CLICK SUCCESS: ${attraction.name} (hit area: ${hitAreaSize}dp)")
+                    onClick()
+                }
+                // Completely transparent - no background
         ) {
+            // Empty box - just for click detection
+        }
+    } else {
+        // Original visual mode
+        Surface(
+            modifier = modifier
+                .size(size)
+                .scale(finalScale)
+                .testTag("circular_marker_${attraction.id}")
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null // We handle visual feedback ourselves
+                ) {
+                    Timber.d("🎯 CircularImageMarker clicked: ${attraction.name}")
+                    onClick()
+                },
+            shape = CircleShape,
+            shadowElevation = shadowElevation,
+            color = Color.Transparent
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = MarkerColors.getColorForCategory(
+                            category = attraction.category,
+                            isDark = false // Will be updated with theme
+                        ),
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = finalBorderWidth,
+                        color = Color.White,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
             // Load image or show fallback
             var isLoading by remember { mutableStateOf(true) }
             var hasError by remember { mutableStateOf(false) }
@@ -179,6 +206,7 @@ fun CircularImageMarker(
             }
         }
     }
+    } // End of else block for visual mode
 }
 
 /**
