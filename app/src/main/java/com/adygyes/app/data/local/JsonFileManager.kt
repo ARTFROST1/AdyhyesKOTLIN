@@ -8,6 +8,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import timber.log.Timber
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -91,7 +93,7 @@ class JsonFileManager @Inject constructor(
     /**
      * Write attractions to editable JSON file
      */
-    fun writeAttractions(attractionsResponse: AttractionsResponse): Boolean {
+    fun writeAttractions(attractionsResponse: AttractionsResponse): ProjectUpdateResult {
         return try {
             val jsonString = json.encodeToString(attractionsResponse)
             internalJsonFile.writeText(jsonString)
@@ -99,12 +101,142 @@ class JsonFileManager @Inject constructor(
             // Also save to SharedPreferences for persistence
             saveToPreferences(jsonString)
             
+            // АВТОМАТИЧЕСКИ обновляем файл проекта
+            val projectUpdateResult = updateProjectAssetsFile(jsonString)
+            
             Timber.d("✅ Successfully wrote ${attractionsResponse.attractions.size} attractions to JSON")
-            true
+            projectUpdateResult
         } catch (e: Exception) {
             Timber.e(e, "❌ Failed to write attractions JSON")
-            false
+            ProjectUpdateResult.FAILED
         }
+    }
+    
+    /**
+     * Результат обновления проекта
+     */
+    enum class ProjectUpdateResult {
+        SUCCESS,            // Успешно обновлен файл проекта
+        PROJECT_NOT_FOUND,  // Проект не найден
+        FAILED              // Ошибка записи
+    }
+    
+    /**
+     * Автоматически обновляет файл attractions.json в папке assets проекта
+     * Это позволяет изменениям из Developer Mode попадать прямо в проект
+     */
+    private fun updateProjectAssetsFile(jsonString: String): ProjectUpdateResult {
+        return try {
+            // Путь к файлу проекта (работает только в debug режиме)
+            val projectPath = findProjectPath()
+            if (projectPath != null) {
+                val assetsFile = File(projectPath, "app/src/main/assets/attractions.json")
+                if (assetsFile.exists()) {
+                    assetsFile.writeText(jsonString)
+                    Timber.d("✅ Updated project assets file: ${assetsFile.absolutePath}")
+                    ProjectUpdateResult.SUCCESS
+                } else {
+                    Timber.w("⚠️ Project assets file not found: ${assetsFile.absolutePath}")
+                    ProjectUpdateResult.PROJECT_NOT_FOUND
+                }
+            } else {
+                Timber.w("⚠️ Could not find project path for auto-update")
+                ProjectUpdateResult.PROJECT_NOT_FOUND
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to update project assets file")
+            ProjectUpdateResult.FAILED
+        }
+    }
+    
+    /**
+     * Проверяет доступность проекта для автообновления
+     */
+    fun checkProjectAvailability(): Pair<Boolean, String?> {
+        val projectPath = findProjectPath()
+        if (projectPath != null) {
+            val assetsFile = File(projectPath, "app/src/main/assets/attractions.json")
+            return Pair(assetsFile.exists(), projectPath)
+        }
+        return Pair(false, null)
+    }
+    
+    /**
+     * Находит путь к корню проекта для автоматического обновления
+     */
+    private fun findProjectPath(): String? {
+        return try {
+            // Попробуем найти проект через различные возможные пути
+            val possiblePaths = listOf(
+                // Windows пути (если запускается на эмуляторе с доступом к хост-системе)
+                "C:\\Users\\moroz\\Desktop\\AdyhyesKOTLIN",
+                "/storage/emulated/0/AdyhyesKOTLIN",
+                "/sdcard/AdyhyesKOTLIN", 
+                "${Environment.getExternalStorageDirectory()}/AdyhyesKOTLIN",
+                "${Environment.getExternalStorageDirectory()}/Desktop/AdyhyesKOTLIN",
+                // Дополнительные пути для разных конфигураций
+                "${Environment.getExternalStorageDirectory()}/Documents/AdyhyesKOTLIN",
+                "${Environment.getExternalStorageDirectory()}/Download/AdyhyesKOTLIN"
+            )
+            
+            for (path in possiblePaths) {
+                val projectDir = File(path)
+                val assetsFile = File(projectDir, "app/src/main/assets/attractions.json")
+                if (assetsFile.exists()) {
+                    Timber.d("✅ Found project at: $path")
+                    return path
+                }
+            }
+            
+            // Если не нашли, попробуем поискать рекурсивно в корневых папках
+            val rootDirs = listOf(
+                Environment.getExternalStorageDirectory(),
+                File("/storage/emulated/0"),
+                File("/sdcard")
+            )
+            
+            for (rootDir in rootDirs) {
+                val foundPath = searchForProject(rootDir, "AdyhyesKOTLIN", 3) // максимум 3 уровня вглубь
+                if (foundPath != null) {
+                    Timber.d("✅ Found project recursively at: $foundPath")
+                    return foundPath
+                }
+            }
+            
+            null
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Error finding project path")
+            null
+        }
+    }
+    
+    /**
+     * Рекурсивный поиск проекта
+     */
+    private fun searchForProject(dir: File, projectName: String, maxDepth: Int): String? {
+        if (maxDepth <= 0 || !dir.exists() || !dir.isDirectory) return null
+        
+        try {
+            // Проверяем текущую папку
+            if (dir.name == projectName) {
+                val assetsFile = File(dir, "app/src/main/assets/attractions.json")
+                if (assetsFile.exists()) {
+                    return dir.absolutePath
+                }
+            }
+            
+            // Ищем в подпапках
+            dir.listFiles()?.forEach { subDir ->
+                if (subDir.isDirectory && !subDir.name.startsWith(".")) {
+                    val found = searchForProject(subDir, projectName, maxDepth - 1)
+                    if (found != null) return found
+                }
+            }
+        } catch (e: Exception) {
+            // Игнорируем ошибки доступа к папкам
+        }
+        
+        return null
     }
     
     /**
@@ -141,7 +273,8 @@ class JsonFileManager @Inject constructor(
                 lastUpdated = java.time.LocalDate.now().toString()
             )
             
-            writeAttractions(updated)
+            val result = writeAttractions(updated)
+            result != ProjectUpdateResult.FAILED
         } catch (e: Exception) {
             Timber.e(e, "❌ Failed to add attraction")
             false
@@ -162,7 +295,8 @@ class JsonFileManager @Inject constructor(
                 lastUpdated = java.time.LocalDate.now().toString()
             )
             
-            writeAttractions(updated)
+            val result = writeAttractions(updated)
+            result != ProjectUpdateResult.FAILED
         } catch (e: Exception) {
             Timber.e(e, "❌ Failed to update attraction")
             false
@@ -181,7 +315,8 @@ class JsonFileManager @Inject constructor(
                 lastUpdated = java.time.LocalDate.now().toString()
             )
             
-            writeAttractions(updated)
+            val result = writeAttractions(updated)
+            result != ProjectUpdateResult.FAILED
         } catch (e: Exception) {
             Timber.e(e, "❌ Failed to delete attraction")
             false

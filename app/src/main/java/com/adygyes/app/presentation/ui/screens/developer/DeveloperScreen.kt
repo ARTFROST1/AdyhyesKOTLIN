@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -138,7 +139,9 @@ fun DeveloperScreen(
                     // Stats Card
                     item {
                         StatsCard(
-                            attractionsCount = attractions.size
+                            attractionsCount = attractions.size,
+                            autoSaveStatus = uiState.autoSaveStatus,
+                            projectPath = uiState.projectPath
                         )
                     }
                     
@@ -276,31 +279,46 @@ fun DeveloperScreen(
 
 @Composable
 private fun StatsCard(
-    attractionsCount: Int
+    attractionsCount: Int,
+    autoSaveStatus: com.adygyes.app.presentation.viewmodel.DeveloperViewModel.AutoSaveStatus,
+    projectPath: String?
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Dimensions.PaddingLarge, vertical = Dimensions.PaddingSmall)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimensions.PaddingMedium),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(Dimensions.PaddingMedium)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = attractionsCount.toString(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Total Attractions",
-                    style = MaterialTheme.typography.bodySmall
-                )
+            // Основная статистика
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = attractionsCount.toString(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Total Attractions",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Статус автосохранения
+            AutoSaveStatusIndicator(
+                status = autoSaveStatus,
+                projectPath = projectPath
+            )
         }
     }
 }
@@ -468,5 +486,78 @@ private fun getCategoryIcon(category: String): androidx.compose.ui.graphics.vect
         "RELIGIOUS" -> Icons.Default.AccountBalance
         "ENTERTAINMENT" -> Icons.Default.Celebration
         else -> Icons.Default.Place
+    }
+}
+
+@Composable
+private fun AutoSaveStatusIndicator(
+    status: com.adygyes.app.presentation.viewmodel.DeveloperViewModel.AutoSaveStatus,
+    projectPath: String?
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val (icon, text, color) = when (status) {
+            com.adygyes.app.presentation.viewmodel.DeveloperViewModel.AutoSaveStatus.IDLE -> {
+                Triple(
+                    Icons.Default.CheckCircle,
+                    "Auto-save: Ready",
+                    MaterialTheme.colorScheme.primary
+                )
+            }
+            com.adygyes.app.presentation.viewmodel.DeveloperViewModel.AutoSaveStatus.SAVING -> {
+                Triple(
+                    Icons.Default.Sync,
+                    "Auto-save: Saving...",
+                    MaterialTheme.colorScheme.primary
+                )
+            }
+            com.adygyes.app.presentation.viewmodel.DeveloperViewModel.AutoSaveStatus.SUCCESS -> {
+                Triple(
+                    Icons.Default.CheckCircle,
+                    "Auto-save: Saved to project",
+                    Color(0xFF4CAF50)
+                )
+            }
+            com.adygyes.app.presentation.viewmodel.DeveloperViewModel.AutoSaveStatus.FAILED -> {
+                Triple(
+                    Icons.Default.Error,
+                    "Auto-save: Failed",
+                    MaterialTheme.colorScheme.error
+                )
+            }
+            com.adygyes.app.presentation.viewmodel.DeveloperViewModel.AutoSaveStatus.PROJECT_NOT_FOUND -> {
+                Triple(
+                    Icons.Default.Warning,
+                    "Auto-save: Project not found",
+                    MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(16.dp)
+        )
+        
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = color
+        )
+        
+        if (projectPath != null) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "• ${projectPath.substringAfterLast("/")}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }

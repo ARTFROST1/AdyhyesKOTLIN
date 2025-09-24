@@ -39,6 +39,7 @@ class DeveloperViewModel @Inject constructor(
     init {
         initializeJsonManager()
         loadAttractions()
+        checkProjectStatus()
     }
     
     private fun initializeJsonManager() {
@@ -51,6 +52,21 @@ class DeveloperViewModel @Inject constructor(
         viewModelScope.launch {
             attractions.collect { list ->
                 _uiState.update { it.copy(attractionsCount = list.size) }
+            }
+        }
+    }
+    
+    /**
+     * Проверяет доступность проекта для автообновления
+     */
+    private fun checkProjectStatus() {
+        viewModelScope.launch {
+            val (isAvailable, projectPath) = jsonFileManager.checkProjectAvailability()
+            _uiState.update { 
+                it.copy(
+                    projectPath = projectPath,
+                    autoSaveStatus = if (isAvailable) AutoSaveStatus.IDLE else AutoSaveStatus.PROJECT_NOT_FOUND
+                )
             }
         }
     }
@@ -328,8 +344,18 @@ class DeveloperViewModel @Inject constructor(
     
     data class DeveloperUiState(
         val attractionsCount: Int = 0,
-        val isReloading: Boolean = false
+        val isReloading: Boolean = false,
+        val autoSaveStatus: AutoSaveStatus = AutoSaveStatus.IDLE,
+        val projectPath: String? = null
     )
+    
+    enum class AutoSaveStatus {
+        IDLE,           // Нет активности
+        SAVING,         // Сохранение в процессе
+        SUCCESS,        // Успешно сохранено в проект
+        FAILED,         // Ошибка сохранения
+        PROJECT_NOT_FOUND // Проект не найден
+    }
     
     data class AttractionEditorState(
         val isLoading: Boolean = false,
