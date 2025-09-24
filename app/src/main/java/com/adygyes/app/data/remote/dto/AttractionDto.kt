@@ -27,28 +27,28 @@ data class AttractionDto(
     val longitude: Double,
     
     @SerialName("address")
-    val address: String?,
+    val address: String? = null,
     
     @SerialName("directions")
-    val directions: String?,
+    val directions: String? = null,
     
     @SerialName("images")
     val images: List<String> = emptyList(),
     
     @SerialName("rating")
-    val rating: Float?,
+    val rating: Float? = null,
     
     @SerialName("workingHours")
-    val workingHours: String?,
+    val workingHours: String? = null,
     
     @SerialName("phoneNumber")
-    val phoneNumber: String?,
+    val phoneNumber: String? = null,
     
     @SerialName("email")
-    val email: String?,
+    val email: String? = null,
     
     @SerialName("website")
-    val website: String?,
+    val website: String? = null,
     
     @SerialName("isFavorite")
     val isFavorite: Boolean = false,
@@ -57,7 +57,7 @@ data class AttractionDto(
     val tags: List<String> = emptyList(),
     
     @SerialName("priceInfo")
-    val priceInfo: String?,
+    val priceInfo: String? = null,
     
     @SerialName("amenities")
     val amenities: List<String> = emptyList()

@@ -2,10 +2,12 @@ package com.adygyes.app.data.repository
 
 import android.content.Context
 import com.adygyes.app.data.local.dao.AttractionDao
+import com.adygyes.app.data.local.JsonFileManager
 import com.adygyes.app.data.mapper.AttractionMapper.toDomainModel
 import com.adygyes.app.data.mapper.AttractionMapper.toDomainModels
 import com.adygyes.app.data.mapper.AttractionMapper.toEntitiesFromDto
 import com.adygyes.app.data.mapper.AttractionMapper.toEntity
+import com.adygyes.app.data.remote.dto.AttractionDto
 import com.adygyes.app.data.remote.dto.AttractionsResponse
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.domain.model.AttractionCategory
@@ -30,6 +32,8 @@ class AttractionRepositoryImpl @Inject constructor(
     private val json = Json { 
         ignoreUnknownKeys = true
         isLenient = true
+        coerceInputValues = true
+        encodeDefaults = false
     }
     
     override fun getAllAttractions(): Flow<List<Attraction>> {
@@ -205,6 +209,111 @@ class AttractionRepositoryImpl @Inject constructor(
                 tags = listOf("заповедник", "природа", "экотуризм"),
                 priceInfo = "Экскурсии от 800₽"
             )
+        )
+    }
+    
+    override suspend fun addAttraction(attraction: Attraction): Boolean {
+        return try {
+            // Add to database
+            attractionDao.insertAttraction(attraction.toEntity())
+            
+            // Also add to JSON file for persistence
+            val jsonManager = JsonFileManager(context)
+            val dto = attraction.toDto()
+            jsonManager.addAttraction(dto)
+            
+            Timber.d("✅ Added attraction: ${attraction.name}")
+            true
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to add attraction")
+            false
+        }
+    }
+    
+    override suspend fun updateAttraction(attraction: Attraction): Boolean {
+        return try {
+            // Update in database
+            attractionDao.updateAttraction(attraction.toEntity())
+            
+            // Also update in JSON file
+            val jsonManager = JsonFileManager(context)
+            val dto = attraction.toDto()
+            jsonManager.updateAttraction(dto)
+            
+            Timber.d("✅ Updated attraction: ${attraction.name}")
+            true
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to update attraction")
+            false
+        }
+    }
+    
+    override suspend fun deleteAttraction(attractionId: String): Boolean {
+        return try {
+            // Delete from database
+            attractionDao.deleteAttraction(attractionId)
+            
+            // Also delete from JSON file
+            val jsonManager = JsonFileManager(context)
+            jsonManager.deleteAttraction(attractionId)
+            
+            Timber.d("✅ Deleted attraction: $attractionId")
+            true
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to delete attraction")
+            false
+        }
+    }
+    
+    override suspend fun reloadFromJson(): Boolean {
+        return try {
+            // Clear database
+            attractionDao.deleteAll()
+            
+            // Reload from JSON
+            val jsonManager = JsonFileManager(context)
+            jsonManager.initializeEditableJson()
+            
+            val attractionsResponse = jsonManager.readAttractions()
+            if (attractionsResponse != null) {
+                val entities = attractionsResponse.attractions.toEntitiesFromDto()
+                attractionDao.insertAttractions(entities)
+                Timber.d("✅ Reloaded ${entities.size} attractions from JSON")
+                true
+            } else {
+                // Fallback to assets
+                loadInitialData()
+                true
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to reload from JSON")
+            false
+        }
+    }
+    
+    /**
+     * Extension function to convert Attraction to AttractionDto
+     */
+    private fun Attraction.toDto(): AttractionDto {
+        return AttractionDto(
+            id = id,
+            name = name,
+            description = description,
+            category = category.name,
+            latitude = location.latitude,
+            longitude = location.longitude,
+            address = location.address,
+            directions = location.directions,
+            images = images,
+            rating = rating,
+            workingHours = workingHours,
+            phoneNumber = contactInfo?.phone,
+            email = contactInfo?.email,
+            website = contactInfo?.website,
+            isFavorite = isFavorite,
+            tags = tags,
+            priceInfo = priceInfo,
+            amenities = amenities
         )
     }
 }

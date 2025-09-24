@@ -1,5 +1,8 @@
 # Project Structure Guide
 
+**Last Updated:** 2025-09-24  
+**Current Version:** Stage 9 Complete - Dual-Layer Marker System
+
 ## Project Directory Layout
 
 ```
@@ -7,47 +10,113 @@ AdyhyesKOTLIN/
 ├── app/
 │   ├── src/
 │   │   ├── main/
+│   │   │   ├── assets/                    # Static data files
+│   │   │   │   ├── attractions.json      # 10 real Adygea attractions
+│   │   │   │   └── geo_objects.json      # Geographic objects data
 │   │   │   ├── java/com/adygyes/app/
-│   │   │   │   ├── core/           # Core utilities and extensions
-│   │   │   │   │   ├── extensions/
-│   │   │   │   │   ├── utils/
-│   │   │   │   │   └── constants/
-│   │   │   │   ├── data/           # Data layer
-│   │   │   │   │   ├── local/      # Room DB, DAOs, local data sources
-│   │   │   │   │   │   ├── database/
-│   │   │   │   │   │   ├── dao/
-│   │   │   │   │   │   └── entities/
-│   │   │   │   │   ├── remote/     # API services, DTOs
-│   │   │   │   │   │   ├── api/
-│   │   │   │   │   │   └── dto/
-│   │   │   │   │   ├── repository/ # Repository implementations
-│   │   │   │   │   └── mapper/     # Data mappers
-│   │   │   │   ├── domain/         # Business logic
-│   │   │   │   │   ├── model/      # Domain models
-│   │   │   │   │   ├── repository/ # Repository interfaces
-│   │   │   │   │   └── usecase/    # Use cases
-│   │   │   │   ├── di/             # Dependency injection
-│   │   │   │   │   ├── module/
-│   │   │   │   │   └── qualifier/
-│   │   │   │   ├── presentation/   # UI layer
-│   │   │   │   │   ├── navigation/ # Navigation setup
-│   │   │   │   │   ├── theme/      # Theme, colors, typography
-│   │   │   │   │   ├── ui/         # Screens and components
+│   │   │   │   ├── data/                 # Data layer
+│   │   │   │   │   ├── local/            # Local data sources
+│   │   │   │   │   │   ├── cache/        # Cache management
+│   │   │   │   │   │   │   └── CacheManager.kt
+│   │   │   │   │   │   ├── dao/          # Room DAOs
+│   │   │   │   │   │   │   └── AttractionDao.kt
+│   │   │   │   │   │   ├── database/     # Room database
+│   │   │   │   │   │   │   └── AdygyesDatabase.kt
+│   │   │   │   │   │   ├── entities/     # Room entities
+│   │   │   │   │   │   │   └── AttractionEntity.kt
+│   │   │   │   │   │   └── preferences/  # DataStore preferences
+│   │   │   │   │   │       └── PreferencesManager.kt
+│   │   │   │   │   ├── remote/           # Remote data sources
+│   │   │   │   │   │   └── dto/          # Data transfer objects
+│   │   │   │   │   │       └── AttractionDto.kt
+│   │   │   │   │   ├── repository/       # Repository implementations
+│   │   │   │   │   │   └── AttractionRepositoryImpl.kt
+│   │   │   │   │   ├── mapper/           # Data mappers
+│   │   │   │   │   │   └── AttractionMapper.kt
+│   │   │   │   │   └── sync/             # Data synchronization
+│   │   │   │   │       └── DataSyncManager.kt
+│   │   │   │   ├── domain/               # Business logic
+│   │   │   │   │   ├── model/            # Domain models
+│   │   │   │   │   │   ├── Attraction.kt
+│   │   │   │   │   │   └── GeoObject.kt
+│   │   │   │   │   ├── repository/       # Repository interfaces
+│   │   │   │   │   │   └── AttractionRepository.kt
+│   │   │   │   │   └── usecase/          # Use cases
+│   │   │   │   │       ├── AttractionDisplayUseCase.kt
+│   │   │   │   │       ├── DataSyncUseCase.kt
+│   │   │   │   │       ├── GetLocationUseCase.kt
+│   │   │   │   │       ├── NavigationUseCase.kt
+│   │   │   │   │       ├── NetworkUseCase.kt
+│   │   │   │   │       └── ShareUseCase.kt
+│   │   │   │   ├── di/                   # Dependency injection
+│   │   │   │   │   └── module/
+│   │   │   │   │       ├── AppModule.kt
+│   │   │   │   │       └── DatabaseModule.kt
+│   │   │   │   ├── presentation/         # UI layer
+│   │   │   │   │   ├── navigation/       # Navigation setup
+│   │   │   │   │   │   ├── AdygyesNavHost.kt
+│   │   │   │   │   │   └── NavDestinations.kt
+│   │   │   │   │   ├── theme/            # Material Design 3 theme
+│   │   │   │   │   │   ├── Color.kt
+│   │   │   │   │   │   ├── Dimensions.kt
+│   │   │   │   │   │   ├── Shapes.kt
+│   │   │   │   │   │   ├── Theme.kt
+│   │   │   │   │   │   └── Typography.kt
+│   │   │   │   │   ├── ui/               # Screens and components
 │   │   │   │   │   │   ├── screens/
-│   │   │   │   │   │   │   ├── map/
-│   │   │   │   │   │   │   ├── detail/
-│   │   │   │   │   │   │   ├── favorites/
-│   │   │   │   │   │   │   ├── search/
-│   │   │   │   │   │   │   └── settings/
-│   │   │   │   │   │   └── components/
-│   │   │   │   │   └── viewmodel/  # ViewModels
-│   │   │   │   └── AdygyesApplication.kt  # Application class
+│   │   │   │   │   │   │   ├── map/      # Map screen with dual-layer markers
+│   │   │   │   │   │   │   │   ├── MapScreen.kt              # ⭐ MAIN UNIFIED SCREEN
+│   │   │   │   │   │   │   │   ├── MapScreenTablet.kt        # Tablet version
+│   │   │   │   │   │   │   │   ├── CategoryMarkerProvider.kt
+│   │   │   │   │   │   │   │   ├── GeoObjectProvider.kt
+│   │   │   │   │   │   │   │   ├── MapStyleProvider.kt
+│   │   │   │   │   │   │   │   ├── TextImageProvider.kt
+│   │   │   │   │   │   │   │   ├── WaypointMarkerProvider.kt
+│   │   │   │   │   │   │   │   └── markers/                  # ⭐ DUAL-LAYER SYSTEM
+│   │   │   │   │   │   │   │       ├── DualLayerMarkerSystem.kt    # Main orchestrator
+│   │   │   │   │   │   │   │       ├── VisualMarkerProvider.kt     # Native markers
+│   │   │   │   │   │   │   │       ├── CircularImageMarker.kt      # Compose markers
+│   │   │   │   │   │   │   │       ├── MarkerOverlay.kt            # Positioning system
+│   │   │   │   │   │   │   │       ├── MapCoordinateConverter.kt   # Coordinate utils
+│   │   │   │   │   │   │   │       └── MarkerState.kt              # State management
+│   │   │   │   │   │   │   ├── detail/   # Attraction details
+│   │   │   │   │   │   │   │   └── AttractionDetailScreen.kt
+│   │   │   │   │   │   │   ├── favorites/ # Favorites management
+│   │   │   │   │   │   │   │   └── FavoritesScreen.kt
+│   │   │   │   │   │   │   ├── search/   # Search functionality
+│   │   │   │   │   │   │   │   └── SearchScreen.kt
+│   │   │   │   │   │   │   ├── settings/ # App settings
+│   │   │   │   │   │   │   │   └── SettingsScreen.kt
+│   │   │   │   │   │   │   └── onboarding/ # First launch
+│   │   │   │   │   │   │       └── OnboardingScreen.kt
+│   │   │   │   │   │   └── components/   # Reusable UI components
+│   │   │   │   │   │       ├── AccessibilityHelper.kt
+│   │   │   │   │   │       ├── AdygyesBottomNavigation.kt  # ⭐ BOTTOM NAV
+│   │   │   │   │   │       ├── AttractionBottomSheet.kt
+│   │   │   │   │   │       ├── AttractionCard.kt
+│   │   │   │   │   │       ├── AttractionsList.kt
+│   │   │   │   │   │       ├── CategoryChip.kt
+│   │   │   │   │   │       ├── CategoryFilterBottomSheet.kt # ⭐ NEW
+│   │   │   │   │   │       ├── EmptyState.kt
+│   │   │   │   │   │       ├── HapticFeedback.kt
+│   │   │   │   │   │       ├── LoadingShimmer.kt
+│   │   │   │   │   │       ├── PhotoGallery.kt
+│   │   │   │   │   │       ├── RatingBar.kt
+│   │   │   │   │   │       └── SearchBar.kt
+│   │   │   │   │   └── viewmodel/        # ViewModels
+│   │   │   │   │       ├── AttractionDetailViewModel.kt
+│   │   │   │   │       ├── FavoritesViewModel.kt
+│   │   │   │   │       ├── MapViewModel.kt
+│   │   │   │   │       ├── SearchViewModel.kt
+│   │   │   │   │       └── SettingsViewModel.kt
+│   │   │   │   ├── AdygyesApplication.kt  # Application class
+│   │   │   │   └── MainActivity.kt        # Main activity
 │   │   │   └── res/
 │   │   │       ├── values/
 │   │   │       │   ├── strings.xml
 │   │   │       │   ├── colors.xml
 │   │   │       │   └── themes.xml
-│   │   │       ├── values-en/      # English translations
+│   │   │       ├── values-en/            # English translations
 │   │   │       ├── raw/            # JSON data files
 │   │   │       └── drawable/       # Icons and images
 │   │   ├── androidTest/            # Instrumented tests
@@ -58,6 +127,95 @@ AdyhyesKOTLIN/
 │   ├── wrapper/
 │   └── libs.versions.toml          # Version catalog
 ├── Docs/                           # Documentation
+│   ├── Implementation_Plan.md      # Development roadmap
+│   ├── AppMap_adygyes.md          # App flow and UI structure
+│   ├── project_structure.md       # This file
+│   ├── PRD_adygyes.md            # Product requirements
+│   ├── Bug_tracking.md           # Known issues and fixes
+│   ├── UI_UX_doc.md             # Design specifications
+│   └── Technical_Specs.md        # Technical specifications
+├── build.gradle.kts               # Project build configuration
+├── settings.gradle.kts            # Project settings
+├── gradle.properties             # Gradle properties
+├── API_SETUP.md                  # API configuration guide
+└── README.md                     # Project overview
+```
+
+## Key Architecture Patterns
+
+### 🏗️ **Clean Architecture Implementation**
+- **Domain Layer**: Business logic and entities
+- **Data Layer**: Repository pattern with local/remote data sources
+- **Presentation Layer**: MVVM with Compose UI
+
+### 🎯 **Key Features Implemented**
+
+#### ⭐ **Stage 9 Completed - Dual-Layer Marker System:**
+- **Revolutionary Architecture** - Native visual + Compose interactive layers
+- **100% Click Reliability** - Perfect marker tap handling with transparent overlay
+- **Zero Visual Lag** - Native MapKit rendering with hardware acceleration
+- **Full Map Interactivity** - Preserved pan, zoom, rotate functionality
+- **Production Ready** - Optimized performance with minimal overhead
+- **Bottom navigation** - Map/List toggle, Favorites, Settings
+- **Real-time search** - Debounced search with instant filtering
+- **Category filtering** - Bottom sheet with category selection
+
+#### 🗺️ **Map Features:**
+- **Yandex MapKit integration** - Interactive map with clustering
+- **Location services** - GPS positioning and permission handling
+- **Marker providers** - Category-based colored markers
+- **Geo-objects support** - Polygons and polylines for parks/trails
+
+#### 📱 **UI Components:**
+- **Material Design 3** - Modern theming and components
+- **Responsive design** - Tablet support with MapScreenTablet.kt
+- **Accessibility** - Screen reader and haptic feedback support
+- **Animations** - Smooth transitions and loading states
+
+#### 💾 **Data Management:**
+- **Room Database** - Local data persistence
+- **DataStore** - User preferences storage
+- **JSON Assets** - 10 real Adygea attractions data
+- **Cache management** - Offline-first architecture
+
+## Development Guidelines
+
+### 📋 **Code Organization**
+- Each screen has its own package under `ui/screens/`
+- Reusable components in `ui/components/`
+- ViewModels follow MVVM pattern with StateFlow
+- Use cases encapsulate business logic
+
+### 🔧 **Dependencies**
+- **Jetpack Compose** - Modern UI toolkit
+- **Hilt** - Dependency injection
+- **Room** - Local database
+- **Yandex MapKit** - Map functionality
+- **Accompanist** - Compose utilities
+
+### 🎨 **UI Standards**
+- Material Design 3 components
+- Consistent spacing using Dimensions.kt
+- Dark/Light theme support
+- Russian/English localization
+
+## Recent Changes (Stage 8)
+
+### ✅ **MapScreen Unification:**
+- Merged 6 different MapScreen files into single unified version
+- Removed: MapScreenReliable, MapScreenWithBottomNav, MapScreenEnhanced, etc.
+- Kept: MapScreen.kt (main), MapScreenTablet.kt (tablet support)
+
+### ✅ **New Components Added:**
+- `CategoryFilterBottomSheet.kt` - Category filtering UI
+- Enhanced `AdygyesBottomNavigation.kt` - Bottom navigation bar
+- Improved marker tap handling with userData validation
+
+### ✅ **Architecture Improvements:**
+- Edge-to-edge display support with WindowInsets
+- Proper MapKit lifecycle management
+- Reliable state management with debug logging
+- Optimized marker updates to prevent unnecessary recreation
 │   ├── Implementation_Plan.md
 │   ├── TechStack_Complete_Guide.md
 │   ├── project_structure.md

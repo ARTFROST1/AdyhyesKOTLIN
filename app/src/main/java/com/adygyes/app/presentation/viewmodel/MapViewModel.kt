@@ -12,6 +12,8 @@ import com.adygyes.app.domain.usecase.NetworkUseCase
 import com.adygyes.app.domain.usecase.AttractionDisplayUseCase
 import com.adygyes.app.domain.usecase.SortCriteria
 import com.adygyes.app.domain.usecase.NetworkStatus
+import com.adygyes.app.presentation.ui.map.markers.MarkerOverlayState
+import com.adygyes.app.presentation.ui.map.markers.MarkerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,6 +22,7 @@ import javax.inject.Inject
 
 /**
  * ViewModel for the Map screen
+ * Enhanced with new marker overlay system for 100% reliable clicks
  */
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -34,11 +37,51 @@ class MapViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
     
+    // New marker overlay state for the improved marker system
+    private val _markerOverlayState = MutableStateFlow(MarkerOverlayState())
+    val markerOverlayState: StateFlow<MarkerOverlayState> = _markerOverlayState.asStateFlow()
+    
     private val _attractions = MutableStateFlow<List<Attraction>>(emptyList())
     val attractions: StateFlow<List<Attraction>> = _attractions.asStateFlow()
     
     private val _selectedAttraction = MutableStateFlow<Attraction?>(null)
     val selectedAttraction: StateFlow<Attraction?> = _selectedAttraction.asStateFlow()
+    
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    
+    private val _selectedCategories = MutableStateFlow<Set<AttractionCategory>>(emptySet())
+    val selectedCategories: StateFlow<Set<AttractionCategory>> = _selectedCategories.asStateFlow()
+    
+    val filteredAttractions: StateFlow<List<Attraction>> = combine(
+        _attractions,
+        _searchQuery,
+        _selectedCategories
+    ) { attractions, query, categories ->
+        var filtered = attractions
+        
+        // Apply search filter
+        if (query.isNotEmpty()) {
+            filtered = filtered.filter { attraction ->
+                attraction.name.contains(query, ignoreCase = true) ||
+                attraction.description.contains(query, ignoreCase = true) ||
+                attraction.tags.any { it.contains(query, ignoreCase = true) }
+            }
+        }
+        
+        // Apply category filter
+        if (categories.isNotEmpty()) {
+            filtered = filtered.filter { attraction ->
+                categories.contains(attraction.category)
+            }
+        }
+        
+        filtered
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
     
     init {
         loadAttractions()
@@ -86,6 +129,7 @@ class MapViewModel @Inject constructor(
     }
     
     fun selectAttraction(attraction: Attraction) {
+        Timber.d("Selecting attraction: ${attraction.name}")
         _selectedAttraction.value = attraction
         _uiState.update { it.copy(showAttractionDetail = true) }
     }
@@ -250,6 +294,83 @@ class MapViewModel @Inject constructor(
                 }
             }
         }
+    }
+    
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+    
+    fun search() {
+        // Filtering is done automatically through the filteredAttractions flow
+        Timber.d("Searching with query: ${_searchQuery.value}")
+    }
+    
+    fun toggleCategory(category: AttractionCategory) {
+        _selectedCategories.update { categories ->
+            if (categories.contains(category)) {
+                categories - category
+            } else {
+                categories + category
+            }
+        }
+    }
+    
+    fun clearFilters() {
+        _selectedCategories.value = emptySet()
+    }
+    
+    fun clearSelection() {
+        Timber.d("Clearing attraction selection")
+        _selectedAttraction.value = null
+        _uiState.update { it.copy(showAttractionDetail = false) }
+    }
+    
+    fun navigateToAttractionById(attractionId: String) {
+        val attraction = _attractions.value.find { it.id == attractionId }
+        attraction?.let { navigateToAttraction(it) }
+    }
+    
+    fun shareAttractionById(attractionId: String) {
+        val attraction = _attractions.value.find { it.id == attractionId }
+        attraction?.let { shareAttraction(it) }
+    }
+    
+    /**
+     * Update marker positions for the new overlay system
+     * Called when the map camera moves
+     */
+    fun updateMarkerPositions() {
+        viewModelScope.launch {
+            val updatedMarkers = filteredAttractions.value.map { attraction ->
+                MarkerState(
+                    attraction = attraction,
+                    screenPosition = null, // Will be calculated in MarkerOverlay
+                    isVisible = true,
+                    isSelected = attraction.id == _selectedAttraction.value?.id,
+                    isLoading = false,
+                    imageUrl = attraction.images.firstOrNull()
+                )
+            }
+            
+            _markerOverlayState.update { state ->
+                state.copy(
+                    markers = updatedMarkers,
+                    selectedMarkerId = _selectedAttraction.value?.id,
+                    isUpdating = false
+                )
+            }
+            
+            Timber.d("📍 Updated ${updatedMarkers.size} marker positions")
+        }
+    }
+    
+    /**
+     * Handle marker click from the new overlay system
+     * This provides 100% reliable click detection
+     */
+    fun onMarkerClick(attraction: Attraction) {
+        Timber.d("✅ Marker clicked via overlay: ${attraction.name}")
+        selectAttraction(attraction)
     }
 }
 

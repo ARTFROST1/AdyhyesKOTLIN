@@ -40,8 +40,14 @@ interface AttractionDao {
     @Delete
     suspend fun deleteAttraction(attraction: AttractionEntity)
     
+    @Query("DELETE FROM attractions WHERE id = :attractionId")
+    suspend fun deleteAttraction(attractionId: String)
+    
     @Query("DELETE FROM attractions")
     suspend fun deleteAllAttractions()
+    
+    @Query("DELETE FROM attractions")
+    suspend fun deleteAll()
     
     @Query("SELECT COUNT(*) FROM attractions")
     suspend fun getAttractionsCount(): Int
