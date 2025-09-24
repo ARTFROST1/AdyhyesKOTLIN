@@ -251,6 +251,7 @@ class VisualMarkerProvider(
         
         val paint = Paint().apply {
             isAntiAlias = true
+            alpha = 255 // Full opacity
         }
         
         val centerX = sizePx / 2f
@@ -269,8 +270,9 @@ class VisualMarkerProvider(
         }
         canvas.clipPath(path)
         
-        // Draw scaled image
+        // Draw scaled image with full opacity
         val scaledBitmap = Bitmap.createScaledBitmap(bitmap, sizePx, sizePx, true)
+        paint.alpha = 255 // Ensure full opacity
         canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
         
         // Draw border
