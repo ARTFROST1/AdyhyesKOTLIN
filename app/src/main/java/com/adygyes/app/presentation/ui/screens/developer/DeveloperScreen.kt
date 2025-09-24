@@ -1,5 +1,6 @@
 package com.adygyes.app.presentation.ui.screens.developer
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.Icons.Default
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +34,8 @@ fun DeveloperScreen(
     onNavigateToEditor: (String?) -> Unit,
     viewModel: DeveloperViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val attractions by viewModel.attractions.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -39,6 +44,7 @@ fun DeveloperScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var attractionToDelete by remember { mutableStateOf<Attraction?>(null) }
     var showResetDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
     
     LaunchedEffect(Unit) {
         viewModel.operationResult.collectLatest { result ->
@@ -70,6 +76,20 @@ fun DeveloperScreen(
                     }
                 },
                 actions = {
+                    // Copy to Clipboard
+                    IconButton(
+                        onClick = { viewModel.getJsonForClipboard(clipboardManager) }
+                    ) {
+                        Icon(Icons.Outlined.ContentCopy, contentDescription = "Copy to Clipboard")
+                    }
+                    
+                    // Export to Downloads
+                    IconButton(
+                        onClick = { showExportDialog = true }
+                    ) {
+                        Icon(Icons.Outlined.FileDownload, contentDescription = "Export Options")
+                    }
+                    
                     // Reload from JSON
                     IconButton(
                         onClick = { viewModel.reloadFromJson() },
@@ -204,6 +224,49 @@ fun DeveloperScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Export Dialog
+    if (showExportDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            title = { Text("Export JSON Data") },
+            text = {
+                Column {
+                    Text("Choose how to export your custom attractions data:")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "• Copy to Clipboard - Paste into attractions.json",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "• Save to Downloads - Find file and copy to project",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Important: Replace app/src/main/assets/attractions.json with the exported data to make changes permanent in your project.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.exportToDownloads()
+                        showExportDialog = false
+                    }
+                ) {
+                    Text("Save to Downloads")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExportDialog = false }) {
                     Text("Cancel")
                 }
             }

@@ -13,6 +13,11 @@
     <!-- Haptic feedback permission -->
     <uses-permission android:name="android.permission.VIBRATE" />
     
+    <!-- Storage permissions for exporting JSON -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
     <application
         android:name="com.adygyes.app.AdygyesApplication"
         android:allowBackup="true"
