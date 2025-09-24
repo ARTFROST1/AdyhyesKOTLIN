@@ -1,6 +1,7 @@
 package com.adygyes.app.data.local
 
 import android.content.Context
+import android.os.Environment
 import com.adygyes.app.data.remote.dto.AttractionsResponse
 import com.adygyes.app.data.remote.dto.AttractionDto
 import kotlinx.serialization.json.Json
@@ -18,6 +19,11 @@ import javax.inject.Singleton
 class JsonFileManager @Inject constructor(
     private val context: Context
 ) {
+    companion object {
+        private const val PREFS_NAME = "adygyes_developer_prefs"
+        private const val KEY_CUSTOM_JSON = "custom_attractions_json"
+        private const val KEY_USE_CUSTOM = "use_custom_json"
+    }
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
@@ -34,7 +40,20 @@ class JsonFileManager @Inject constructor(
      */
     suspend fun initializeEditableJson() {
         try {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val useCustom = prefs.getBoolean(KEY_USE_CUSTOM, false)
+            
             if (!internalJsonFile.exists()) {
+                if (useCustom) {
+                    // Try to restore from SharedPreferences
+                    val savedJson = prefs.getString(KEY_CUSTOM_JSON, null)
+                    if (savedJson != null) {
+                        internalJsonFile.writeText(savedJson)
+                        Timber.d("✅ Restored custom JSON from preferences")
+                        return
+                    }
+                }
+                
                 // Copy from assets to internal storage
                 val assetJson = context.assets.open("attractions.json")
                     .bufferedReader()
@@ -76,11 +95,31 @@ class JsonFileManager @Inject constructor(
         return try {
             val jsonString = json.encodeToString(attractionsResponse)
             internalJsonFile.writeText(jsonString)
+            
+            // Also save to SharedPreferences for persistence
+            saveToPreferences(jsonString)
+            
             Timber.d("✅ Successfully wrote ${attractionsResponse.attractions.size} attractions to JSON")
             true
         } catch (e: Exception) {
             Timber.e(e, "❌ Failed to write attractions JSON")
             false
+        }
+    }
+    
+    /**
+     * Save JSON to SharedPreferences for persistence across app reinstalls
+     */
+    private fun saveToPreferences(jsonString: String) {
+        try {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.edit()
+                .putString(KEY_CUSTOM_JSON, jsonString)
+                .putBoolean(KEY_USE_CUSTOM, true)
+                .apply()
+            Timber.d("✅ Saved JSON to SharedPreferences for persistence")
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to save to SharedPreferences")
         }
     }
     
@@ -172,6 +211,59 @@ class JsonFileManager @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "❌ Failed to reset JSON")
             false
+        }
+    }
+    
+    /**
+     * Export JSON to Downloads folder for manual copying to project
+     * Returns the file path if successful, null otherwise
+     */
+    fun exportToDownloads(): String? {
+        return try {
+            val attractions = readAttractions() ?: return null
+            val jsonString = json.encodeToString(attractions)
+            
+            // Save to Downloads folder
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val exportFile = File(downloadsDir, "attractions_export_${System.currentTimeMillis()}.json")
+            exportFile.writeText(jsonString)
+            
+            Timber.d("✅ Exported attractions to: ${exportFile.absolutePath}")
+            exportFile.absolutePath
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to export JSON")
+            null
+        }
+    }
+    
+    /**
+     * Get the formatted JSON string for display or sharing
+     */
+    fun getJsonString(): String? {
+        return try {
+            val attractions = readAttractions() ?: return null
+            json.encodeToString(attractions)
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to get JSON string")
+            null
+        }
+    }
+    
+    /**
+     * Copy JSON to clipboard-friendly format
+     */
+    fun getClipboardJson(): String? {
+        return try {
+            val attractions = readAttractions() ?: return null
+            // Create compact version for clipboard
+            val compactJson = Json {
+                prettyPrint = true
+                ignoreUnknownKeys = true
+            }
+            compactJson.encodeToString(attractions)
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to get clipboard JSON")
+            null
         }
     }
 }

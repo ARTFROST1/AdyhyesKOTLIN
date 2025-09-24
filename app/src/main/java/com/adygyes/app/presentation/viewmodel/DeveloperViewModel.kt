@@ -280,6 +280,44 @@ class DeveloperViewModel @Inject constructor(
     }
     
     /**
+     * Export JSON to Downloads folder for manual copying to project
+     */
+    fun exportToDownloads() {
+        viewModelScope.launch {
+            val filePath = jsonFileManager.exportToDownloads()
+            if (filePath != null) {
+                _operationResult.emit(
+                    OperationResult.Success("JSON exported to:\n$filePath\n\nCopy this file to app/src/main/assets/attractions.json in your project")
+                )
+            } else {
+                _operationResult.emit(
+                    OperationResult.Error("Failed to export JSON")
+                )
+            }
+        }
+    }
+    
+    /**
+     * Get JSON string for sharing or copying
+     */
+    fun getJsonForClipboard(clipboardManager: android.content.ClipboardManager) {
+        viewModelScope.launch {
+            val jsonString = jsonFileManager.getClipboardJson()
+            if (jsonString != null) {
+                val clip = android.content.ClipData.newPlainText("attractions.json", jsonString)
+                clipboardManager.setPrimaryClip(clip)
+                _operationResult.emit(
+                    OperationResult.Success("JSON copied to clipboard! Paste it into app/src/main/assets/attractions.json")
+                )
+            } else {
+                _operationResult.emit(
+                    OperationResult.Error("Failed to get JSON for clipboard")
+                )
+            }
+        }
+    }
+    
+    /**
      * Validate image URL
      */
     fun validateImageUrl(url: String): Boolean {
