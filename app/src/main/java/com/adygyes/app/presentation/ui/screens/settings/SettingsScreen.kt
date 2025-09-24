@@ -27,15 +27,13 @@ import com.adygyes.app.presentation.viewmodel.SettingsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: (() -> Unit)? = null,
-    onAboutClick: () -> Unit,
-    onPrivacyClick: () -> Unit,
-    onTermsClick: () -> Unit,
-    onDeveloperModeClick: () -> Unit = {},
+    onNavigateBack: () -> Unit,
+    onNavigateToAbout: () -> Unit,
+    onNavigateToPrivacy: () -> Unit,
+    onNavigateToTerms: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val developerModeEnabled by viewModel.developerModeEnabled.collectAsStateWithLifecycle()
     val context = LocalContext.current
     
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -212,7 +210,7 @@ fun SettingsScreen(
                     subtitle = "Version ${uiState.appVersion}",
                     onClick = {
                         viewModel.onVersionClick()
-                        onAboutClick()
+                        onNavigateToAbout()
                     }
                 )
             }
@@ -222,7 +220,7 @@ fun SettingsScreen(
                     icon = Icons.Default.PrivacyTip,
                     title = "Privacy Policy",
                     subtitle = "Learn how we protect your data",
-                    onClick = onPrivacyClick
+                    onClick = onNavigateToPrivacy
                 )
             }
             
@@ -231,7 +229,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Article,
                     title = "Terms of Service",
                     subtitle = "Read our terms and conditions",
-                    onClick = onTermsClick
+                    onClick = onNavigateToTerms
                 )
             }
             
@@ -251,26 +249,6 @@ fun SettingsScreen(
                     subtitle = "Recommend Adygyes to friends",
                     onClick = { /* Share app link */ }
                 )
-            }
-            
-            // Developer Mode Section (only visible when enabled)
-            if (developerModeEnabled) {
-                item {
-                    Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
-                }
-                
-                item {
-                    SettingsSectionHeader(title = "Developer Mode")
-                }
-                
-                item {
-                    SettingsItem(
-                        icon = Icons.Default.Code,
-                        title = "Developer Tools",
-                        subtitle = "Manage attractions and data",
-                        onClick = onDeveloperModeClick
-                    )
-                }
             }
             
             item {

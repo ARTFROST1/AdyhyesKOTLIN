@@ -91,10 +91,9 @@ class MapViewModel @Inject constructor(
     private fun checkAndLoadInitialData() {
         viewModelScope.launch {
             try {
-                if (!attractionRepository.isDataLoaded()) {
-                    Timber.d("Loading initial data...")
-                    attractionRepository.loadInitialData()
-                }
+                // Always call loadInitialData() - it now handles version checking internally
+                Timber.d("Checking data version and loading if needed...")
+                attractionRepository.loadInitialData()
             } catch (e: Exception) {
                 Timber.e(e, "Error loading initial data")
             }

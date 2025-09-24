@@ -29,9 +29,6 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
     
-    private var developerModeClickCount = 0
-    private val _developerModeEnabled = MutableStateFlow(true) // Временно включен для разработки
-    val developerModeEnabled: StateFlow<Boolean> = _developerModeEnabled.asStateFlow()
     
     private val _syncProgress = MutableStateFlow<SyncProgress?>(null)
     val syncProgress: StateFlow<SyncProgress?> = _syncProgress.asStateFlow()
@@ -185,14 +182,10 @@ class SettingsViewModel @Inject constructor(
     }
     
     /**
-     * Handle version click for developer mode activation
+     * Handle version click
      */
     fun onVersionClick() {
-        developerModeClickCount++
-        if (developerModeClickCount >= 7) {
-            _developerModeEnabled.value = true
-            developerModeClickCount = 0
-        }
+        // Просто обработка клика по версии
     }
     
     enum class Theme(val displayName: String) {

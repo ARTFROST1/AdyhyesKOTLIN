@@ -50,9 +50,10 @@ object DatabaseModule {
     @Singleton
     fun provideAttractionRepository(
         attractionDao: AttractionDao,
+        preferencesManager: PreferencesManager,
         @ApplicationContext context: Context
     ): AttractionRepository {
-        return AttractionRepositoryImpl(attractionDao, context)
+        return AttractionRepositoryImpl(attractionDao, preferencesManager, context)
     }
     
     @Provides

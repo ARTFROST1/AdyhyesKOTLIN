@@ -3,6 +3,7 @@ package com.adygyes.app.data.repository
 import android.content.Context
 import com.adygyes.app.data.local.dao.AttractionDao
 import com.adygyes.app.data.local.JsonFileManager
+import com.adygyes.app.data.local.preferences.PreferencesManager
 import com.adygyes.app.data.mapper.AttractionMapper.toDomainModel
 import com.adygyes.app.data.mapper.AttractionMapper.toDomainModels
 import com.adygyes.app.data.mapper.AttractionMapper.toEntitiesFromDto
@@ -14,6 +15,7 @@ import com.adygyes.app.domain.model.AttractionCategory
 import com.adygyes.app.domain.repository.AttractionRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -26,6 +28,7 @@ import javax.inject.Singleton
 @Singleton
 class AttractionRepositoryImpl @Inject constructor(
     private val attractionDao: AttractionDao,
+    private val preferencesManager: PreferencesManager,
     @ApplicationContext private val context: Context
 ) : AttractionRepository {
     
@@ -66,25 +69,21 @@ class AttractionRepositoryImpl @Inject constructor(
     
     override suspend fun loadInitialData() {
         try {
-            // Check if data already exists
-            if (attractionDao.getAttractionsCount() > 0) {
-                Timber.d("Data already loaded, skipping initial load")
-                return
-            }
+            Timber.d("🔄 Starting loadInitialData() - checking version...")
             
             // Load from JSON file in assets
             val jsonString = try {
                 context.assets.open("attractions.json").bufferedReader().use { it.readText() }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to read attractions.json from assets")
+                Timber.e(e, "❌ Failed to read attractions.json from assets")
                 // Fallback to sample data if JSON file not found
                 loadSampleData()
                 return
             }
             
-            // Parse JSON and insert into database
-            Timber.d("Loading initial attraction data from JSON")
+            Timber.d("✅ Successfully read attractions.json from assets")
             
+            // Parse JSON to get version
             val attractionsResponse = try {
                 json.decodeFromString<AttractionsResponse>(jsonString)
             } catch (e: Exception) {
@@ -94,11 +93,52 @@ class AttractionRepositoryImpl @Inject constructor(
                 return
             }
             
-            // Convert DTOs to entities and insert into database
-            val entities = attractionsResponse.attractions.toEntitiesFromDto()
-            attractionDao.insertAttractions(entities)
+            // Get current data version from preferences
+            val currentVersion = preferencesManager.userPreferencesFlow.first().dataVersion
+            val jsonVersion = attractionsResponse.version
+            val hasData = attractionDao.getAttractionsCount() > 0
             
-            Timber.d("Initial data loaded: ${entities.size} attractions from JSON (version ${attractionsResponse.version})")
+            Timber.d("📊 Version check: stored='$currentVersion', json='$jsonVersion', hasData=$hasData")
+            
+            // Check if we need to update data
+            val needsUpdate = when {
+                !hasData -> {
+                    Timber.d("🆕 No data in database, loading initial data")
+                    true
+                }
+                currentVersion == null -> {
+                    Timber.d("🔄 No version stored, updating to version $jsonVersion")
+                    true
+                }
+                currentVersion != jsonVersion -> {
+                    Timber.d("🔄 Version mismatch: stored='$currentVersion', json='$jsonVersion'. Updating data...")
+                    true
+                }
+                else -> {
+                    Timber.d("✅ Data is up to date (version $currentVersion)")
+                    false
+                }
+            }
+            
+            Timber.d("🎯 Update decision: needsUpdate=$needsUpdate")
+            
+            if (needsUpdate) {
+                // Clear existing data and reload
+                Timber.d("Clearing existing data and reloading from JSON")
+                attractionDao.deleteAll()
+                
+                // Convert DTOs to entities and insert into database
+                val entities = attractionsResponse.attractions.toEntitiesFromDto()
+                attractionDao.insertAttractions(entities)
+                
+                // Update stored version
+                preferencesManager.updateDataVersion(jsonVersion)
+                
+                Timber.d("✅ Data updated: ${entities.size} attractions loaded (version $jsonVersion)")
+            } else {
+                Timber.d("✅ Data is current, no update needed")
+            }
+            
         } catch (e: Exception) {
             Timber.e(e, "Failed to load initial data")
             // Fallback to sample data
@@ -123,6 +163,47 @@ class AttractionRepositoryImpl @Inject constructor(
     
     override suspend fun isDataLoaded(): Boolean {
         return attractionDao.getAttractionsCount() > 0
+    }
+    
+    /**
+     * Force reload data from JSON file (ignores version check)
+     */
+    suspend fun forceReloadData(): Boolean {
+        return try {
+            Timber.d("🔄 Force reloading data from JSON...")
+            
+            // Load from JSON file in assets
+            val jsonString = try {
+                context.assets.open("attractions.json").bufferedReader().use { it.readText() }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to read attractions.json from assets")
+                return false
+            }
+            
+            // Parse JSON
+            val attractionsResponse = try {
+                json.decodeFromString<AttractionsResponse>(jsonString)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to parse attractions JSON")
+                return false
+            }
+            
+            // Clear existing data and reload
+            attractionDao.deleteAll()
+            
+            // Convert DTOs to entities and insert into database
+            val entities = attractionsResponse.attractions.toEntitiesFromDto()
+            attractionDao.insertAttractions(entities)
+            
+            // Update stored version
+            preferencesManager.updateDataVersion(attractionsResponse.version)
+            
+            Timber.d("✅ Force reload completed: ${entities.size} attractions loaded (version ${attractionsResponse.version})")
+            true
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Force reload failed")
+            false
+        }
     }
     
     /**
@@ -214,13 +295,8 @@ class AttractionRepositoryImpl @Inject constructor(
     
     override suspend fun addAttraction(attraction: Attraction): Boolean {
         return try {
-            // Add to database
+            // Add to database only - no JSON editing in simplified mode
             attractionDao.insertAttraction(attraction.toEntity())
-            
-            // Also add to JSON file for persistence
-            val jsonManager = JsonFileManager(context)
-            val dto = attraction.toDto()
-            jsonManager.addAttraction(dto)
             
             Timber.d("✅ Added attraction: ${attraction.name}")
             true
@@ -232,13 +308,8 @@ class AttractionRepositoryImpl @Inject constructor(
     
     override suspend fun updateAttraction(attraction: Attraction): Boolean {
         return try {
-            // Update in database
+            // Update in database only - no JSON editing in simplified mode
             attractionDao.updateAttraction(attraction.toEntity())
-            
-            // Also update in JSON file
-            val jsonManager = JsonFileManager(context)
-            val dto = attraction.toDto()
-            jsonManager.updateAttraction(dto)
             
             Timber.d("✅ Updated attraction: ${attraction.name}")
             true
@@ -250,12 +321,8 @@ class AttractionRepositoryImpl @Inject constructor(
     
     override suspend fun deleteAttraction(attractionId: String): Boolean {
         return try {
-            // Delete from database
+            // Delete from database only - no JSON editing in simplified mode
             attractionDao.deleteAttraction(attractionId)
-            
-            // Also delete from JSON file
-            val jsonManager = JsonFileManager(context)
-            jsonManager.deleteAttraction(attractionId)
             
             Timber.d("✅ Deleted attraction: $attractionId")
             true
