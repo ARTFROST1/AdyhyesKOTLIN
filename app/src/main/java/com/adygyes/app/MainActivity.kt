@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
@@ -26,6 +27,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.adygyes.app.data.local.locale.LocaleManager
 import com.adygyes.app.presentation.navigation.AdygyesNavHost
+import com.adygyes.app.presentation.ui.screens.map.MapHost
 import com.adygyes.app.presentation.theme.AdygyesTheme
 import com.adygyes.app.presentation.viewmodel.LocaleViewModel
 import com.adygyes.app.presentation.viewmodel.ThemeViewModel
@@ -145,9 +147,12 @@ fun AdygyesApp() {
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
-        AdygyesNavHost(
-            navController = navController,
-            paddingValues = PaddingValues(0.dp)
-        )
+        // MapHost now accepts content and provides LocalMapHostController to it
+        MapHost(modifier = Modifier.fillMaxSize()) {
+            AdygyesNavHost(
+                navController = navController,
+                paddingValues = PaddingValues(0.dp)
+            )
+        }
     }
 }

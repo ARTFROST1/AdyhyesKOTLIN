@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+// import removed: AndroidView no longer needed in overlay mode
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -44,7 +44,7 @@ import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
 import com.yandex.mapkit.mapview.MapView
-import com.yandex.mapkit.MapKitFactory
+// import removed: MapKitFactory lifecycle handled by MapHost
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,7 +70,8 @@ fun MapScreen(
     imageCacheViewModel: ImageCacheViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    var mapView by remember { mutableStateOf<MapView?>(null) }
+    // Get persistent MapView from MapHost
+    val mapView: MapView? = LocalMapHostController.current?.mapView
     
     // State collection
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -121,17 +122,7 @@ fun MapScreen(
         }
     }
     
-    // MapKit lifecycle management
-    DisposableEffect(Unit) {
-        Timber.d("🗺️ Initializing MapKit")
-        MapKitFactory.getInstance().onStart()
-        
-        onDispose {
-            Timber.d("🗺️ Disposing MapKit")
-            mapView?.onStop()
-            MapKitFactory.getInstance().onStop()
-        }
-    }
+    // MapKit lifecycle handled by MapHost now
     
     // Location permissions handling
     LaunchedEffect(locationPermissionsState) {
@@ -168,52 +159,11 @@ fun MapScreen(
         ) { mode ->
             when (mode) {
                 ViewMode.MAP -> {
-                    // CRITICAL: Box ensures proper layering
+                    // Overlay mode: Map is rendered by MapHost behind; here we render overlay click layer and ensure native markers rendered via DualLayerMarkerSystem
                     Box(modifier = Modifier.fillMaxSize()) {
-                        // Layer 1: Map View (bottom) - DISABLE TOUCH for markers to work
-                        AndroidView(
-                            factory = { ctx ->
-                                Timber.d("🗺️ Creating MapView")
-                                MapView(ctx).apply {
-                                    this.onStart()
-                                    mapView = this
-                                    
-                                    // Apply styles immediately
-                                    MapStyleProvider.applyMapStyle(this, isDarkTheme)
-                                    MapStyleProvider.configureMapInteraction(this)
-                                    
-                                    // Keep map interactive for pan/zoom
-                                    
-                                    // Initialize map position
-                                    this.map.move(
-                                        CameraPosition(Point(44.6098, 40.1006), 10.0f, 0.0f, 0.0f),
-                                        Animation(Animation.Type.SMOOTH, 2f),
-                                        null
-                                    )
-                                    
-                                    isMapReady = true
-                                    // Force marker update after map initialization
-                                    viewModel.updateMarkerPositions()
-                                    Timber.d("✅ Map initialized and ready, markers updated")
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                            update = { view ->
-                                // Store latest mapView reference for instant marker updates
-                                mapView = view
-                                // Force immediate recomposition on any map change
-                                viewModel.updateMarkerPositions()
-                            }
-                        )
-                        
-                        // Re-apply map style when theme changes
-                        LaunchedEffect(mapView, isDarkTheme) {
-                            mapView?.let { MapStyleProvider.applyMapStyle(it, isDarkTheme) }
-                        }
-                        
-                        // Layer 2: DUAL-LAYER MARKER SYSTEM (top)
-                        // Native markers for visual (perfect map binding)
-                        // Transparent overlays for clicks (100% reliability)
+                        // Ensure readiness based on persistent mapView availability
+                        isMapReady = mapView != null
+
                         if (mapView != null && isMapReady) {
                             DualLayerMarkerSystem(
                                 mapView = mapView,

@@ -34,6 +34,12 @@ class PreferencesManager @Inject constructor(
         private val KEY_NOTIFICATION_ENABLED = booleanPreferencesKey("notification_enabled")
         private val KEY_DATA_VERSION = stringPreferencesKey("data_version")
         private val KEY_LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
+        // Map camera state keys
+        private val KEY_CAMERA_LAT = doublePreferencesKey("camera_lat")
+        private val KEY_CAMERA_LON = doublePreferencesKey("camera_lon")
+        private val KEY_CAMERA_ZOOM = floatPreferencesKey("camera_zoom")
+        private val KEY_CAMERA_AZIMUTH = floatPreferencesKey("camera_azimuth")
+        private val KEY_CAMERA_TILT = floatPreferencesKey("camera_tilt")
     }
     
     /**
@@ -54,6 +60,17 @@ class PreferencesManager @Inject constructor(
         val dataVersion: String? = null,
         val lastSyncTime: Long = 0L
     )
+
+    /**
+     * Map camera preferences data class
+     */
+    data class CameraPreferences(
+        val lat: Double = 44.6098,
+        val lon: Double = 40.1006,
+        val zoom: Float = 10f,
+        val azimuth: Float = 0f,
+        val tilt: Float = 0f
+    )
     
     /**
      * Flow of user preferences
@@ -69,6 +86,28 @@ class PreferencesManager @Inject constructor(
         }
         .map { preferences ->
             mapUserPreferences(preferences)
+        }
+
+    /**
+     * Flow of map camera preferences
+     */
+    val cameraStateFlow: Flow<CameraPreferences> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                Timber.e(exception, "Error reading camera preferences")
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            CameraPreferences(
+                lat = preferences[KEY_CAMERA_LAT] ?: 44.6098,
+                lon = preferences[KEY_CAMERA_LON] ?: 40.1006,
+                zoom = preferences[KEY_CAMERA_ZOOM] ?: 10f,
+                azimuth = preferences[KEY_CAMERA_AZIMUTH] ?: 0f,
+                tilt = preferences[KEY_CAMERA_TILT] ?: 0f
+            )
         }
     
     /**
@@ -218,6 +257,25 @@ class PreferencesManager @Inject constructor(
     suspend fun updateLastSyncTime(timestamp: Long) {
         dataStore.edit { preferences ->
             preferences[KEY_LAST_SYNC_TIME] = timestamp
+        }
+    }
+
+    /**
+     * Update map camera state
+     */
+    suspend fun updateCameraState(
+        lat: Double,
+        lon: Double,
+        zoom: Float,
+        azimuth: Float,
+        tilt: Float
+    ) {
+        dataStore.edit { preferences ->
+            preferences[KEY_CAMERA_LAT] = lat
+            preferences[KEY_CAMERA_LON] = lon
+            preferences[KEY_CAMERA_ZOOM] = zoom
+            preferences[KEY_CAMERA_AZIMUTH] = azimuth
+            preferences[KEY_CAMERA_TILT] = tilt
         }
     }
     
