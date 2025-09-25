@@ -48,7 +48,7 @@
 14. **Favorites System** - Save and manage favorite places
 15. **Offline Favorites** - Access saved places without internet
 16. **Category Filtering** - Filter POIs by categories
-17. **Language Support** - Russian and English languages
+17. **Language Support** - ✅ **Полная локализация на русский язык** (весь интерфейс переведен), English language support (архитектура готова)
 18. **Dark Theme** - Support for dark mode
 
 #### Data Management:
@@ -528,7 +528,8 @@
 - ✅ Favorites system with offline access
 - ✅ Route building to attractions
 - ✅ Share functionality
-- ✅ Russian and English language support
+- ✅ **Полная локализация на русский язык** - весь интерфейс переведен и адаптирован
+- ✅ English language support (архитектура готова для будущего расширения)
 - ✅ Dark theme support
 - ✅ Offline data access for saved content
 
