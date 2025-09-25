@@ -273,7 +273,7 @@ private fun InfoRow(
     }
 }
 
-private fun formatDistance(distanceInMeters: Float): String {
+fun formatDistance(distanceInMeters: Float): String {
     return when {
         distanceInMeters < 1000 -> "${distanceInMeters.toInt()} m"
         else -> "%.1f km".format(distanceInMeters / 1000)

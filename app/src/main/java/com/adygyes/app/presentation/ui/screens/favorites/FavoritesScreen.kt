@@ -235,7 +235,8 @@ private fun FavoritesGridView(
                 attraction = attraction,
                 onClick = { onAttractionClick(attraction.id) },
                 onFavoriteClick = { onRemoveFavorite(attraction.id) },
-                modifier = Modifier.animateItem()
+                modifier = Modifier.animateItem(),
+                compactForFavorites = true
             )
         }
     }

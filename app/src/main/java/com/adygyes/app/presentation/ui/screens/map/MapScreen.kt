@@ -257,12 +257,12 @@ fun MapScreen(
                     .align(Alignment.BottomEnd)
                     .padding(Dimensions.SpacingMedium)
                     .padding(bottom = 80.dp), // Space for bottom nav
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
                     imageVector = Icons.Default.MyLocation,
                     contentDescription = stringResource(R.string.my_location),
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adygyes.app.R
@@ -144,18 +145,18 @@ fun AttractionDetailScreen(
                             // Title and category
                             Text(
                                 text = attraction.name,
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             
                             Spacer(modifier = Modifier.height(8.dp))
                             
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 CategoryChip(category = attraction.category)
-                                
                                 attraction.rating?.let { rating ->
                                     RatingBar(
                                         rating = rating,

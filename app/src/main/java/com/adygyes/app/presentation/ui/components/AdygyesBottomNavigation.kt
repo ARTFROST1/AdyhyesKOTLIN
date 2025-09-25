@@ -2,6 +2,7 @@ package com.adygyes.app.presentation.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -41,18 +42,27 @@ fun AdygyesBottomNavigation(
                             .togetherWith(scaleOut(animationSpec = tween(90)) + fadeOut(animationSpec = tween(90)))
                     }
                 ) { mode ->
-                    Icon(
-                        imageVector = if (mode == ViewMode.MAP) {
-                            Icons.Filled.List
-                        } else {
-                            Icons.Filled.Map
-                        },
-                        contentDescription = if (mode == ViewMode.MAP) {
-                            stringResource(R.string.switch_to_list_view)
-                        } else {
-                            stringResource(R.string.switch_to_map_view)
-                        }
-                    )
+                    Surface(
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        tonalElevation = 0.dp
+                    ) {
+                        Icon(
+                            imageVector = if (mode == ViewMode.MAP) {
+                                Icons.Filled.List
+                            } else {
+                                Icons.Filled.Map
+                            },
+                            contentDescription = if (mode == ViewMode.MAP) {
+                                stringResource(R.string.switch_to_list_view)
+                            } else {
+                                stringResource(R.string.switch_to_map_view)
+                            },
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier
+                                .padding(8.dp)
+                        )
+                    }
                 }
             },
             label = { 

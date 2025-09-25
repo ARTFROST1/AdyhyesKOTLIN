@@ -1,6 +1,7 @@
 package com.adygyes.app.presentation.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.adygyes.app.R
@@ -37,7 +39,8 @@ fun AttractionCard(
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier,
     showDistance: Boolean = false,
-    distance: Float? = null
+    distance: Float? = null,
+    compactForFavorites: Boolean = false
 ) {
     Card(
         onClick = onClick,
@@ -58,7 +61,7 @@ fun AttractionCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            
+
             // Gradient overlay
             Box(
                 modifier = Modifier
@@ -73,7 +76,7 @@ fun AttractionCard(
                         )
                     )
             )
-            
+
             // Content
             Column(
                 modifier = Modifier
@@ -90,51 +93,61 @@ fun AttractionCard(
                         category = attraction.category,
                         modifier = Modifier.padding(top = Dimensions.PaddingExtraSmall)
                     )
-                    
+
                     IconButton(
                         onClick = onFavoriteClick,
                         modifier = Modifier
-                            .size(40.dp)
-                            .background(
-                                Color.White.copy(alpha = 0.9f),
-                                RoundedCornerShape(50)
+                            .size(if (compactForFavorites) 44.dp else 40.dp)
+                            .then(
+                                if (compactForFavorites) Modifier
+                                    .border(1.dp, Color.White, RoundedCornerShape(50))
+                                else Modifier
+                                    .background(
+                                        Color.White.copy(alpha = 0.9f),
+                                        RoundedCornerShape(50)
+                                    )
                             )
                     ) {
                         Icon(
                             imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(R.string.cd_add_to_favorites),
-                            tint = if (attraction.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray
+                            contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
+                                R.string.cd_add_to_favorites
+                            ),
+                            tint = if (compactForFavorites) MaterialTheme.colorScheme.primary else if (attraction.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray,
+                            modifier = Modifier.size(if (compactForFavorites) 28.dp else 24.dp)
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.weight(1f))
-                
+
                 // Bottom content
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = attraction.name,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = if (compactForFavorites) MaterialTheme.typography.headlineSmall.copy(
+                            fontSize = 20.sp
+                        ) else MaterialTheme.typography.headlineSmall,
                         color = Color.White,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         fontWeight = FontWeight.Bold
                     )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = attraction.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
+
+                    if (!compactForFavorites) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = attraction.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -152,7 +165,10 @@ fun AttractionCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = attraction.location.address ?: stringResource(R.string.detail_location),
+                                text = (attraction.location.address?.let {
+                                    if (compactForFavorites) extractSettlement(it) else it
+                                }
+                                    ?: stringResource(R.string.detail_location)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.9f),
                                 maxLines = 1,
@@ -160,138 +176,14 @@ fun AttractionCard(
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                         }
-                        
-                        // Distance if available
-                        if (showDistance && distance != null) {
-                            Text(
-                                text = formatDistance(distance),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                        
-                        // Rating if available
-                        attraction.rating?.let { rating ->
-                            RatingBar(
-                                rating = rating,
-                                compact = true
-                            )
-                        }
                     }
-                }
-            }
-        }
-    }
-}
 
-/**
- * Compact attraction card for lists
- */
-@Composable
-fun AttractionListItem(
-    attraction: Attraction,
-    onClick: () -> Unit,
-    onFavoriteClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    showDistance: Boolean = false,
-    distance: Float? = null
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(120.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Image
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(attraction.images.firstOrNull() ?: "")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = attraction.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .width(120.dp)
-                    .fillMaxHeight()
-            )
-            
-            // Content
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(Dimensions.PaddingMedium)
-            ) {
-                // Title and favorite
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Text(
-                        text = attraction.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    IconButton(
-                        onClick = onFavoriteClick,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(R.string.cd_add_to_favorites),
-                            tint = if (attraction.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                
-                // Category
-                CategoryChip(
-                    category = attraction.category,
-                    compact = true,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-                
-                // Description
-                Text(
-                    text = attraction.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Spacer(modifier = Modifier.weight(1f))
-                
-                // Bottom info
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Distance
+                    // Distance if available
                     if (showDistance && distance != null) {
                         Text(
                             text = formatDistance(distance),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    
-                    // Rating
-                    attraction.rating?.let { rating ->
-                        RatingBar(
-                            rating = rating,
-                            compact = true,
-                            size = 12.dp
+                            color = Color.White.copy(alpha = 0.9f)
                         )
                     }
                 }
@@ -300,9 +192,11 @@ fun AttractionListItem(
     }
 }
 
-private fun formatDistance(distanceInMeters: Float): String {
-    return when {
-        distanceInMeters < 1000 -> "${distanceInMeters.toInt()} m"
-        else -> "%.1f km".format(distanceInMeters / 1000)
-    }
+
+/**
+ * Extract settlement from address
+ */
+private fun extractSettlement(address: String): String {
+    val parts = address.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    return if (parts.isNotEmpty()) parts.last() else address
 }
