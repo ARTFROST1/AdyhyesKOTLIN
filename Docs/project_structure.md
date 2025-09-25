@@ -1,7 +1,15 @@
 # Project Structure Guide
 
-**Last Updated:** 2025-09-24  
-**Current Version:** Stage 9 Complete - Dual-Layer Marker System
+**Last Updated:** 2025-09-25  
+**Current Version:** Stage 9 Complete - Dual-Layer Marker System + Image Caching
+
+## 🎯 Key Architecture Updates:
+- **Simplified Data Management:** JsonFileManager now only reads from assets/attractions.json
+- **Developer Mode Removed:** DeveloperScreen, DeveloperViewModel, AttractionEditorScreen replaced with stubs
+- **New LocaleViewModel:** Added for runtime language switching support
+- **Preserved MapScreenReliable:** Kept as backup map implementation with reliable tap handling
+- **✨ NEW: ImageCacheManager:** Advanced image caching system with version-based cache invalidation
+- **✨ NEW: Hardware Bitmap Fix:** Resolved Canvas compatibility issues for map markers
 
 ## Project Directory Layout
 
@@ -17,15 +25,19 @@ AdyhyesKOTLIN/
 │   │   │   │   ├── data/                 # Data layer
 │   │   │   │   │   ├── local/            # Local data sources
 │   │   │   │   │   │   ├── cache/        # Cache management
-│   │   │   │   │   │   │   └── CacheManager.kt
+│   │   │   │   │   │   │   ├── CacheManager.kt
+│   │   │   │   │   │   │   └── ImageCacheManager.kt      # ⭐ NEW: Advanced image caching
 │   │   │   │   │   │   ├── dao/          # Room DAOs
 │   │   │   │   │   │   │   └── AttractionDao.kt
 │   │   │   │   │   │   ├── database/     # Room database
 │   │   │   │   │   │   │   └── AdygyesDatabase.kt
 │   │   │   │   │   │   ├── entities/     # Room entities
 │   │   │   │   │   │   │   └── AttractionEntity.kt
-│   │   │   │   │   │   └── preferences/  # DataStore preferences
-│   │   │   │   │   │       └── PreferencesManager.kt
+│   │   │   │   │   │   ├── locale/        # Locale management
+│   │   │   │   │   │   │   └── LocaleManager.kt
+│   │   │   │   │   │   ├── preferences/  # DataStore preferences
+│   │   │   │   │   │   │   └── PreferencesManager.kt
+│   │   │   │   │   │   └── JsonFileManager.kt  # Simplified JSON reader
 │   │   │   │   │   ├── remote/           # Remote data sources
 │   │   │   │   │   │   └── dto/          # Data transfer objects
 │   │   │   │   │   │       └── AttractionDto.kt
@@ -105,7 +117,10 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │       └── SearchBar.kt
 │   │   │   │   │   └── viewmodel/        # ViewModels
 │   │   │   │   │       ├── AttractionDetailViewModel.kt
+│   │   │   │   │       ├── DeveloperViewModel.kt  # Stub file
 │   │   │   │   │       ├── FavoritesViewModel.kt
+│   │   │   │   │       ├── ImageCacheViewModel.kt # ⭐ NEW: Image cache management
+│   │   │   │   │       ├── LocaleViewModel.kt    # Language switching
 │   │   │   │   │       ├── MapViewModel.kt
 │   │   │   │   │       ├── SearchViewModel.kt
 │   │   │   │   │       └── SettingsViewModel.kt
@@ -332,7 +347,39 @@ dependencyResolutionManagement {
 - Application Class: `app/src/main/java/com/adygyes/app/AdygyesApplication.kt`
 - Navigation Graph: `presentation/navigation/NavGraph.kt`
 
+## 🖼️ Image Caching System
+
+### Architecture Overview:
+The app now features a sophisticated image caching system that optimizes performance and reduces network usage:
+
+#### Components:
+1. **ImageCacheManager** (`data/local/cache/ImageCacheManager.kt`)
+   - Manages Coil ImageLoader with optimized cache settings
+   - Memory cache: 25% of available app memory
+   - Disk cache: Up to 250MB persistent storage
+   - Version-based cache invalidation
+
+2. **ImageCacheViewModel** (`presentation/viewmodel/ImageCacheViewModel.kt`)
+   - Provides ImageLoader instance to UI components
+   - Manages cache statistics and monitoring
+   - Handles preloading of first attraction images
+
+#### Key Features:
+- **Smart Preloading**: First image of each attraction preloaded on app start
+- **Lazy Loading**: Additional gallery images loaded on-demand
+- **Version Sync**: Cache automatically cleared when attractions.json version changes
+- **Hardware Bitmap Fix**: Resolved Canvas compatibility for map markers with `.allowHardware(false)`
+
+#### Integration Points:
+- **Map Markers**: VisualMarkerProvider uses cached images for circular markers
+- **Photo Gallery**: PhotoGallery component with lazy loading and cache policies
+- **Attraction Cards**: All attraction images benefit from caching
+- **Repository**: AttractionRepositoryImpl integrates with cache versioning
+
 ## Changelog
+- 2025-09-25: **MAJOR UPDATE** - Added ImageCacheManager system with version-based invalidation, fixed hardware bitmap issues in map markers, integrated lazy loading in PhotoGallery
+- 2025-09-25: Documentation update - Simplified JsonFileManager, removed Developer Mode files (replaced with stubs), added LocaleViewModel for language switching
+- 2025-09-24: Stage 9 Complete - Dual-Layer Marker System with DualLayerMarkerSystem, VisualMarkerProvider, and transparent overlay
 - 2025-09-22: Centralized repositories in `settings.gradle.kts`; Gradle wrapper updated to 8.13; AGP aligned to 8.7.3.
 
 ## Commands Reference

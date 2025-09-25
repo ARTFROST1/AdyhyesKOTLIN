@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.room.Room
 import com.adygyes.app.data.local.cache.CacheManager
+import com.adygyes.app.data.local.cache.ImageCacheManager
 import com.adygyes.app.data.local.dao.AttractionDao
 import com.adygyes.app.data.local.database.AdygyesDatabase
 import com.adygyes.app.data.local.JsonFileManager
@@ -50,9 +51,11 @@ object DatabaseModule {
     @Singleton
     fun provideAttractionRepository(
         attractionDao: AttractionDao,
+        preferencesManager: PreferencesManager,
+        imageCacheManager: ImageCacheManager,
         @ApplicationContext context: Context
     ): AttractionRepository {
-        return AttractionRepositoryImpl(attractionDao, context)
+        return AttractionRepositoryImpl(attractionDao, preferencesManager, imageCacheManager, context)
     }
     
     @Provides
@@ -77,5 +80,13 @@ object DatabaseModule {
         @ApplicationContext context: Context
     ): JsonFileManager {
         return JsonFileManager(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideImageCacheManager(
+        @ApplicationContext context: Context
+    ): ImageCacheManager {
+        return ImageCacheManager(context)
     }
 }

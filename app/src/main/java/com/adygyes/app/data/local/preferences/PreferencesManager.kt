@@ -2,6 +2,7 @@ package com.adygyes.app.data.local.preferences
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
+import com.adygyes.app.data.local.locale.LocaleManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -39,7 +40,7 @@ class PreferencesManager @Inject constructor(
      */
     data class UserPreferences(
         val isDarkTheme: Boolean = false,
-        val language: String = "ru", // "ru" or "en"
+        val language: String = LocaleManager.DEFAULT_LANGUAGE, // "ru" or "en" - default to Russian
         val mapType: String = "normal", // "normal", "satellite", "hybrid"
         val showTraffic: Boolean = false,
         val autoCenterLocation: Boolean = true,
@@ -74,7 +75,7 @@ class PreferencesManager @Inject constructor(
     private fun mapUserPreferences(preferences: Preferences): UserPreferences {
         return UserPreferences(
             isDarkTheme = preferences[KEY_DARK_THEME] ?: false,
-            language = preferences[KEY_LANGUAGE] ?: "ru",
+            language = preferences[KEY_LANGUAGE] ?: LocaleManager.DEFAULT_LANGUAGE,
             mapType = preferences[KEY_MAP_TYPE] ?: "normal",
             showTraffic = preferences[KEY_SHOW_TRAFFIC] ?: false,
             autoCenterLocation = preferences[KEY_AUTO_CENTER_LOCATION] ?: true,

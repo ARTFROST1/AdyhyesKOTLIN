@@ -91,10 +91,9 @@ class MapViewModel @Inject constructor(
     private fun checkAndLoadInitialData() {
         viewModelScope.launch {
             try {
-                if (!attractionRepository.isDataLoaded()) {
-                    Timber.d("Loading initial data...")
-                    attractionRepository.loadInitialData()
-                }
+                // Always call loadInitialData() - it now handles version checking internally
+                Timber.d("Checking data version and loading if needed...")
+                attractionRepository.loadInitialData()
             } catch (e: Exception) {
                 Timber.e(e, "Error loading initial data")
             }
@@ -164,6 +163,16 @@ class MapViewModel @Inject constructor(
                     attractionId = attractionId,
                     isFavorite = !it.isFavorite
                 )
+                
+                // Update selected attraction if it's the same one
+                if (_selectedAttraction.value?.id == attractionId) {
+                    _selectedAttraction.value = _selectedAttraction.value?.copy(
+                        isFavorite = !it.isFavorite
+                    )
+                }
+                
+                // Refresh attractions list
+                loadAttractions()
             }
         }
     }

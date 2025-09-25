@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.adygyes.app.R
 
 /**
  * Empty state component for lists and screens
@@ -80,10 +82,10 @@ fun NoFavoritesState(
     modifier: Modifier = Modifier
 ) {
     EmptyState(
-        title = "No Favorites Yet",
-        message = "Start exploring and add your favorite attractions to see them here",
+        title = stringResource(R.string.no_favorites_yet),
+        message = stringResource(R.string.no_favorites_message),
         icon = Icons.Default.FavoriteBorder,
-        actionLabel = "Explore Attractions",
+        actionLabel = stringResource(R.string.explore_attractions),
         onAction = onExplore,
         modifier = modifier
     )
@@ -96,10 +98,10 @@ fun NoSearchResultsState(
     modifier: Modifier = Modifier
 ) {
     EmptyState(
-        title = "No Results Found",
-        message = "We couldn't find any attractions matching \"$query\".\nTry adjusting your search or filters.",
+        title = stringResource(R.string.no_results_found),
+        message = stringResource(R.string.no_results_message, query),
         icon = Icons.Default.SearchOff,
-        actionLabel = if (onClearFilters != null) "Clear Filters" else null,
+        actionLabel = if (onClearFilters != null) stringResource(R.string.clear_filters) else null,
         onAction = onClearFilters,
         modifier = modifier
     )
@@ -111,10 +113,10 @@ fun NoConnectionState(
     modifier: Modifier = Modifier
 ) {
     EmptyState(
-        title = "No Internet Connection",
-        message = "Please check your connection and try again",
+        title = stringResource(R.string.no_internet_connection),
+        message = stringResource(R.string.no_internet_message),
         icon = Icons.Default.WifiOff,
-        actionLabel = "Retry",
+        actionLabel = stringResource(R.string.retry),
         onAction = onRetry,
         modifier = modifier
     )
@@ -122,15 +124,15 @@ fun NoConnectionState(
 
 @Composable
 fun ErrorState(
-    message: String = "Something went wrong",
+    message: String? = null,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     EmptyState(
-        title = "Oops!",
-        message = message,
+        title = stringResource(R.string.oops),
+        message = message ?: stringResource(R.string.something_went_wrong),
         icon = Icons.Default.ErrorOutline,
-        actionLabel = "Try Again",
+        actionLabel = stringResource(R.string.try_again),
         onAction = onRetry,
         modifier = modifier
     )
@@ -142,10 +144,10 @@ fun LocationDisabledState(
     modifier: Modifier = Modifier
 ) {
     EmptyState(
-        title = "Location Services Disabled",
-        message = "Enable location services to see nearby attractions and get directions",
+        title = stringResource(R.string.location_services_disabled),
+        message = stringResource(R.string.location_services_message),
         icon = Icons.Default.LocationOff,
-        actionLabel = "Enable Location",
+        actionLabel = stringResource(R.string.enable_location),
         onAction = onEnableLocation,
         modifier = modifier
     )

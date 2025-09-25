@@ -2,6 +2,7 @@ package com.adygyes.app.presentation.ui.screens.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -9,9 +10,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,12 +22,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.ui.components.*
@@ -73,7 +78,7 @@ fun AttractionDetailScreen(
                             IconButton(onClick = onBackClick) {
                                 Icon(
                                     imageVector = Icons.Default.ArrowBack,
-                                    contentDescription = "Back"
+                                    contentDescription = stringResource(R.string.cd_back)
                                 )
                             }
                         },
@@ -81,7 +86,7 @@ fun AttractionDetailScreen(
                             IconButton(onClick = onShareClick) {
                                 Icon(
                                     imageVector = Icons.Default.Share,
-                                    contentDescription = "Share"
+                                    contentDescription = stringResource(R.string.cd_share)
                                 )
                             }
                             IconButton(
@@ -93,9 +98,9 @@ fun AttractionDetailScreen(
                                     else 
                                         Icons.Default.FavoriteBorder,
                                     contentDescription = if (attraction.isFavorite) 
-                                        "Remove from favorites" 
+                                        stringResource(R.string.cd_remove_from_favorites) 
                                     else 
-                                        "Add to favorites",
+                                        stringResource(R.string.cd_add_to_favorites),
                                     tint = if (attraction.isFavorite) 
                                         MaterialTheme.colorScheme.primary 
                                     else 
@@ -162,7 +167,7 @@ fun AttractionDetailScreen(
                             // Description
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "About",
+                                text = stringResource(R.string.detail_about),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -185,7 +190,7 @@ fun AttractionDetailScreen(
                             attraction.location.address?.let { address ->
                                 InfoCard(
                                     icon = Icons.Default.LocationOn,
-                                    title = "Location",
+                                    title = stringResource(R.string.detail_location),
                                     content = {
                                         Text(
                                             text = address,
@@ -207,7 +212,7 @@ fun AttractionDetailScreen(
                             attraction.workingHours?.let { hours ->
                                 InfoCard(
                                     icon = Icons.Default.Schedule,
-                                    title = "Working Hours",
+                                    title = stringResource(R.string.detail_working_hours),
                                     content = {
                                         Text(
                                             text = hours,
@@ -221,7 +226,7 @@ fun AttractionDetailScreen(
                             attraction.priceInfo?.let { price ->
                                 InfoCard(
                                     icon = Icons.Default.AttachMoney,
-                                    title = "Price",
+                                    title = stringResource(R.string.detail_price),
                                     content = {
                                         Text(
                                             text = price,
@@ -236,7 +241,7 @@ fun AttractionDetailScreen(
                                 if (contact.phone != null || contact.email != null || contact.website != null) {
                                     InfoCard(
                                         icon = Icons.Default.ContactPhone,
-                                        title = "Contact Information",
+                                        title = stringResource(R.string.detail_contact_info),
                                         content = {
                                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                                 contact.phone?.let { phone ->
@@ -303,7 +308,7 @@ fun AttractionDetailScreen(
                                 )
                             ) {
                                 Text(
-                                    text = "Amenities",
+                                    text = stringResource(R.string.detail_amenities),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -323,7 +328,7 @@ fun AttractionDetailScreen(
                                 )
                             ) {
                                 Text(
-                                    text = "Tags",
+                                    text = stringResource(R.string.detail_tags),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -362,7 +367,7 @@ fun AttractionDetailScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Get Directions")
+                                Text(stringResource(R.string.detail_get_directions))
                             }
                         }
                     }

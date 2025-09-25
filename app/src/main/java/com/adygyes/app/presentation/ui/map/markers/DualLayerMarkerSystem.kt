@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import com.adygyes.app.domain.model.Attraction
+import com.adygyes.app.data.local.cache.ImageCacheManager
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.mapkit.map.PlacemarkMapObject
 import timber.log.Timber
@@ -23,16 +24,21 @@ fun DualLayerMarkerSystem(
     mapView: MapView?,
     attractions: List<Attraction>,
     selectedAttraction: Attraction?,
+    imageCacheManager: ImageCacheManager,
     onMarkerClick: (Attraction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // IMPORTANT: Box to ensure proper layering
     Box(modifier = modifier.fillMaxSize()) {
         // Layer 1: Native visual markers (bottom layer)
-        DisposableEffect(mapView, attractions) {
-            val visualMarkerProvider = mapView?.let {
-                VisualMarkerProvider(mapView = it)
+        // Use remember to keep stable reference to provider
+        val visualMarkerProvider = remember(mapView) {
+            mapView?.let {
+                VisualMarkerProvider(mapView = it, imageCacheManager = imageCacheManager)
             }
+        }
+        
+        DisposableEffect(mapView, attractions) {
             
             // Create native markers for visual representation
             visualMarkerProvider?.addVisualMarkers(attractions)
@@ -45,10 +51,7 @@ fun DualLayerMarkerSystem(
         
         // Update visual selection state
         LaunchedEffect(selectedAttraction) {
-            mapView?.let {
-                val visualMarkerProvider = VisualMarkerProvider(mapView = it)
-                visualMarkerProvider.updateSelectedMarker(selectedAttraction)
-            }
+            visualMarkerProvider?.updateSelectedMarker(selectedAttraction)
         }
         
         // Layer 2: Transparent overlay for click detection (top layer)

@@ -17,11 +17,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
 
@@ -100,7 +102,7 @@ fun AttractionCard(
                     ) {
                         Icon(
                             imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (attraction.isFavorite) "Remove from favorites" else "Add to favorites",
+                            contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(R.string.cd_add_to_favorites),
                             tint = if (attraction.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray
                         )
                     }
@@ -150,7 +152,7 @@ fun AttractionCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = attraction.location.address ?: "Location",
+                                text = attraction.location.address ?: stringResource(R.string.detail_location),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.9f),
                                 maxLines = 1,
@@ -244,7 +246,7 @@ fun AttractionListItem(
                     ) {
                         Icon(
                             imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (attraction.isFavorite) "Remove from favorites" else "Add to favorites",
+                            contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(R.string.cd_add_to_favorites),
                             tint = if (attraction.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )

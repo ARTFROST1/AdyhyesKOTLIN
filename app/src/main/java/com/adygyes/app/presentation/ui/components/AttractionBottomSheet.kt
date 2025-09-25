@@ -9,9 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
 import kotlinx.coroutines.launch
@@ -94,9 +96,9 @@ fun AttractionBottomSheet(
                         else 
                             Icons.Default.FavoriteBorder,
                         contentDescription = if (attraction.isFavorite) 
-                            "Remove from favorites" 
+                            stringResource(R.string.cd_remove_from_favorites) 
                         else 
-                            "Add to favorites",
+                            stringResource(R.string.cd_add_to_favorites),
                         tint = if (attraction.isFavorite) 
                             MaterialTheme.colorScheme.primary 
                         else 
@@ -105,36 +107,58 @@ fun AttractionBottomSheet(
                 }
             }
             
-            // Rating and distance
+            // Rating, distance and details button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = Dimensions.SpacingSmall),
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.SpacingMedium),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                attraction.rating?.let { rating ->
-                    RatingBar(
-                        rating = rating,
-                        size = 16.dp
-                    )
-                }
-                
-                distance?.let { dist ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = formatDistance(dist),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.SpacingMedium),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    attraction.rating?.let { rating ->
+                        RatingBar(
+                            rating = rating,
+                            size = 16.dp
                         )
                     }
+                    
+                    distance?.let { dist ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = formatDistance(dist),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                // Details button moved here
+                OutlinedButton(
+                    onClick = onNavigateToDetail,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.detail_details),
+                        style = MaterialTheme.typography.labelMedium
+                    )
                 }
             }
             
@@ -153,7 +177,7 @@ fun AttractionBottomSheet(
             attraction.workingHours?.let { hours ->
                 InfoRow(
                     icon = Icons.Default.Schedule,
-                    label = "Working Hours",
+                    label = stringResource(R.string.detail_working_hours),
                     value = hours
                 )
             }
@@ -161,7 +185,7 @@ fun AttractionBottomSheet(
             attraction.priceInfo?.let { price ->
                 InfoRow(
                     icon = Icons.Default.AttachMoney,
-                    label = "Price",
+                    label = stringResource(R.string.detail_price),
                     value = price
                 )
             }
@@ -169,7 +193,7 @@ fun AttractionBottomSheet(
             attraction.location.address?.let { address ->
                 InfoRow(
                     icon = Icons.Default.Place,
-                    label = "Address",
+                    label = stringResource(R.string.detail_address),
                     value = address
                 )
             }
@@ -192,7 +216,7 @@ fun AttractionBottomSheet(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Route")
+                    Text(stringResource(R.string.detail_route))
                 }
                 
                 // Share button
@@ -206,21 +230,7 @@ fun AttractionBottomSheet(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Share")
-                }
-                
-                // Details button
-                OutlinedButton(
-                    onClick = onNavigateToDetail,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Details")
+                    Text(stringResource(R.string.detail_share))
                 }
             }
         }

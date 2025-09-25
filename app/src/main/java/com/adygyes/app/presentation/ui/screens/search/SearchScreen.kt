@@ -282,7 +282,7 @@ private fun InitialSearchState(
         if (recentSearches.isNotEmpty()) {
             item {
                 Text(
-                    text = "Recent Searches",
+                    text = stringResource(R.string.search_recent),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = Dimensions.PaddingSmall)
                 )
@@ -325,7 +325,7 @@ private fun InitialSearchState(
         if (popularAttractions.isNotEmpty()) {
             item {
                 Text(
-                    text = "Popular Attractions",
+                    text = stringResource(R.string.search_popular),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = Dimensions.PaddingSmall)
                 )
@@ -374,7 +374,7 @@ private fun FilterBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Filters",
+                    text = stringResource(R.string.filters),
                     style = MaterialTheme.typography.headlineSmall
                 )
                 
@@ -382,7 +382,7 @@ private fun FilterBottomSheet(
                     onClick = onClearAll,
                     enabled = selectedCategories.isNotEmpty()
                 ) {
-                    Text("Clear All")
+                    Text(stringResource(R.string.clear_all))
                 }
             }
             
@@ -402,7 +402,7 @@ private fun FilterBottomSheet(
                 onClick = onApply,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Apply Filters")
+                Text(stringResource(R.string.apply_filters))
             }
         }
     }
