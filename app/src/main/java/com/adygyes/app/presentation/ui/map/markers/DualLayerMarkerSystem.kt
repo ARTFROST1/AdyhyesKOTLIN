@@ -26,50 +26,74 @@ fun DualLayerMarkerSystem(
     selectedAttraction: Attraction?,
     imageCacheManager: ImageCacheManager,
     onMarkerClick: (Attraction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    composeVisualMode: Boolean = false // When true, render visual markers with Compose and skip native markers
 ) {
     // IMPORTANT: Box to ensure proper layering
     Box(modifier = modifier.fillMaxSize()) {
-        // Layer 1: Native visual markers (bottom layer)
-        // Persist provider across navigation via registry to avoid re-creating markers
-        val visualMarkerProvider = remember(mapView) {
-            mapView?.let { mv ->
-                VisualMarkerRegistry.getOrCreate(mv, imageCacheManager)
+        if (!composeVisualMode) {
+            // Layer 1: Native visual markers (bottom layer)
+            // Persist provider across navigation via registry to avoid re-creating markers
+            val visualMarkerProvider = remember(mapView) {
+                mapView?.let { mv ->
+                    VisualMarkerRegistry.getOrCreate(mv, imageCacheManager)
+                }
             }
-        }
 
-        // Incremental sync of markers on attractions changes
-        LaunchedEffect(mapView, attractions) {
-            if (mapView != null && visualMarkerProvider != null) {
-                visualMarkerProvider.updateVisualMarkers(attractions)
-                VisualMarkerRegistry.setLastIds(mapView, attractions.map { it.id }.toSet())
-                Timber.d("📍 Incremental sync of visual markers: ${attractions.size}")
+            // Incremental sync of markers on attractions changes
+            LaunchedEffect(mapView, attractions) {
+                if (mapView != null && visualMarkerProvider != null) {
+                    visualMarkerProvider.updateVisualMarkers(attractions)
+                    VisualMarkerRegistry.setLastIds(mapView, attractions.map { it.id }.toSet())
+                    Timber.d("📍 Incremental sync of visual markers: ${attractions.size}")
+                }
             }
-        }
 
-        // Update visual selection state
-        LaunchedEffect(selectedAttraction) {
-            visualMarkerProvider?.updateSelectedMarker(selectedAttraction)
+            // Update visual selection state
+            LaunchedEffect(selectedAttraction) {
+                visualMarkerProvider?.updateSelectedMarker(selectedAttraction)
+            }
+        } else {
+            // Compose visual mode: render visual markers using Compose overlay
+            MarkerOverlay(
+                mapView = mapView,
+                attractions = attractions,
+                selectedAttraction = selectedAttraction,
+                onMarkerClick = onMarkerClick,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(500f),
+                enableClustering = false,
+                animationDuration = 0,
+                transparentMode = false // visual markers visible
+            )
         }
         
-        // Layer 2: Transparent overlay for click detection (top layer)
-        // MUST be rendered AFTER native markers to be on top
-        TransparentClickOverlay(
-            mapView = mapView,
-            attractions = attractions,
-            selectedAttraction = selectedAttraction,
-            onMarkerClick = onMarkerClick,
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(1000f) // Ensure it's on top of everything
-        )
+        if (!composeVisualMode) {
+            // Layer 2: Transparent overlay for click detection (top layer)
+            // MUST be rendered AFTER native markers to be on top
+            TransparentClickOverlay(
+                mapView = mapView,
+                attractions = attractions,
+                selectedAttraction = selectedAttraction,
+                onMarkerClick = onMarkerClick,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1000f) // Ensure it's on top of everything
+            )
+        }
         
         // Log system state
-        LaunchedEffect(attractions.size) {
+        LaunchedEffect(attractions.size, composeVisualMode) {
             Timber.d("🎯 DualLayerMarkerSystem: ${attractions.size} attractions")
-            Timber.d("  ├─ Visual Layer: Native MapKit markers (perfect binding)")
-            Timber.d("  └─ Interactive Layer: Transparent Compose overlays (1.1x hit area)")
-            Timber.d("  └─ Overlay is on TOP for click detection")
+            if (composeVisualMode) {
+                Timber.d("  ├─ Visual Layer: Compose markers (easter egg mode)")
+                Timber.d("  └─ Interactive Layer: Click handled by visual markers")
+            } else {
+                Timber.d("  ├─ Visual Layer: Native MapKit markers (perfect binding)")
+                Timber.d("  └─ Interactive Layer: Transparent Compose overlays (1.1x hit area)")
+                Timber.d("  └─ Overlay is on TOP for click detection")
+            }
         }
     }
 }

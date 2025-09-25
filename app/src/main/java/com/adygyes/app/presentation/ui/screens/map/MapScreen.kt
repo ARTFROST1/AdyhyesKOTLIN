@@ -49,6 +49,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import com.adygyes.app.presentation.ui.util.EasterEggManager
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 
 /**
  * Unified Map Screen - combines all best features from previous versions:
@@ -92,6 +96,7 @@ fun MapScreen(
     var viewMode by remember { mutableStateOf(ViewMode.MAP) }
     var showFilterSheet by remember { mutableStateOf(false) }
     var isMapReady by remember { mutableStateOf(false) }
+    val easterEggActive by EasterEggManager.isActive.collectAsState()
     
     // Search debouncing
     val scope = rememberCoroutineScope()
@@ -164,6 +169,60 @@ fun MapScreen(
                         // Ensure readiness based on persistent mapView availability
                         isMapReady = mapView != null
 
+                        if (easterEggActive) {
+                            // Opaque container to ensure the map is fully covered, even if image fails to load
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black)
+                                    .pointerInteropFilter { true } // block gestures to the map
+                            ) {
+                                var loadError by remember { mutableStateOf(false) }
+                                var isLoading by remember { mutableStateOf(true) }
+
+                                AsyncImage(
+                                    model = "https://images.unsplash.com/photo-1589182337358-2cb63099350c?w=1200",
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                    onSuccess = {
+                                        isLoading = false
+                                        loadError = false
+                                        Timber.d("🖼️ Easter egg image loaded successfully")
+                                    },
+                                    onError = {
+                                        isLoading = false
+                                        loadError = true
+                                        Timber.w("🖼️ Easter egg image failed to load")
+                                    }
+                                )
+
+                                if (isLoading) {
+                                    // Simple overlay while loading
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(color = Color.White)
+                                    }
+                                }
+
+                                if (loadError) {
+                                    // Show subtle text so it's clear the background is intentional
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Easter Egg",
+                                            color = Color.White.copy(alpha = 0.6f),
+                                            style = MaterialTheme.typography.headlineSmall
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         if (mapView != null && isMapReady) {
                             DualLayerMarkerSystem(
                                 mapView = mapView,
@@ -176,7 +235,8 @@ fun MapScreen(
                                     Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
                                     viewModel.onMarkerClick(attraction)
                                 },
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
+                                composeVisualMode = easterEggActive
                             )
                         }
                     }
