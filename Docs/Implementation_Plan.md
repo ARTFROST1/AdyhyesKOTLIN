@@ -1,7 +1,7 @@
 # Implementation Plan for Adygyes
 
 ## 📊 Current Status
-**Last Updated:** 2025-09-25  
+**Last Updated:** 2025-09-26  
 **Current Stage:** Stage 9 COMPLETED ✅ - Dual-Layer Marker System  
 **Progress:** 120/132 tasks completed (91%)  
 **Next Stage:** Stage 10 - Quality Assurance & Optimization  
@@ -29,7 +29,7 @@
 
 #### Core Map Features:
 1. **Interactive Map Display** - Yandex Maps API-based map showing Adygea region
-2. **POI Markers** - Circular markers with photos or colored markers for attractions
+2. **POI Markers** - Circular markers with photos; if no photo or load fails, marker remains transparent with a white border (no colored background, no emoji)
 3. **Geo-objects** - Polygons for parks/territories, lines for tourist trails
 4. **Map Search** - Search by attraction name or category
 5. **Map Controls** - Zoom, pan, user location centering
@@ -381,6 +381,9 @@
 - [x] **Implement image caching and optimization** ✅ - ImageCacheManager with Coil integration
 - [x] **Fix hardware bitmap issues in map markers** ✅ - Added `.allowHardware(false)` and bitmap conversion
 - [x] **Implement lazy loading for gallery images** ✅ - PhotoGallery with on-demand loading
+- [x] **Persistent MapHost (single MapView across app)** ✅ - `MapHost.kt` with lifecycle, theme styling, and camera listener
+- [x] **Camera State Persistence** ✅ - `MapStateViewModel.kt` + `PreferencesManager.cameraStateFlow` (lat/lon/zoom/azimuth/tilt)
+- [x] **Marker Persistence Across Navigation** ✅ - `VisualMarkerRegistry.kt` + incremental sync in `VisualMarkerProvider.updateVisualMarkers()`
 - [ ] Add crash reporting with Firebase Crashlytics
 - [ ] Implement analytics tracking
 - [ ] Optimize database queries
@@ -410,6 +413,19 @@
 
 
 ## 🔄 Version Updates (Changelog)
+- **2025-09-26: Marker Visuals Update**
+  - Removed colored background and category emoji fallback from map markers without photos
+  - Default fallback is now fully transparent with a white border and shadow until an image loads
+  - Documentation updated: `AppMap_adygyes.md`, `project_structure.md`, `IMAGE_CACHING_SYSTEM.md`
+- **2025-09-26: Persistent MapHost + Camera State + Marker Persistence**
+  - Introduced `MapHost.kt` (persistent MapView at app root with proper MapKit lifecycle and theme styling)
+  - Added `MapStateViewModel.kt` to hold and persist camera state (lat/lon/zoom/azimuth/tilt) via DataStore (`PreferencesManager.cameraStateFlow`)
+  - Implemented `VisualMarkerRegistry.kt` to reuse a single `VisualMarkerProvider` per `MapView` across navigation
+  - Added incremental marker updates: `VisualMarkerProvider.updateVisualMarkers()` avoids full clear/add
+  - Updated `DualLayerMarkerSystem.kt` to use registry + incremental sync; removed marker clearing on dispose
+  - Refactored `MapScreen.kt` to overlay mode (uses persistent `mapView` from `LocalMapHostController`)
+  - Updated `MainActivity.kt` to render `MapHost { AdygyesNavHost(...) }`
+  - Result: Map is initialized once, camera state persists, markers do not recreate on return from other screens
 - **2025-09-25: MAJOR UPDATE - Image Caching System Implementation** 🖼️ - Advanced image optimization and caching:
   - **ImageCacheManager**: Sophisticated caching system with Coil integration (25% memory, 250MB disk cache)
   - **ImageCacheViewModel**: UI integration with cache statistics and preloading management

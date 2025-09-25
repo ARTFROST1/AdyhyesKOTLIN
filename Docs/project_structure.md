@@ -1,7 +1,7 @@
 # Project Structure Guide
 
-**Last Updated:** 2025-09-25  
-**Current Version:** Stage 9 Complete - Dual-Layer Marker System + Image Caching
+**Last Updated:** 2025-09-26  
+**Current Version:** Stage 9 + Persistent MapHost & Camera/Marker Persistence
 
 ## 🎯 Key Architecture Updates:
 - **Simplified Data Management:** JsonFileManager now only reads from assets/attractions.json
@@ -77,7 +77,7 @@ AdyhyesKOTLIN/
 │   │   │   │   │   ├── ui/               # Screens and components
 │   │   │   │   │   │   ├── screens/
 │   │   │   │   │   │   │   ├── map/      # Map screen with dual-layer markers
-│   │   │   │   │   │   │   │   ├── MapScreen.kt              # ⭐ MAIN UNIFIED SCREEN
+│   │   │   │   │   │   │   │   ├── MapScreen.kt              # ⭐ MAIN UNIFIED OVERLAY SCREEN (over persistent MapHost)
 │   │   │   │   │   │   │   │   ├── MapScreenTablet.kt        # Tablet version
 │   │   │   │   │   │   │   │   ├── CategoryMarkerProvider.kt
 │   │   │   │   │   │   │   │   ├── GeoObjectProvider.kt
@@ -85,8 +85,9 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   │   │   ├── TextImageProvider.kt
 │   │   │   │   │   │   │   │   ├── WaypointMarkerProvider.kt
 │   │   │   │   │   │   │   │   └── markers/                  # ⭐ DUAL-LAYER SYSTEM
-│   │   │   │   │   │   │   │       ├── DualLayerMarkerSystem.kt    # Main orchestrator
-│   │   │   │   │   │   │   │       ├── VisualMarkerProvider.kt     # Native markers
+│   │   │   │   │   │   │   │       ├── DualLayerMarkerSystem.kt    # Main orchestrator (uses registry, incremental sync)
+│   │   │   │   │   │   │   │       ├── VisualMarkerProvider.kt     # Native markers (incremental updates)
+│   │   │   │   │   │   │   │       ├── VisualMarkerRegistry.kt     # ⭐ NEW: Persist provider across navigation
 │   │   │   │   │   │   │   │       ├── CircularImageMarker.kt      # Compose markers
 │   │   │   │   │   │   │   │       ├── MarkerOverlay.kt            # Positioning system
 │   │   │   │   │   │   │   │       ├── MapCoordinateConverter.kt   # Coordinate utils
@@ -122,10 +123,11 @@ AdyhyesKOTLIN/
 │   │   │   │   │       ├── ImageCacheViewModel.kt # ⭐ NEW: Image cache management
 │   │   │   │   │       ├── LocaleViewModel.kt    # Language switching
 │   │   │   │   │       ├── MapViewModel.kt
+│   │   │   │   │       ├── MapStateViewModel.kt            # ⭐ NEW: Camera state persistence
 │   │   │   │   │       ├── SearchViewModel.kt
 │   │   │   │   │       └── SettingsViewModel.kt
 │   │   │   │   ├── AdygyesApplication.kt  # Application class
-│   │   │   │   └── MainActivity.kt        # Main activity
+│   │   │   │   └── MainActivity.kt        # Main activity (renders MapHost { AdygyesNavHost(...) })
 │   │   │   └── res/
 │   │   │       ├── values/
 │   │   │       │   ├── strings.xml
@@ -165,20 +167,23 @@ AdyhyesKOTLIN/
 
 ### 🎯 **Key Features Implemented**
 
-#### ⭐ **Stage 9 Completed - Dual-Layer Marker System:**
+#### ⭐ **Stage 9 Completed - Dual-Layer Marker System + Persistent Map:**
 - **Revolutionary Architecture** - Native visual + Compose interactive layers
 - **100% Click Reliability** - Perfect marker tap handling with transparent overlay
 - **Zero Visual Lag** - Native MapKit rendering with hardware acceleration
 - **Full Map Interactivity** - Preserved pan, zoom, rotate functionality
 - **Production Ready** - Optimized performance with minimal overhead
 - **Bottom navigation** - Map/List toggle, Favorites, Settings
+- **Persistent MapHost** - Single `MapView` at app root, `NavHost` rendered inside `MapHost`
+- **Camera state persistence** - `MapStateViewModel` + `PreferencesManager.cameraStateFlow`
+- **Marker persistence** - `VisualMarkerRegistry` + incremental updates in `VisualMarkerProvider`
 - **Real-time search** - Debounced search with instant filtering
 - **Category filtering** - Bottom sheet with category selection
 
 #### 🗺️ **Map Features:**
 - **Yandex MapKit integration** - Interactive map with clustering
 - **Location services** - GPS positioning and permission handling
-- **Marker providers** - Category-based colored markers
+- **Marker providers** - Category-based colored markers; visual markers use attraction photos, and if no photo is available or loading fails, the marker remains transparent (no colored background, no emoji) with a white border and shadow
 - **Geo-objects support** - Polygons and polylines for parks/trails
 
 #### 📱 **UI Components:**
@@ -378,6 +383,7 @@ The app now features a sophisticated image caching system that optimizes perform
 - **Repository**: AttractionRepositoryImpl integrates with cache versioning
 
 ## Changelog
+- 2025-09-26: **Marker Visuals Update** — Removed colored background and emoji fallback for markers without photos. Default fallback is now fully transparent with a white border and shadow until an image loads. Updated `AppMap_adygyes.md`, `Implementation_Plan.md`, and `IMAGE_CACHING_SYSTEM.md` accordingly.
 - 2025-09-25: **MAJOR UPDATE** - Added ImageCacheManager system with version-based invalidation, fixed hardware bitmap issues in map markers, integrated lazy loading in PhotoGallery
 - 2025-09-25: Documentation update - Simplified JsonFileManager, removed Developer Mode files (replaced with stubs), added LocaleViewModel for language switching
 - 2025-09-24: Stage 9 Complete - Dual-Layer Marker System with DualLayerMarkerSystem, VisualMarkerProvider, and transparent overlay

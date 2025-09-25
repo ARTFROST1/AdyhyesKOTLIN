@@ -2,9 +2,9 @@
 
 # 📱 Карта приложения **Adygyes**
 
-**Последнее обновление:** 2025-09-25  
-**Версия:** Stage 9 Complete - Dual-Layer Marker System + Image Caching  
-**Статус:** ✅ Полностью реализовано + Система кэширования изображений
+**Последнее обновление:** 2025-09-26  
+**Версия:** Stage 9 Complete + Persistent MapHost & Camera State  
+**Статус:** ✅ Полностью реализовано: постоянная карта, сохранение камеры, без пересоздания маркеров
 
 ## 🟩 Главный экран — **MapScreen с революционной системой маркеров**
 
@@ -26,8 +26,11 @@
 
 **Технические особенности:**
 * **Dual-Layer Architecture** - нативные визуалы (0ms лага) + Compose клики (100% надежность)
+* **Persistent MapHost** (`MapHost.kt`) - единый `MapView` на уровне приложения, карта не пересоздаётся при навигации
+* **Camera State Persistence** (`MapStateViewModel.kt`, `PreferencesManager.cameraStateFlow`) - сохранение центра/зума/азимута/наклона между сессиями
+* **Marker Persistence** (`VisualMarkerRegistry.kt`) - нативные маркеры не очищаются при навигации, инкрементальные обновления
 * **DualLayerMarkerSystem** - главный оркестратор двухслойной системы
-* **VisualMarkerProvider** - создание красивых круглых маркеров для MapKit с кэшированными изображениями
+* **VisualMarkerProvider** - создание красивых круглых маркеров для MapKit с кэшированными изображениями; по умолчанию (если фото нет/не загрузилось) маркер прозрачный без фона и эмодзи, видны только белая обводка и тень
 * **Transparent Overlay** - прозрачный слой для перехвата кликов с точным позиционированием
 * **🖼️ ImageCacheManager** - продвинутая система кэширования изображений (25% памяти, 250MB диск)
 * **Hardware Bitmap Fix** - исправлена совместимость Canvas с `.allowHardware(false)`
@@ -149,11 +152,11 @@
    │    ├── Favorites ⭐ (with badge) → FavoritesScreen
    │    └── Settings ⚙️ → SettingsScreen
    │
-   ├── 🗺️ Map Mode (AndroidView + MapView)
-   │    ├── Yandex MapKit → ClusterizedPlacemarkCollection
-   │    ├── CategoryMarkerProvider → colored markers
-   │    ├── Marker tap → userData validation → selectAttraction()
-   │    ├── Cluster tap → zoom in animation
+   ├── 🗺️ Map Mode (Persistent MapHost + overlay)
+   │    ├── MapHost: единый MapView с жизненным циклом и стилями (ночной режим)
+   │    ├── DualLayerMarkerSystem: VisualMarkerProvider (нативные маркеры) + TransparentClickOverlay (клики)
+   │    ├── VisualMarkerRegistry: инкрементальные обновления маркеров без полного пересоздания
+   │    ├── Camera state persisted: MapStateViewModel + DataStore
    │    └── FAB 📍 → GPS location → camera animation
    │
    ├── 📋 List Mode (AttractionsList)
@@ -169,20 +172,23 @@
         ├── Action buttons:
         │    ├── 🚩 Route → NavigationUseCase → Yandex Maps
         │    ├── ⭐ Favorite → toggleFavorite() → state update
-        │    └── 🔗 Share → ShareUseCase → system share
         └── onDismiss → clearSelection() → close sheet
 
 Technical Features:
-├── 🔧 Reliable marker taps (100% guaranteed)
+├── 🔧 reliable marker taps (100% guaranteed)
 ├── 🎨 Edge-to-edge UI with WindowInsets
-├── 🔄 Proper MapKit lifecycle (DisposableEffect)
-├── 📊 Comprehensive logging (emoji indicators)
-├── ⚡ Optimized marker updates (prevent recreation)
+   178→├── 🔄 Proper MapKit lifecycle (handled by MapHost)
+   180→├── ⚡ Optimized marker updates (VisualMarkerRegistry incremental sync)
+   182→├── Persistent MapHost (single MapView instance)
+   183→├── Camera state persistence (MapStateViewModel + DataStore)
+   184→├── Marker persistence (VisualMarkerRegistry + DataStore)
 └── 🎭 Smooth animations (view mode transitions)
-```
 
-## 🏗️ Architecture Benefits
+# 📊 Карта приложения **Adygyes**
 
+**Последнее обновление:** 2025-09-27  
+**Версия:** Stage 9 Complete + Persistent MapHost & Camera State  
+**Статус:** ✅ Полностью реализовано: постоянная карта, сохранение камеры, без пересоздания маркеров
 ### ✅ **Code Consolidation:**
 - **6 MapScreen files** → **1 unified MapScreen.kt**
 - **Single source of truth** for map functionality

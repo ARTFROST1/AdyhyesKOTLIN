@@ -17,6 +17,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adygyes.app.R
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.viewmodel.SettingsViewModel
+import android.widget.Toast
+import com.adygyes.app.presentation.ui.util.EasterEggManager
 
 /**
  * Settings screen for app configuration and preferences
@@ -36,11 +38,34 @@ fun SettingsScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showCacheDialog by remember { mutableStateOf(false) }
+    // Easter egg: 7 taps on title
+    var tapCount by remember { mutableStateOf(0) }
+    var lastTapTime by remember { mutableStateOf(0L) }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.nav_settings)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.nav_settings),
+                        modifier = Modifier.clickable {
+                            val now = System.currentTimeMillis()
+                            // Reset sequence if too slow between taps
+                            if (now - lastTapTime > 1500) tapCount = 0
+                            lastTapTime = now
+                            tapCount += 1
+                            if (tapCount >= 7) {
+                                tapCount = 0
+                                EasterEggManager.activate()
+                                Toast.makeText(
+                                    context,
+                                    "Пасхалка активирована: фон карты заменён на фото до перезапуска",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
