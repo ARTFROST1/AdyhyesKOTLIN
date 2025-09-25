@@ -1,10 +1,12 @@
-# Implementation Plan for Adygyes
+# Implementation Plan for AdygGIS (project codename: Adygyes)
 
 ## 📊 Current Status
 **Last Updated:** 2025-09-26  
 **Current Stage:** Stage 9 COMPLETED ✅ - Dual-Layer Marker System  
 **Progress:** 120/132 tasks completed (91%)  
 **Next Stage:** Stage 10 - Quality Assurance & Optimization  
+
+> Note: User-facing app name is now "AdygGIS". Internal package and code identifiers remain "Adygyes" to avoid breaking changes.
 
 ### Stage Completion Status:
 - ✅ **Stage 1:** Foundation & Setup (100% complete - 12/12 tasks) ✅
@@ -413,6 +415,13 @@
 
 
 ## 🔄 Version Updates (Changelog)
+- **2025-09-26: Branding Update (User-facing name + Icon)**
+  - App display name changed to "AdygGIS" (no internal package rename). Files updated:
+    - `app/src/main/res/values/strings.xml` → `<string name="app_name">AdygGIS</string>`
+    - `app/src/main/res/values-en/strings.xml` → `<string name="app_name">AdygGIS</string>` + text mentions
+    - `app/src/main/AndroidManifest.xml` → `android:label="AdygGIS"`
+    - Adaptive icon updated: `res/drawable/ic_launcher_background.xml` (green gradient), `res/drawable/ic_launcher_foreground.xml` (gold compass). Legacy `<circle>` elements replaced with `<path>` for Android Vector Drawable compatibility.
+  - Documentation updated: `Implementation_Plan.md`, `project_structure.md`, `AppMap_adygyes.md`.
 - **2025-09-26: Marker Visuals Update**
   - Removed colored background and category emoji fallback from map markers without photos
   - Default fallback is now fully transparent with a white border and shadow until an image loads

@@ -3,6 +3,8 @@
 **Last Updated:** 2025-09-26  
 **Current Version:** Stage 9 + Persistent MapHost & Camera/Marker Persistence
 
+> Branding: User-facing app name is "AdygGIS". Internal code/package retains "Adygyes" to avoid breaking changes.
+
 ## 🎯 Key Architecture Updates:
 - **Simplified Data Management:** JsonFileManager now only reads from assets/attractions.json
 - **Developer Mode Removed:** DeveloperScreen, DeveloperViewModel, AttractionEditorScreen replaced with stubs
@@ -327,10 +329,13 @@ dependencyResolutionManagement {
 - Keep dependencies up to date
 
 ## Resource Organization
-- Strings: Centralized in `strings.xml`
+- Strings: Centralized in `strings.xml` (app display name: `<string name="app_name">AdygGIS</string>`)
 - Colors: Defined in `colors.xml`, referenced in theme
 - Dimensions: Use Material Design spacing
 - Drawables: Vector drawables preferred
+- App icon: Adaptive icon configured via `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round`.
+  - Foreground: `res/drawable/ic_launcher_foreground.xml` (gold compass, VectorDrawable; uses only `<path>` elements for compatibility)
+  - Background: `res/drawable/ic_launcher_background.xml` (green gradient)
 
 ## Testing Structure
 - Unit tests mirror source structure
@@ -383,6 +388,7 @@ The app now features a sophisticated image caching system that optimizes perform
 - **Repository**: AttractionRepositoryImpl integrates with cache versioning
 
 ## Changelog
+- 2025-09-26: **Branding Update** — App display name changed to "AdygGIS" (no internal package rename). Adaptive icon updated (green gradient background + gold compass foreground). `AndroidManifest.xml` `android:label` set to `AdygGIS`; `values/strings.xml` and `values-en/strings.xml` updated accordingly.
 - 2025-09-26: **Marker Visuals Update** — Removed colored background and emoji fallback for markers without photos. Default fallback is now fully transparent with a white border and shadow until an image loads. Updated `AppMap_adygyes.md`, `Implementation_Plan.md`, and `IMAGE_CACHING_SYSTEM.md` accordingly.
 - 2025-09-25: **MAJOR UPDATE** - Added ImageCacheManager system with version-based invalidation, fixed hardware bitmap issues in map markers, integrated lazy loading in PhotoGallery
 - 2025-09-25: Documentation update - Simplified JsonFileManager, removed Developer Mode files (replaced with stubs), added LocaleViewModel for language switching
