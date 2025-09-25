@@ -33,6 +33,7 @@ import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
 import com.adygyes.app.presentation.ui.components.AdygyesBottomNavigation
 import com.adygyes.app.presentation.ui.components.ViewMode
 import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
+import com.adygyes.app.presentation.viewmodel.ImageCacheViewModel
 import com.adygyes.app.presentation.viewmodel.MapViewModel
 import com.adygyes.app.presentation.viewmodel.MapUiState
 import com.adygyes.app.presentation.navigation.NavDestination
@@ -64,7 +65,8 @@ import timber.log.Timber
 fun MapScreen(
     navController: NavController,
     onAttractionClick: (String) -> Unit,
-    viewModel: MapViewModel = hiltViewModel()
+    viewModel: MapViewModel = hiltViewModel(),
+    imageCacheViewModel: ImageCacheViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var mapView by remember { mutableStateOf<MapView?>(null) }
@@ -204,6 +206,9 @@ fun MapScreen(
                                 mapView = mapView,
                                 attractions = filteredAttractions,
                                 selectedAttraction = selectedAttraction,
+                                imageCacheManager = remember { 
+                                    com.adygyes.app.data.local.cache.ImageCacheManager(context) 
+                                },
                                 onMarkerClick = { attraction ->
                                     Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
                                     viewModel.onMarkerClick(attraction)

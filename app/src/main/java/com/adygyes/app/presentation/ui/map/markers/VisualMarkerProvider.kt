@@ -10,8 +10,9 @@ import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
+import coil.request.ImageRequest
+import com.adygyes.app.data.local.cache.ImageCacheManager
 import timber.log.Timber
-import java.net.URL
 import kotlinx.coroutines.*
 
 /**
@@ -19,7 +20,8 @@ import kotlinx.coroutines.*
  * These markers are perfectly synchronized with map coordinates
  */
 class VisualMarkerProvider(
-    private val mapView: MapView
+    private val mapView: MapView,
+    private val imageCacheManager: ImageCacheManager
 ) {
     private val mapObjectCollection = mapView.map.mapObjects
     private val markers = mutableMapOf<String, PlacemarkMapObject>()
@@ -207,9 +209,45 @@ class VisualMarkerProvider(
     ) {
         withContext(Dispatchers.IO) {
             try {
-                // Load image from URL
-                val url = URL(imageUrl)
-                val bitmap = BitmapFactory.decodeStream(url.openStream())
+                // Load image using Coil with caching
+                // IMPORTANT: Disable hardware bitmaps for Canvas operations
+                val request = ImageRequest.Builder(mapView.context)
+                    .data(imageUrl)
+                    .crossfade(false)
+                    .allowHardware(false) // Critical: Canvas cannot draw hardware bitmaps
+                    .build()
+                
+                val result = imageCacheManager.imageLoader.execute(request)
+                val drawable = result.drawable
+                
+                // Convert drawable to bitmap
+                val bitmap = when {
+                    drawable is BitmapDrawable -> {
+                        val originalBitmap = drawable.bitmap
+                        // Check if it's a hardware bitmap and convert if needed
+                        if (originalBitmap.config == Bitmap.Config.HARDWARE) {
+                            // Convert hardware bitmap to software bitmap
+                            val softwareBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, false)
+                            softwareBitmap ?: originalBitmap // Use original if copy fails
+                        } else {
+                            originalBitmap
+                        }
+                    }
+                    drawable != null -> {
+                        // Create bitmap from drawable
+                        val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 100
+                        val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 100
+                        val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                        val canvas = Canvas(bmp)
+                        drawable.setBounds(0, 0, canvas.width, canvas.height)
+                        drawable.draw(canvas)
+                        bmp
+                    }
+                    else -> {
+                        // Create placeholder bitmap if drawable is null
+                        Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+                    }
+                }
                 
                 withContext(Dispatchers.Main) {
                     // Create circular image with loaded bitmap
@@ -218,6 +256,14 @@ class VisualMarkerProvider(
                         attraction = attraction,
                         isSelected = isSelected
                     )
+                    
+                    // Log cache status
+                    val isCached = imageCacheManager.isImageCached(imageUrl)
+                    if (isCached) {
+                        Timber.d("✅ Loaded marker image from cache for ${attraction.name}")
+                    } else {
+                        Timber.d("📥 Downloaded marker image for ${attraction.name}")
+                    }
                     
                     // Update marker
                     val imageProvider = ImageProvider.fromBitmap(circularBitmap)
@@ -271,9 +317,25 @@ class VisualMarkerProvider(
         canvas.clipPath(path)
         
         // Draw scaled image with full opacity
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, sizePx, sizePx, true)
-        paint.alpha = 255 // Ensure full opacity
-        canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
+        try {
+            // Ensure we're not working with a hardware bitmap
+            val safeBitmap = if (bitmap.config == Bitmap.Config.HARDWARE) {
+                bitmap.copy(Bitmap.Config.ARGB_8888, false) ?: bitmap
+            } else {
+                bitmap
+            }
+            
+            val scaledBitmap = Bitmap.createScaledBitmap(safeBitmap, sizePx, sizePx, true)
+            paint.alpha = 255 // Ensure full opacity
+            canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
+            scaledBitmap.recycle() // Clean up scaled bitmap
+        } catch (e: Exception) {
+            // If image drawing fails, draw a colored circle as fallback
+            paint.style = Paint.Style.FILL
+            paint.color = getCategoryColor(attraction.category)
+            canvas.drawCircle(centerX, centerY, radius, paint)
+            Timber.e(e, "Failed to draw image for marker ${attraction.name}")
+        }
         
         // Draw border
         paint.style = Paint.Style.STROKE

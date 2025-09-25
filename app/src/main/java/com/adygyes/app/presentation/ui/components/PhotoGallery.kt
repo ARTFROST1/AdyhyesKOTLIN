@@ -25,6 +25,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.request.CachePolicy
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
@@ -73,17 +74,33 @@ fun PhotoGallery(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
+            // Lazy loading: only load images when visible
+            // First image is already preloaded, others load on-demand
+            val imageUrl = images[page]
+            val isFirstImage = page == 0
+            
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(images[page])
+                    .data(imageUrl)
                     .crossfade(true)
+                    // Use cache for all images
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    // Placeholder while loading
+                    .placeholder(android.R.drawable.ic_menu_gallery)
                     .build(),
                 contentDescription = "Photo ${page + 1}",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { onImageClick?.invoke(page) }
+                    .clickable { onImageClick?.invoke(page) },
+                onSuccess = {
+                    // Log cache status for debugging
+                    if (!isFirstImage) {
+                        timber.log.Timber.d("🖼️ Loaded photo ${page + 1} for gallery")
+                    }
+                }
             )
         }
         

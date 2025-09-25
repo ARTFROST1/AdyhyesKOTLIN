@@ -29,6 +29,7 @@ import javax.inject.Singleton
 class AttractionRepositoryImpl @Inject constructor(
     private val attractionDao: AttractionDao,
     private val preferencesManager: PreferencesManager,
+    private val imageCacheManager: com.adygyes.app.data.local.cache.ImageCacheManager,
     @ApplicationContext private val context: Context
 ) : AttractionRepository {
     
@@ -127,6 +128,13 @@ class AttractionRepositoryImpl @Inject constructor(
                 Timber.d("Clearing existing data and reloading from JSON")
                 attractionDao.deleteAll()
                 
+                // Clear image cache if version changed
+                if (currentVersion != null && currentVersion != jsonVersion) {
+                    Timber.d("🗑️ Clearing image cache due to version change")
+                    imageCacheManager.clearAllCache()
+                    imageCacheManager.updateCacheVersion(jsonVersion)
+                }
+                
                 // Convert DTOs to entities and insert into database
                 val entities = attractionsResponse.attractions.toEntitiesFromDto()
                 attractionDao.insertAttractions(entities)
@@ -135,6 +143,9 @@ class AttractionRepositoryImpl @Inject constructor(
                 preferencesManager.updateDataVersion(jsonVersion)
                 
                 Timber.d("✅ Data updated: ${entities.size} attractions loaded (version $jsonVersion)")
+                
+                // Preload first images from attractions
+                preloadFirstImages(attractionsResponse.attractions)
             } else {
                 Timber.d("✅ Data is current, no update needed")
             }
@@ -382,5 +393,33 @@ class AttractionRepositoryImpl @Inject constructor(
             priceInfo = priceInfo,
             amenities = amenities
         )
+    }
+    
+    /**
+     * Preload first images from attractions for optimized loading
+     */
+    private suspend fun preloadFirstImages(attractions: List<AttractionDto>) {
+        try {
+            Timber.d("🖼️ Starting preload of first images for ${attractions.size} attractions")
+            
+            // Collect first image URL from each attraction
+            val firstImageUrls = attractions.mapNotNull { attraction ->
+                attraction.images.firstOrNull()
+            }
+            
+            if (firstImageUrls.isNotEmpty()) {
+                Timber.d("📥 Preloading ${firstImageUrls.size} first images")
+                
+                // Preload images in parallel using coroutines
+                imageCacheManager.preloadImages(firstImageUrls)
+                
+                Timber.d("✅ Completed preloading first images")
+            } else {
+                Timber.d("ℹ️ No images to preload")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error preloading first images")
+            // Don't fail the whole load process if preloading fails
+        }
     }
 }
