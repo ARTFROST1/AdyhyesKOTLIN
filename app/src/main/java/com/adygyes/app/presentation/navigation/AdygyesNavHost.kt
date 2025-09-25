@@ -10,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.adygyes.app.presentation.ui.screens.splash.SplashScreen
 import com.adygyes.app.presentation.ui.screens.map.MapScreen
 import com.adygyes.app.presentation.ui.screens.search.SearchScreen
 import com.adygyes.app.presentation.ui.screens.favorites.FavoritesScreen
@@ -27,9 +28,20 @@ fun AdygyesNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = NavDestination.Map.route,
+        startDestination = NavDestination.Splash.route,
         modifier = modifier.fillMaxSize()
     ) {
+        // Splash Screen
+        composable(NavDestination.Splash.route) {
+            SplashScreen(
+                onNavigateToMain = {
+                    navController.navigate(NavDestination.Map.route) {
+                        popUpTo(NavDestination.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
         // Main Map Screen
         composable(NavDestination.Map.route) {
             MapScreen(

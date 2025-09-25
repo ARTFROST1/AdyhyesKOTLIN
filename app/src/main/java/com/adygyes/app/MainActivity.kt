@@ -20,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,6 +37,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import android.os.Build
+import android.graphics.Color as AndroidColor
 
 /**
  * Main activity that hosts the Compose UI
@@ -50,6 +55,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Prevent Android from adding a contrast-enforcing translucent scrim over the navigation bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
+        // Remove navigation bar divider line on Android 9+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.navigationBarDividerColor = AndroidColor.TRANSPARENT
+        }
         
         // Get current language from preferences
         lifecycleScope.launch {
@@ -66,6 +79,12 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
             AdygyesTheme(darkTheme = darkTheme) {
+                val systemUiController = rememberSystemUiController()
+                SideEffect {
+                    // Make system bars fully transparent over the splash background
+                    systemUiController.setStatusBarColor(color = Color.Transparent, darkIcons = false)
+                    systemUiController.setNavigationBarColor(color = Color.Transparent, darkIcons = false)
+                }
                 AdygyesApp()
             }
         }

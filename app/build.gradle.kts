@@ -101,7 +101,6 @@ android {
 }
 
 dependencies {
-    // Core Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -117,12 +116,13 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.runtime)
+    // Google Fonts for Compose (Downloadable Fonts)
+    implementation("androidx.compose.ui:ui-text-google-fonts")
     
     // Accompanist
     implementation(libs.accompanist.permissions)
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.accompanist.pager)
-    implementation(libs.accompanist.pager.indicators)
     
     // Navigation
     implementation(libs.navigation.compose)

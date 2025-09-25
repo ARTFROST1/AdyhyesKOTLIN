@@ -973,9 +973,37 @@ mapView.map.mapObjects.traverse(object : MapObjectVisitor { ... })
 ### Modified Files:
 - `/app/src/main/java/com/adygyes/app/presentation/ui/components/AccessibilityHelper.kt`
 - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/GeoObjectProvider.kt`
-- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenTablet.kt`
+  - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenTablet.kt`
 
 ---
 
-*Last Updated: 2025-09-23*
+### BUG-025: Android Resource Merge Fails Due to .svg in res/drawable
+**Date:** 2025-09-25  
+**Stage:** Stage 4 - Splash Screen  
+**Severity:** High  
+**Status:** Resolved  
+
+**Description:**
+After adding splash screen assets, an `.svg` file was placed directly under `app/src/main/res/drawable/`, which Android resource merger does not accept. Only `.xml` (VectorDrawable) or raster images like `.png` are supported in `res/` folders. Additionally, the generated vector used `android:fillRule` which must be `android:fillType`.
+
+**Error Message/Stack Trace:**
+```
+E:\it\adyghyes_new\AdyhyesKOTLIN\app\src\main\res\drawable\ic_airplane.svg: Error: The file name must end with .xml or .png
+```
+
+  **Root Cause:**
+  - Invalid resource file `res/drawable/ic_airplane.svg` present in resources.
+   - Minor VectorDrawable attribute mismatch (`fillRule` instead of `fillType`).
+
+  **Solution:**
+  - Remove `app/src/main/res/drawable/ic_airplane.svg` from resources.
+  - Keep vector drawable `app/src/main/res/drawable/ic_airplane.xml` and set `android:fillType="evenOdd"`.
+
+  **Prevention:**
+  - Never commit raw `.svg` into `res/` folders. Convert to VectorDrawable `.xml` or export to `.png`.
+  - Validate vector attributes against VectorDrawable schema; use `fillType`, not `fillRule`.
+
+**Related Files:**
+- `app/src/main/res/drawable/ic_airplane.svg` (removed)
+- `app/src/main/res/drawable/ic_airplane.xml` (fixed)
 *Version: 1.0.0*

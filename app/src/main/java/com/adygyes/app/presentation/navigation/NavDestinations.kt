@@ -5,6 +5,9 @@ package com.adygyes.app.presentation.navigation
  */
 sealed class NavDestination(val route: String) {
     
+    // Splash screen
+    data object Splash : NavDestination("splash")
+    
     // Main screens
     data object Map : NavDestination("map")
     data object Search : NavDestination("search")
