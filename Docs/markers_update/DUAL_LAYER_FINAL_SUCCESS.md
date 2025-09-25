@@ -119,3 +119,32 @@ The dual-layer marker system now provides a **premium map experience** that comb
 - Professional user experience
 
 **Perfect markers on a fully interactive map!** 🚀✨
+
+---
+
+## ♻️ 2025-09-26 Update — Persistent Map + Camera/Marker Persistence
+
+To ensure markers don't recreate on navigation and the map stays alive across screens, the following improvements were implemented:
+
+- **Persistent MapHost (`MapHost.kt`)**
+  - Single `MapView` instance rendered at app root.
+  - Proper MapKit lifecycle (start/stop) and theme styling handled centrally.
+  - Exposes `LocalMapHostController` so overlays (like `MapScreen.kt`) can access the live `mapView`.
+
+- **Camera State Persistence (`MapStateViewModel.kt` + `PreferencesManager.cameraStateFlow`)**
+  - Persists `lat/lon/zoom/azimuth/tilt` to DataStore.
+  - Restores camera on app resume/restart for consistent UX.
+
+- **Marker Persistence (`VisualMarkerRegistry.kt`)**
+  - Reuses a single `VisualMarkerProvider` per `MapView` across navigation.
+  - Prevents full clear/re-add cycles when leaving/returning to map screen.
+
+- **Incremental Marker Updates (`VisualMarkerProvider.updateVisualMarkers`)**
+  - Removes only obsolete markers and adds only new ones.
+  - Keeps existing markers intact, preserving cache and avoiding flicker.
+
+- **DualLayerMarkerSystem Integration**
+  - Uses registry + incremental sync.
+  - No longer clears markers in `onDispose`.
+
+Result: The map initializes once, markers persist across navigation, and camera state is stable across sessions.
