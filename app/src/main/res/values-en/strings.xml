@@ -76,6 +76,23 @@
     <string name="favorites_empty">You have no favorite places yet</string>
     <string name="favorites_empty_description">Add interesting places to favorites to quickly return to them</string>
     <string name="favorites_explore">Explore</string>
+    <string name="no_favorites_yet">No Favorites Yet</string>
+    <string name="no_favorites_message">Start exploring and add your favorite attractions to see them here</string>
+    <string name="explore_attractions">Explore Attractions</string>
+    
+    <!-- Empty States -->
+    <string name="no_results_found">No Results Found</string>
+    <string name="no_results_message">We couldn\'t find any attractions matching \"%s\".\nTry adjusting your search or filters.</string>
+    <string name="clear_filters">Clear Filters</string>
+    <string name="no_internet_connection">No Internet Connection</string>
+    <string name="no_internet_message">Please check your connection and try again</string>
+    <string name="retry">Retry</string>
+    <string name="oops">Oops!</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="try_again">Try Again</string>
+    <string name="location_services_disabled">Location Services Disabled</string>
+    <string name="location_services_message">Enable location services to see nearby attractions and get directions</string>
+    <string name="enable_location">Enable Location</string>
     <string name="favorites_sort_date_added">Recently Added</string>
     <string name="favorites_sort_name">Name</string>
     <string name="favorites_sort_category">Category</string>

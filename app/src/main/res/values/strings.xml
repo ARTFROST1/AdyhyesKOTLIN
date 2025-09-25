@@ -76,6 +76,24 @@
     <string name="favorites_empty">У вас пока нет избранных мест</string>
     <string name="favorites_empty_description">Добавляйте интересные места в избранное, чтобы быстро к ним возвращаться</string>
     <string name="favorites_explore">Исследовать</string>
+    <string name="no_favorites_yet">Пока нет избранных</string>
+    <string name="no_favorites_message">Начните исследовать и добавляйте любимые достопримечательности, чтобы увидеть их здесь</string>
+    <string name="explore_attractions">Исследовать достопримечательности</string>
+    
+    <!-- Empty States -->
+    <string name="no_results_found">Ничего не найдено</string>
+    <string name="no_results_message">Мы не смогли найти достопримечательности по запросу \"%s\".\nПопробуйте изменить поиск или фильтры.</string>
+    <string name="clear_filters">Очистить фильтры</string>
+    <string name="no_internet_connection">Нет подключения к интернету</string>
+    <string name="no_internet_message">Проверьте подключение и попробуйте снова</string>
+    <string name="retry">Повторить</string>
+    <string name="oops">Упс!</string>
+    <string name="something_went_wrong">Что-то пошло не так</string>
+    <string name="try_again">Попробовать снова</string>
+    <string name="location_services_disabled">Службы геолокации отключены</string>
+    <string name="location_services_message">Включите службы геолокации, чтобы видеть ближайшие достопримечательности и получать маршруты</string>
+    <string name="enable_location">Включить геолокацию</string>
+    
     <string name="favorites_sort_date_added">Недавно добавленные</string>
     <string name="favorites_sort_name">По названию</string>
     <string name="favorites_sort_category">По категории</string>
