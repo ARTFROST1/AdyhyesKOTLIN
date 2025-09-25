@@ -50,7 +50,7 @@ The Adygyes app features a sophisticated image caching system built on top of Co
 ### Hardware Bitmap Compatibility
 - **Canvas Fix**: Resolved hardware bitmap issues with `.allowHardware(false)`
 - **Map Markers**: Fixed image display in VisualMarkerProvider
-- **Fallback Handling**: Graceful degradation to colored circles if image fails
+- **Fallback Handling**: No colored fallback — markers remain transparent with a white border if image fails or is absent
 
 ## 🔧 Implementation Details
 

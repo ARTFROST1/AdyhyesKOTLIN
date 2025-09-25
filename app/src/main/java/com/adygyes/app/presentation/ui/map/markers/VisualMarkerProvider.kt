@@ -3,9 +3,7 @@ package com.adygyes.app.presentation.ui.map.markers
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import androidx.compose.ui.graphics.toArgb
 import com.adygyes.app.domain.model.Attraction
-import com.adygyes.app.domain.model.AttractionCategory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
 import com.yandex.mapkit.mapview.MapView
@@ -145,13 +143,6 @@ class VisualMarkerProvider(
         val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         
-        // Paint for background circle
-        val backgroundPaint = Paint().apply {
-            isAntiAlias = true
-            color = getCategoryColor(attraction.category)
-            style = Paint.Style.FILL
-        }
-        
         // Paint for border
         val borderPaint = Paint().apply {
             isAntiAlias = true
@@ -173,12 +164,7 @@ class VisualMarkerProvider(
         
         // Draw shadow
         canvas.drawCircle(centerX + 2, centerY + 2, radius, shadowPaint)
-        
-        // Draw background circle
-        canvas.drawCircle(centerX, centerY, radius, backgroundPaint)
-        
-        // Draw category emoji or image placeholder
-        drawCategoryContent(canvas, attraction, centerX, centerY, radius)
+        // Do NOT draw background fill or emoji — keep fully transparent until image loads
         
         // Draw border
         canvas.drawCircle(centerX, centerY, radius, borderPaint)
@@ -193,37 +179,7 @@ class VisualMarkerProvider(
         return ImageProvider.fromBitmap(bitmap)
     }
     
-    /**
-     * Draw category emoji or icon in the center of marker
-     */
-    private fun drawCategoryContent(
-        canvas: Canvas,
-        attraction: Attraction,
-        centerX: Float,
-        centerY: Float,
-        radius: Float
-    ) {
-        val emoji = getCategoryEmoji(attraction.category)
-        
-        val textPaint = Paint().apply {
-            isAntiAlias = true
-            color = Color.WHITE
-            textSize = radius * 0.8f
-            textAlign = Paint.Align.CENTER
-        }
-        
-        // Center emoji vertically
-        val textBounds = android.graphics.Rect()
-        textPaint.getTextBounds(emoji, 0, emoji.length, textBounds)
-        val textHeight = textBounds.height()
-        
-        canvas.drawText(
-            emoji,
-            centerX,
-            centerY + textHeight / 2f,
-            textPaint
-        )
-    }
+    // No category emoji/content drawing — markers remain transparent until an image is loaded
     
     /**
      * Load image from URL and update marker
@@ -350,16 +306,12 @@ class VisualMarkerProvider(
             } else {
                 bitmap
             }
-            
             val scaledBitmap = Bitmap.createScaledBitmap(safeBitmap, sizePx, sizePx, true)
             paint.alpha = 255 // Ensure full opacity
             canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
             scaledBitmap.recycle() // Clean up scaled bitmap
         } catch (e: Exception) {
-            // If image drawing fails, draw a colored circle as fallback
-            paint.style = Paint.Style.FILL
-            paint.color = getCategoryColor(attraction.category)
-            canvas.drawCircle(centerX, centerY, radius, paint)
+            // If image drawing fails, do not draw any colored fallback — keep transparent
             Timber.e(e, "Failed to draw image for marker ${attraction.name}")
         }
         
@@ -372,43 +324,14 @@ class VisualMarkerProvider(
         return output
     }
     
-    /**
-     * Get category color
-     */
-    private fun getCategoryColor(category: AttractionCategory): Int {
-        return when (category) {
-            AttractionCategory.NATURE -> Color.parseColor("#4CAF50")
-            AttractionCategory.CULTURE -> Color.parseColor("#9C27B0")
-            AttractionCategory.HISTORY -> Color.parseColor("#795548")
-            AttractionCategory.ADVENTURE -> Color.parseColor("#FF5722")
-            AttractionCategory.RECREATION -> Color.parseColor("#03A9F4")
-            AttractionCategory.GASTRONOMY -> Color.parseColor("#FF9800")
-            AttractionCategory.RELIGIOUS -> Color.parseColor("#607D8B")
-            AttractionCategory.ENTERTAINMENT -> Color.parseColor("#E91E63")
-        }
-    }
-    
-    /**
-     * Get category emoji
-     */
-    private fun getCategoryEmoji(category: AttractionCategory): String {
-        return when (category) {
-            AttractionCategory.NATURE -> "🌲"
-            AttractionCategory.CULTURE -> "🎭"
-            AttractionCategory.HISTORY -> "🏛️"
-            AttractionCategory.ADVENTURE -> "⛰️"
-            AttractionCategory.RECREATION -> "🏖️"
-            AttractionCategory.GASTRONOMY -> "🍴"
-            AttractionCategory.RELIGIOUS -> "⛪"
-            AttractionCategory.ENTERTAINMENT -> "🎪"
-        }
-    }
+    // Removed category color/emoji helpers — no visual fallback is used anymore
     
     /**
      * Clear all markers from the map
      */
     fun clearMarkers() {
         markers.clear()
+        markerImages.clear()
         mapObjectCollection.clear()
         // Cancel existing coroutines and create new scope
         coroutineScope.cancel()
