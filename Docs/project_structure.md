@@ -1,7 +1,14 @@
 # Project Structure Guide
 
-**Last Updated:** 2025-09-24  
+**Last Updated:** 2025-09-25  
 **Current Version:** Stage 9 Complete - Dual-Layer Marker System
+
+## 🎯 Key Architecture Updates:
+- **Simplified Data Management:** JsonFileManager now only reads from assets/attractions.json
+- **Developer Mode Removed:** DeveloperScreen, DeveloperViewModel, AttractionEditorScreen replaced with stubs
+- **New LocaleViewModel:** Added for runtime language switching support
+- **Preserved MapScreenReliable:** Kept as backup map implementation with reliable tap handling
+- **No ImageCacheManager:** Using standard Coil image caching instead
 
 ## Project Directory Layout
 
@@ -24,8 +31,11 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   │   └── AdygyesDatabase.kt
 │   │   │   │   │   │   ├── entities/     # Room entities
 │   │   │   │   │   │   │   └── AttractionEntity.kt
-│   │   │   │   │   │   └── preferences/  # DataStore preferences
-│   │   │   │   │   │       └── PreferencesManager.kt
+│   │   │   │   │   │   ├── locale/        # Locale management
+│   │   │   │   │   │   │   └── LocaleManager.kt
+│   │   │   │   │   │   ├── preferences/  # DataStore preferences
+│   │   │   │   │   │   │   └── PreferencesManager.kt
+│   │   │   │   │   │   └── JsonFileManager.kt  # Simplified JSON reader
 │   │   │   │   │   ├── remote/           # Remote data sources
 │   │   │   │   │   │   └── dto/          # Data transfer objects
 │   │   │   │   │   │       └── AttractionDto.kt
@@ -105,7 +115,9 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │       └── SearchBar.kt
 │   │   │   │   │   └── viewmodel/        # ViewModels
 │   │   │   │   │       ├── AttractionDetailViewModel.kt
+│   │   │   │   │       ├── DeveloperViewModel.kt  # Stub file
 │   │   │   │   │       ├── FavoritesViewModel.kt
+│   │   │   │   │       ├── LocaleViewModel.kt    # Language switching
 │   │   │   │   │       ├── MapViewModel.kt
 │   │   │   │   │       ├── SearchViewModel.kt
 │   │   │   │   │       └── SettingsViewModel.kt
@@ -333,6 +345,8 @@ dependencyResolutionManagement {
 - Navigation Graph: `presentation/navigation/NavGraph.kt`
 
 ## Changelog
+- 2025-09-25: Documentation update - Simplified JsonFileManager, removed Developer Mode files (replaced with stubs), added LocaleViewModel for language switching
+- 2025-09-24: Stage 9 Complete - Dual-Layer Marker System with DualLayerMarkerSystem, VisualMarkerProvider, and transparent overlay
 - 2025-09-22: Centralized repositories in `settings.gradle.kts`; Gradle wrapper updated to 8.13; AGP aligned to 8.7.3.
 
 ## Commands Reference
