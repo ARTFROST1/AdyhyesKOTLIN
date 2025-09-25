@@ -183,7 +183,7 @@ AdyhyesKOTLIN/
 #### 🗺️ **Map Features:**
 - **Yandex MapKit integration** - Interactive map with clustering
 - **Location services** - GPS positioning and permission handling
-- **Marker providers** - Category-based colored markers
+- **Marker providers** - Category-based colored markers; visual markers use attraction photos, and if no photo is available or loading fails, the marker remains transparent (no colored background, no emoji) with a white border and shadow
 - **Geo-objects support** - Polygons and polylines for parks/trails
 
 #### 📱 **UI Components:**
@@ -383,6 +383,7 @@ The app now features a sophisticated image caching system that optimizes perform
 - **Repository**: AttractionRepositoryImpl integrates with cache versioning
 
 ## Changelog
+- 2025-09-26: **Marker Visuals Update** — Removed colored background and emoji fallback for markers without photos. Default fallback is now fully transparent with a white border and shadow until an image loads. Updated `AppMap_adygyes.md`, `Implementation_Plan.md`, and `IMAGE_CACHING_SYSTEM.md` accordingly.
 - 2025-09-25: **MAJOR UPDATE** - Added ImageCacheManager system with version-based invalidation, fixed hardware bitmap issues in map markers, integrated lazy loading in PhotoGallery
 - 2025-09-25: Documentation update - Simplified JsonFileManager, removed Developer Mode files (replaced with stubs), added LocaleViewModel for language switching
 - 2025-09-24: Stage 9 Complete - Dual-Layer Marker System with DualLayerMarkerSystem, VisualMarkerProvider, and transparent overlay
