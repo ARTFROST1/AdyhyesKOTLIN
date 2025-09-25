@@ -1,7 +1,7 @@
 # Implementation Plan for Adygyes
 
 ## 📊 Current Status
-**Last Updated:** 2025-09-24  
+**Last Updated:** 2025-09-25  
 **Current Stage:** Stage 9 COMPLETED ✅ - Dual-Layer Marker System  
 **Progress:** 120/132 tasks completed (91%)  
 **Next Stage:** Stage 10 - Quality Assurance & Optimization  
@@ -409,6 +409,12 @@
 
 
 ## 🔄 Version Updates (Changelog)
+- **2025-09-25: Documentation Update** - Актуализация документации после финальных изменений:
+  - **Упрощенная архитектура**: Удален Developer Mode, оставлен только assets/attractions.json
+  - **JsonFileManager**: Упрощен до чтения только из assets без кэширования
+  - **ImageCacheManager**: Удален, используется стандартный кэш Coil
+  - **LocaleViewModel**: Добавлена поддержка смены языка приложения
+  - **MapScreenReliable**: Сохранен как резервный вариант MapScreen
 - **2025-09-24: Stage 9 COMPLETED ✅ - Dual-Layer Marker System** - Revolutionary marker system implementation:
   - **BUG-020 SOLVED**: Achieved 100% reliable click detection (was 50-70%)
   - **Dual-Layer Architecture**: Native visual markers + transparent Compose overlay
