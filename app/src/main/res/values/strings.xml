@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Адыгэес</string>
+    <string name="app_name">AdygGIS</string>
     
     <!-- Navigation -->
     <string name="nav_map">Карта</string>

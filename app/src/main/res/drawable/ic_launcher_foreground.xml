@@ -4,27 +4,72 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    
+    <!-- Compass outer circle -->
     <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:pathData="M54,20C35.2,20 20,35.2 20,54C20,72.8 35.2,88 54,88C72.8,88 88,72.8 88,54C88,35.2 72.8,20 54,20Z"
+        android:strokeWidth="3"
+        android:strokeColor="#FFD700"
+        android:fillColor="@android:color/transparent" />
+    
+    <!-- Compass rose - main star (North) -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M54,26L58,46L54,54L50,46Z" />
+    <!-- South -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M54,82L50,62L54,54L58,62Z" />
+    <!-- West -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M26,54L46,50L54,54L46,58Z" />
+    <!-- East -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M82,54L62,58L54,54L62,50Z" />
+    
+    <!-- Diagonal compass points -->
+    <!-- Northeast -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M70,38L60,48L54,54L64,44Z" />
+    <!-- Southeast -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M70,70L60,60L54,54L64,64Z" />
+    <!-- Southwest -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M38,70L48,60L54,54L44,64Z" />
+    <!-- Northwest -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M38,38L48,48L54,54L44,44Z" />
+    
+    <!-- Corner dots as small circles using path -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M40,38C41.1,38 42,38.9 42,40C42,41.1 41.1,42 40,42C38.9,42 38,41.1 38,40C38,38.9 38.9,38 40,38Z" />
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M68,38C69.1,38 70,38.9 70,40C70,41.1 69.1,42 68,42C66.9,42 66,41.1 66,40C66,38.9 66.9,38 68,38Z" />
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M40,66C41.1,66 42,66.9 42,68C42,69.1 41.1,70 40,70C38.9,70 38,69.1 38,68C38,66.9 38.9,66 40,66Z" />
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M68,66C69.1,66 70,66.9 70,68C70,69.1 69.1,70 68,70C66.9,70 66,69.1 66,68C66,66.9 66.9,66 68,66Z" />
+    
+    <!-- Center circle -->
+    <path
+        android:fillColor="#FFD700"
+        android:strokeWidth="2"
+        android:strokeColor="#1B5E20"
+        android:pathData="M54,48C57.3,48 60,50.7 60,54C60,57.3 57.3,60 54,60C50.7,60 48,57.3 48,54C48,50.7 50.7,48 54,48Z" />
+    
+    <!-- Inner center circle -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M54,51C55.7,51 57,52.3 57,54C57,55.7 55.7,57 54,57C52.3,57 51,55.7 51,54C51,52.3 52.3,51 54,51Z" />
 </vector>

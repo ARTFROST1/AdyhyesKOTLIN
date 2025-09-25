@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Adygyes</string>
+    <string name="app_name">AdygGIS</string>
     
     <!-- Navigation -->
     <string name="nav_map">Map</string>
@@ -140,7 +140,7 @@
     <string name="settings_clear_cache">Clear Cache</string>
     <string name="settings_clear_cache_desc">Free up storage space</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_app">About Adygyes</string>
+    <string name="settings_about_app">About AdygGIS</string>
     <string name="settings_version">Version</string>
     <string name="settings_privacy">Privacy Policy</string>
     <string name="settings_privacy_desc">Learn how we protect your data</string>
@@ -149,7 +149,7 @@
     <string name="settings_rate_us">Rate Us</string>
     <string name="settings_rate_us_desc">Share your feedback on Google Play</string>
     <string name="settings_share_app">Share App</string>
-    <string name="settings_share_app_desc">Recommend Adygyes to friends</string>
+    <string name="settings_share_app_desc">Recommend AdygGIS to friends</string>
     <string name="settings_select_language">Select Language</string>
     <string name="settings_select_theme">Select Theme</string>
     <string name="settings_theme_light_desc">Always use light theme</string>
