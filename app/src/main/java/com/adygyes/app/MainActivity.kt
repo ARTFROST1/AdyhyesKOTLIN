@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -27,6 +28,7 @@ import com.adygyes.app.data.local.locale.LocaleManager
 import com.adygyes.app.presentation.navigation.AdygyesNavHost
 import com.adygyes.app.presentation.theme.AdygyesTheme
 import com.adygyes.app.presentation.viewmodel.LocaleViewModel
+import com.adygyes.app.presentation.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -53,7 +55,15 @@ class MainActivity : ComponentActivity() {
         }
         
         setContent {
-            AdygyesTheme {
+            // Observe theme mode from preferences
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val themeMode by themeViewModel.themeMode.collectAsState()
+            val darkTheme = when (themeMode) {
+                "dark" -> true
+                "light" -> false
+                else -> isSystemInDarkTheme()
+            }
+            AdygyesTheme(darkTheme = darkTheme) {
                 AdygyesApp()
             }
         }

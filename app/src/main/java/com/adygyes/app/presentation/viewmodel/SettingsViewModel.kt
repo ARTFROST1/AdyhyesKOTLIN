@@ -49,7 +49,11 @@ class SettingsViewModel @Inject constructor(
             // Load preferences using the actual PreferencesManager API
             preferencesManager.userPreferencesFlow.collect { preferences ->
                 _uiState.value = SettingsUiState(
-                    theme = if (preferences.isDarkTheme) Theme.DARK else Theme.LIGHT,
+                    theme = when (preferences.themeMode.lowercase()) {
+                        "dark" -> Theme.DARK
+                        "light" -> Theme.LIGHT
+                        else -> Theme.SYSTEM
+                    },
                     language = if (preferences.language == "ru") Language.RUSSIAN else Language.ENGLISH,
                     showUserLocation = preferences.autoCenterLocation,
                     clusterMarkers = true, // Default value since not in preferences
@@ -66,7 +70,11 @@ class SettingsViewModel @Inject constructor(
     
     fun setTheme(theme: Theme) {
         viewModelScope.launch {
-            preferencesManager.updateDarkTheme(theme == Theme.DARK)
+            when (theme) {
+                Theme.LIGHT -> preferencesManager.updateThemeMode("light")
+                Theme.DARK -> preferencesManager.updateThemeMode("dark")
+                Theme.SYSTEM -> preferencesManager.updateThemeMode("system")
+            }
         }
     }
     

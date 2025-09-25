@@ -22,6 +22,7 @@ class PreferencesManager @Inject constructor(
     // Preference Keys
     companion object {
         private val KEY_DARK_THEME = booleanPreferencesKey("dark_theme")
+        private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_MAP_TYPE = stringPreferencesKey("map_type")
         private val KEY_SHOW_TRAFFIC = booleanPreferencesKey("show_traffic")
@@ -40,6 +41,7 @@ class PreferencesManager @Inject constructor(
      */
     data class UserPreferences(
         val isDarkTheme: Boolean = false,
+        val themeMode: String = "system", // "light", "dark", "system"
         val language: String = LocaleManager.DEFAULT_LANGUAGE, // "ru" or "en" - default to Russian
         val mapType: String = "normal", // "normal", "satellite", "hybrid"
         val showTraffic: Boolean = false,
@@ -75,6 +77,13 @@ class PreferencesManager @Inject constructor(
     private fun mapUserPreferences(preferences: Preferences): UserPreferences {
         return UserPreferences(
             isDarkTheme = preferences[KEY_DARK_THEME] ?: false,
+            themeMode = preferences[KEY_THEME_MODE] ?: run {
+                // Backward compatibility: derive from old boolean if present
+                when (preferences[KEY_DARK_THEME] ?: false) {
+                    true -> "dark"
+                    false -> "light"
+                }
+            },
             language = preferences[KEY_LANGUAGE] ?: LocaleManager.DEFAULT_LANGUAGE,
             mapType = preferences[KEY_MAP_TYPE] ?: "normal",
             showTraffic = preferences[KEY_SHOW_TRAFFIC] ?: false,
@@ -95,6 +104,21 @@ class PreferencesManager @Inject constructor(
     suspend fun updateDarkTheme(isDarkTheme: Boolean) {
         dataStore.edit { preferences ->
             preferences[KEY_DARK_THEME] = isDarkTheme
+        }
+    }
+
+    /**
+     * Update theme mode preference ("light", "dark", or "system")
+     */
+    suspend fun updateThemeMode(mode: String) {
+        val normalized = when (mode.lowercase()) {
+            "light", "dark", "system" -> mode.lowercase()
+            else -> "system"
+        }
+        dataStore.edit { preferences ->
+            preferences[KEY_THEME_MODE] = normalized
+            // Keep legacy boolean in sync for backward compatibility
+            preferences[KEY_DARK_THEME] = (normalized == "dark")
         }
     }
     

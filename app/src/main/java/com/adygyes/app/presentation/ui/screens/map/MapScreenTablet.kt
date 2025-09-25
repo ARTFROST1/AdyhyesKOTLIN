@@ -21,6 +21,7 @@ import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.viewmodel.MapViewModel
+import com.adygyes.app.presentation.viewmodel.ThemeViewModel
 import com.adygyes.app.presentation.ui.components.AttractionCard
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
@@ -51,7 +52,14 @@ fun MapScreenTablet(
     val attractions by viewModel.attractions.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedAttraction by viewModel.selectedAttraction.collectAsStateWithLifecycle()
-    val isDarkTheme = isSystemInDarkTheme()
+    // Observe app theme (light/dark/system) and compute dark flag
+    val themeViewModel: ThemeViewModel = hiltViewModel()
+    val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
+    val isDarkTheme = when (themeMode) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDarkTheme()
+    }
     
     // Location permissions
     val locationPermissionsState = rememberMultiplePermissionsState(
@@ -107,6 +115,11 @@ fun MapScreenTablet(
             Timber.d("Tablet map initialized and centered on Adygea")
         }
     }
+
+    // Re-apply map style when theme changes
+    LaunchedEffect(mapView, isDarkTheme) {
+        mapView?.let { MapStyleProvider.applyMapStyle(it, isDarkTheme) }
+    }
     
     // Add user location marker
     LaunchedEffect(mapView, uiState.userLocation) {
@@ -150,7 +163,8 @@ fun MapScreenTablet(
     }
     
     // Add markers for attractions with clustering
-    LaunchedEffect(mapView, attractions) {
+    // Include isDarkTheme to refresh marker icons on theme change
+    LaunchedEffect(mapView, attractions, isDarkTheme) {
         mapView?.let { map ->
             try {
                 // Clear existing markers

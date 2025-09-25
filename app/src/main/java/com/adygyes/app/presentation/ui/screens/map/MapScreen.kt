@@ -36,6 +36,7 @@ import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
 import com.adygyes.app.presentation.viewmodel.ImageCacheViewModel
 import com.adygyes.app.presentation.viewmodel.MapViewModel
 import com.adygyes.app.presentation.viewmodel.MapUiState
+import com.adygyes.app.presentation.viewmodel.ThemeViewModel
 import com.adygyes.app.presentation.navigation.NavDestination
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.domain.model.Attraction
@@ -77,7 +78,14 @@ fun MapScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
     val filteredAttractions by viewModel.filteredAttractions.collectAsStateWithLifecycle()
-    val isDarkTheme = isSystemInDarkTheme()
+    // Observe app theme (light/dark/system) and compute dark flag
+    val themeViewModel: ThemeViewModel = hiltViewModel()
+    val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
+    val isDarkTheme = when (themeMode) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDarkTheme()
+    }
     
     // UI State
     var viewMode by remember { mutableStateOf(ViewMode.MAP) }
@@ -197,6 +205,11 @@ fun MapScreen(
                                 viewModel.updateMarkerPositions()
                             }
                         )
+                        
+                        // Re-apply map style when theme changes
+                        LaunchedEffect(mapView, isDarkTheme) {
+                            mapView?.let { MapStyleProvider.applyMapStyle(it, isDarkTheme) }
+                        }
                         
                         // Layer 2: DUAL-LAYER MARKER SYSTEM (top)
                         // Native markers for visual (perfect map binding)
