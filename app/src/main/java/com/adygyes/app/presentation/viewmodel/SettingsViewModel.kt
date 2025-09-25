@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adygyes.app.data.local.preferences.PreferencesManager
 import com.adygyes.app.data.local.cache.CacheManager
+import com.adygyes.app.data.local.locale.LocaleManager
 import com.adygyes.app.domain.usecase.DataSyncUseCase
 import com.adygyes.app.domain.usecase.NetworkUseCase
 import com.adygyes.app.domain.usecase.NetworkStatus
@@ -22,6 +23,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
     private val cacheManager: CacheManager,
+    private val localeManager: LocaleManager,
     private val dataSyncUseCase: DataSyncUseCase,
     private val networkUseCase: NetworkUseCase
 ) : ViewModel() {
@@ -71,10 +73,10 @@ class SettingsViewModel @Inject constructor(
     fun setLanguage(language: Language) {
         viewModelScope.launch {
             val langCode = when (language) {
-                Language.RUSSIAN -> "ru"
-                Language.ENGLISH -> "en"
+                Language.RUSSIAN -> LocaleManager.LANGUAGE_RUSSIAN
+                Language.ENGLISH -> LocaleManager.LANGUAGE_ENGLISH
             }
-            preferencesManager.updateLanguage(langCode)
+            localeManager.setLanguage(langCode)
         }
     }
     

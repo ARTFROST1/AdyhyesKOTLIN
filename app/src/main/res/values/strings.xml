@@ -45,8 +45,15 @@
     
     <!-- Attraction Details -->
     <string name="detail_description">Описание</string>
-    <string name="detail_how_to_get">Как добраться</string>
+    <string name="detail_about">О месте</string>
+    <string name="detail_location">Местоположение</string>
     <string name="detail_working_hours">Часы работы</string>
+    <string name="detail_price">Стоимость</string>
+    <string name="detail_contact_info">Контактная информация</string>
+    <string name="detail_amenities">Удобства</string>
+    <string name="detail_tags">Теги</string>
+    <string name="detail_get_directions">Построить маршрут</string>
+    <string name="detail_how_to_get">Как добраться</string>
     <string name="detail_contacts">Контакты</string>
     <string name="detail_rating">Рейтинг</string>
     <string name="detail_reviews">Отзывы</string>
@@ -56,10 +63,20 @@
     <string name="detail_add_to_favorites">Добавить в избранное</string>
     <string name="detail_remove_from_favorites">Удалить из избранного</string>
     
+    <!-- Content Descriptions -->
+    <string name="cd_back">Назад</string>
+    <string name="cd_share">Поделиться</string>
+    <string name="cd_add_to_favorites">Добавить в избранное</string>
+    <string name="cd_remove_from_favorites">Удалить из избранного</string>
+    
     <!-- Favorites Screen -->
     <string name="favorites_empty">У вас пока нет избранных мест</string>
     <string name="favorites_empty_description">Добавляйте интересные места в избранное, чтобы быстро к ним возвращаться</string>
     <string name="favorites_explore">Исследовать</string>
+    <string name="favorites_sort_date_added">Недавно добавленные</string>
+    <string name="favorites_sort_name">По названию</string>
+    <string name="favorites_sort_category">По категории</string>
+    <string name="favorites_sort_rating">По рейтингу</string>
     
     <!-- Search Screen -->
     <string name="search_placeholder">Поиск мест и достопримечательностей</string>
@@ -69,8 +86,12 @@
     <string name="search_no_results">Ничего не найдено</string>
     <string name="search_try_different">Попробуйте изменить запрос</string>
     <string name="search_clear">Очистить</string>
+    <string name="search_remove">Удалить</string>
+    <string name="search_back">Назад</string>
+    <string name="search_attractions_hint">Поиск достопримечательностей...</string>
     
     <!-- Settings Screen -->
+    <string name="settings_appearance">Внешний вид</string>
     <string name="settings_language">Язык</string>
     <string name="settings_language_ru">Русский</string>
     <string name="settings_language_en">English</string>
@@ -78,13 +99,44 @@
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>
     <string name="settings_theme_system">Системная</string>
+    <string name="settings_map">Настройки карты</string>
+    <string name="settings_show_location">Показать моё местоположение</string>
+    <string name="settings_show_location_desc">Отображать ваше текущее местоположение на карте</string>
+    <string name="settings_cluster_markers">Группировать маркеры</string>
+    <string name="settings_cluster_markers_desc">Группировать близкие маркеры при отдалении</string>
+    <string name="settings_show_traffic">Показать трафик</string>
+    <string name="settings_show_traffic_desc">Отображать информацию о трафике на карте</string>
+    <string name="settings_data_storage">Данные и хранилище</string>
+    <string name="settings_offline_mode">Автономный режим</string>
+    <string name="settings_offline_mode_desc">Использовать кэшированные данные когда возможно</string>
+    <string name="settings_auto_download">Автозагрузка изображений</string>
+    <string name="settings_auto_download_desc">Загружать изображения для автономного просмотра</string>
     <string name="settings_notifications">Уведомления</string>
+    <string name="settings_push_notifications">Push-уведомления</string>
+    <string name="settings_push_notifications_desc">Получать обновления о новых достопримечательностях</string>
+    <string name="settings_location_alerts">Уведомления по местоположению</string>
+    <string name="settings_location_alerts_desc">Уведомлять при приближении к достопримечательностям</string>
     <string name="settings_cache">Кэш</string>
     <string name="settings_clear_cache">Очистить кэш</string>
+    <string name="settings_clear_cache_desc">Освободить место в хранилище</string>
     <string name="settings_about">О приложении</string>
+    <string name="settings_about_app">О приложении Адыгэес</string>
     <string name="settings_version">Версия</string>
     <string name="settings_privacy">Политика конфиденциальности</string>
+    <string name="settings_privacy_desc">Узнайте, как мы защищаем ваши данные</string>
     <string name="settings_terms">Условия использования</string>
+    <string name="settings_terms_desc">Прочитайте наши условия и положения</string>
+    <string name="settings_rate_us">Оценить нас</string>
+    <string name="settings_rate_us_desc">Поделитесь отзывом в Google Play</string>
+    <string name="settings_share_app">Поделиться приложением</string>
+    <string name="settings_share_app_desc">Рекомендовать Адыгэес друзьям</string>
+    <string name="settings_select_language">Выберите язык</string>
+    <string name="settings_select_theme">Выберите тему</string>
+    <string name="settings_theme_light_desc">Всегда использовать светлую тему</string>
+    <string name="settings_theme_dark_desc">Всегда использовать тёмную тему</string>
+    <string name="settings_theme_system_desc">Следовать системным настройкам</string>
+    <string name="settings_clear_cache_title">Очистить кэш?</string>
+    <string name="settings_clear_cache_message">Это удалит все кэшированные данные, включая автономные карты и изображения. Вам понадобится подключение к интернету для повторной загрузки данных.</string>
     
     <!-- Common -->
     <string name="common_ok">OK</string>

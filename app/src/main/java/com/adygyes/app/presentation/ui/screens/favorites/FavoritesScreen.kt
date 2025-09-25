@@ -98,7 +98,7 @@ fun FavoritesScreen(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(sortOption.displayName)
+                                            Text(getSortDisplayName(sortOption))
                                             if (sortBy == sortOption) {
                                                 Icon(
                                                     imageVector = Icons.Default.Check,
@@ -133,7 +133,6 @@ fun FavoritesScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                
                 is FavoritesViewModel.UiState.Success -> {
                     if (state.favorites.isEmpty()) {
                         NoFavoritesState(
@@ -141,40 +140,28 @@ fun FavoritesScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
-                        Column {
-                            // Stats bar
-                            FavoritesStatsBar(
-                                totalCount = state.favorites.size,
-                                categoryCounts = state.favorites.groupBy { it.category }.mapValues { it.value.size },
-                                modifier = Modifier.padding(
-                                    horizontal = Dimensions.PaddingMedium,
-                                    vertical = Dimensions.PaddingSmall
+                        // Content based on view mode
+                        when (viewMode) {
+                            FavoritesViewModel.ViewMode.LIST -> {
+                                FavoritesListView(
+                                    favorites = state.favorites,
+                                    onAttractionClick = onAttractionClick,
+                                    onRemoveFavorite = { attractionId ->
+                                        viewModel.removeFavorite(attractionId)
+                                    },
+                                    modifier = Modifier.fillMaxSize()
                                 )
-                            )
+                            }
                             
-                            // Content based on view mode
-                            when (viewMode) {
-                                FavoritesViewModel.ViewMode.LIST -> {
-                                    FavoritesListView(
-                                        favorites = state.favorites,
-                                        onAttractionClick = onAttractionClick,
-                                        onRemoveFavorite = { attractionId ->
-                                            viewModel.removeFavorite(attractionId)
-                                        },
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
-                                
-                                FavoritesViewModel.ViewMode.GRID -> {
-                                    FavoritesGridView(
-                                        favorites = state.favorites,
-                                        onAttractionClick = onAttractionClick,
-                                        onRemoveFavorite = { attractionId ->
-                                            viewModel.removeFavorite(attractionId)
-                                        },
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
+                            FavoritesViewModel.ViewMode.GRID -> {
+                                FavoritesGridView(
+                                    favorites = state.favorites,
+                                    onAttractionClick = onAttractionClick,
+                                    onRemoveFavorite = { attractionId ->
+                                        viewModel.removeFavorite(attractionId)
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
                             }
                         }
                     }
@@ -254,53 +241,6 @@ private fun FavoritesGridView(
     }
 }
 
-@Composable
-private fun FavoritesStatsBar(
-    totalCount: Int,
-    categoryCounts: Map<com.adygyes.app.domain.model.AttractionCategory, Int>,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.PaddingMedium)
-        ) {
-            Text(
-                text = "You have $totalCount favorite${if (totalCount != 1) "s" else ""}",
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            if (categoryCounts.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    categoryCounts.entries
-                        .sortedByDescending { it.value }
-                        .take(3)
-                        .forEach { (category, count) ->
-                            CategoryChip(
-                                category = category,
-                                compact = true,
-                                modifier = Modifier
-                            )
-                            Text(
-                                text = "($count)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -337,12 +277,22 @@ private fun SwipeToDeleteContainer(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.common_delete),
                     tint = MaterialTheme.colorScheme.onError
                 )
             }
         }
     ) {
         content()
+    }
+}
+
+@Composable
+private fun getSortDisplayName(sortBy: FavoritesViewModel.SortBy): String {
+    return when (sortBy) {
+        FavoritesViewModel.SortBy.DATE_ADDED -> stringResource(R.string.favorites_sort_date_added)
+        FavoritesViewModel.SortBy.NAME -> stringResource(R.string.favorites_sort_name)
+        FavoritesViewModel.SortBy.CATEGORY -> stringResource(R.string.favorites_sort_category)
+        FavoritesViewModel.SortBy.RATING -> stringResource(R.string.favorites_sort_rating)
     }
 }

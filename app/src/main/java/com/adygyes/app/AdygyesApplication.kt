@@ -1,14 +1,23 @@
 package com.adygyes.app
 
 import android.app.Application
+import android.content.Context
+import android.content.res.Configuration
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import com.adygyes.app.data.local.locale.LocaleManager
 import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * Main Application class for Adygyes app.
@@ -17,10 +26,25 @@ import timber.log.Timber
 @HiltAndroidApp
 class AdygyesApplication : Application(), ImageLoaderFactory {
 
+    @Inject
+    lateinit var localeManager: LocaleManager
+    
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate() {
         super.onCreate()
-        initializeMapKit()
         initializeTimber()
+        initializeMapKit()
+        initializeLocale()
+    }
+    
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+    }
+    
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Handle configuration changes if needed
     }
 
     /**
@@ -50,6 +74,20 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
             Timber.d("Adygyes Application Started")
+        }
+    }
+    
+    /**
+     * Initialize locale settings
+     */
+    private fun initializeLocale() {
+        applicationScope.launch {
+            try {
+                val currentLanguage = localeManager.currentLanguage.first()
+                Timber.d("Application initialized with language: $currentLanguage")
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to initialize locale")
+            }
         }
     }
 

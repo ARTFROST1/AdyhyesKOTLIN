@@ -3,6 +3,7 @@
     
     <!-- Navigation -->
     <string name="nav_map">Map</string>
+    <string name="nav_list">List</string>
     <string name="nav_favorites">Favorites</string>
     <string name="nav_search">Search</string>
     <string name="nav_settings">Settings</string>
@@ -15,6 +16,23 @@
     <string name="map_loading">Loading map...</string>
     <string name="map_error">Map loading error</string>
     <string name="map_retry">Retry</string>
+    <string name="switch_to_list_view">Switch to list</string>
+    <string name="switch_to_map_view">Switch to map</string>
+    <string name="search_attractions">Search attractions</string>
+    <string name="my_location">My location</string>
+    <string name="filters">Filters</string>
+    <string name="clear_search">Clear search</string>
+    <string name="apply_filters">Apply filters</string>
+    <string name="clear_all">Clear all</string>
+    <string name="search_results_count">%d results</string>
+    <string name="filtered_results_count">Found: %d</string>
+    <string name="attractions_count">Total places: %d</string>
+    <string name="no_results_with_filters">No places found for \"%s\" with selected filters</string>
+    <string name="no_results_for_query">No places found for \"%s\"</string>
+    <string name="no_results_for_categories">No places found in selected categories</string>
+    <string name="no_attractions_available">No attractions available</string>
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="remove_from_favorites">Remove from favorites</string>
     
     <!-- Categories -->
     <string name="category_all">All</string>
@@ -27,8 +45,15 @@
     
     <!-- Attraction Details -->
     <string name="detail_description">Description</string>
+    <string name="detail_about">About</string>
+    <string name="detail_location">Location</string>
+    <string name="detail_working_hours">Working Hours</string>
+    <string name="detail_price">Price</string>
+    <string name="detail_contact_info">Contact Information</string>
+    <string name="detail_amenities">Amenities</string>
+    <string name="detail_tags">Tags</string>
+    <string name="detail_get_directions">Get Directions</string>
     <string name="detail_how_to_get">How to get there</string>
-    <string name="detail_working_hours">Working hours</string>
     <string name="detail_contacts">Contacts</string>
     <string name="detail_rating">Rating</string>
     <string name="detail_reviews">Reviews</string>
@@ -38,20 +63,35 @@
     <string name="detail_add_to_favorites">Add to favorites</string>
     <string name="detail_remove_from_favorites">Remove from favorites</string>
     
+    <!-- Content Descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_share">Share</string>
+    <string name="cd_add_to_favorites">Add to favorites</string>
+    <string name="cd_remove_from_favorites">Remove from favorites</string>
+    
     <!-- Favorites Screen -->
     <string name="favorites_empty">You have no favorite places yet</string>
     <string name="favorites_empty_description">Add interesting places to favorites to quickly return to them</string>
     <string name="favorites_explore">Explore</string>
+    <string name="favorites_sort_date_added">Recently Added</string>
+    <string name="favorites_sort_name">Name</string>
+    <string name="favorites_sort_category">Category</string>
+    <string name="favorites_sort_rating">Rating</string>
     
     <!-- Search Screen -->
+    <string name="search_placeholder">Search places and attractions</string>
     <string name="search_hint">Enter name or category...</string>
     <string name="search_recent">Recent searches</string>
     <string name="search_popular">Popular places</string>
     <string name="search_no_results">Nothing found</string>
     <string name="search_try_different">Try a different query</string>
     <string name="search_clear">Clear</string>
+    <string name="search_remove">Remove</string>
+    <string name="search_back">Back</string>
+    <string name="search_attractions_hint">Search attractions...</string>
     
     <!-- Settings Screen -->
+    <string name="settings_appearance">Appearance</string>
     <string name="settings_language">Language</string>
     <string name="settings_language_ru">Русский</string>
     <string name="settings_language_en">English</string>
@@ -59,13 +99,44 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_system">System</string>
+    <string name="settings_map">Map Settings</string>
+    <string name="settings_show_location">Show My Location</string>
+    <string name="settings_show_location_desc">Display your current location on the map</string>
+    <string name="settings_cluster_markers">Cluster Markers</string>
+    <string name="settings_cluster_markers_desc">Group nearby markers when zoomed out</string>
+    <string name="settings_show_traffic">Show Traffic</string>
+    <string name="settings_show_traffic_desc">Display traffic information on the map</string>
+    <string name="settings_data_storage">Data &amp; Storage</string>
+    <string name="settings_offline_mode">Offline Mode</string>
+    <string name="settings_offline_mode_desc">Use cached data when possible</string>
+    <string name="settings_auto_download">Auto-download Images</string>
+    <string name="settings_auto_download_desc">Download images for offline viewing</string>
     <string name="settings_notifications">Notifications</string>
+    <string name="settings_push_notifications">Push Notifications</string>
+    <string name="settings_push_notifications_desc">Receive updates about new attractions</string>
+    <string name="settings_location_alerts">Location-based Alerts</string>
+    <string name="settings_location_alerts_desc">Notify when near attractions</string>
     <string name="settings_cache">Cache</string>
-    <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_clear_cache">Clear Cache</string>
+    <string name="settings_clear_cache_desc">Free up storage space</string>
     <string name="settings_about">About</string>
+    <string name="settings_about_app">About Adygyes</string>
     <string name="settings_version">Version</string>
     <string name="settings_privacy">Privacy Policy</string>
-    <string name="settings_terms">Terms of Use</string>
+    <string name="settings_privacy_desc">Learn how we protect your data</string>
+    <string name="settings_terms">Terms of Service</string>
+    <string name="settings_terms_desc">Read our terms and conditions</string>
+    <string name="settings_rate_us">Rate Us</string>
+    <string name="settings_rate_us_desc">Share your feedback on Google Play</string>
+    <string name="settings_share_app">Share App</string>
+    <string name="settings_share_app_desc">Recommend Adygyes to friends</string>
+    <string name="settings_select_language">Select Language</string>
+    <string name="settings_select_theme">Select Theme</string>
+    <string name="settings_theme_light_desc">Always use light theme</string>
+    <string name="settings_theme_dark_desc">Always use dark theme</string>
+    <string name="settings_theme_system_desc">Follow system settings</string>
+    <string name="settings_clear_cache_title">Clear Cache?</string>
+    <string name="settings_clear_cache_message">This will delete all cached data including offline maps and images. You\'ll need an internet connection to reload this data.</string>
     
     <!-- Common -->
     <string name="common_ok">OK</string>
@@ -78,6 +149,8 @@
     <string name="common_error">Error</string>
     <string name="common_retry">Retry</string>
     <string name="common_offline">No internet connection</string>
+    <string name="results_found">found</string>
+    <string name="clear">Clear</string>
     
     <!-- Accessibility -->
     <string name="a11y_back_button">Back button</string>

@@ -5,15 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,13 +42,11 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.nav_settings)) },
                 navigationIcon = {
-                    if (onNavigateBack != null) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.search_back)
+                        )
                     }
                 }
             )
@@ -65,14 +60,18 @@ fun SettingsScreen(
         ) {
             // Appearance Section
             item {
-                SettingsSectionHeader(title = "Appearance")
+                SettingsSectionHeader(title = stringResource(R.string.settings_appearance))
             }
             
             item {
                 SettingsItem(
                     icon = Icons.Default.DarkMode,
-                    title = "Theme",
-                    subtitle = uiState.theme.displayName,
+                    title = stringResource(R.string.settings_theme),
+                    subtitle = when (uiState.theme) {
+                        SettingsViewModel.Theme.LIGHT -> stringResource(R.string.settings_theme_light)
+                        SettingsViewModel.Theme.DARK -> stringResource(R.string.settings_theme_dark)
+                        SettingsViewModel.Theme.SYSTEM -> stringResource(R.string.settings_theme_system)
+                    },
                     onClick = { showThemeDialog = true }
                 )
             }
@@ -80,8 +79,11 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Language,
-                    title = "Language",
-                    subtitle = uiState.language.displayName,
+                    title = stringResource(R.string.settings_language),
+                    subtitle = when (uiState.language) {
+                        SettingsViewModel.Language.RUSSIAN -> stringResource(R.string.settings_language_ru)
+                        SettingsViewModel.Language.ENGLISH -> stringResource(R.string.settings_language_en)
+                    },
                     onClick = { showLanguageDialog = true }
                 )
             }
@@ -92,36 +94,36 @@ fun SettingsScreen(
             
             // Map Settings Section
             item {
-                SettingsSectionHeader(title = "Map Settings")
+                SettingsSectionHeader(title = stringResource(R.string.settings_map))
             }
             
             item {
                 SettingsItemSwitch(
                     icon = Icons.Default.MyLocation,
-                    title = "Show My Location",
-                    subtitle = "Display your current location on the map",
+                    title = stringResource(R.string.settings_show_location),
+                    subtitle = stringResource(R.string.settings_show_location_desc),
                     checked = uiState.showUserLocation,
-                    onCheckedChange = { viewModel.setShowUserLocation(it) }
+                    onCheckedChange = { enabled -> viewModel.setShowUserLocation(enabled) }
                 )
             }
             
             item {
                 SettingsItemSwitch(
                     icon = Icons.Default.GroupWork,
-                    title = "Cluster Markers",
-                    subtitle = "Group nearby markers when zoomed out",
+                    title = stringResource(R.string.settings_cluster_markers),
+                    subtitle = stringResource(R.string.settings_cluster_markers_desc),
                     checked = uiState.clusterMarkers,
-                    onCheckedChange = { viewModel.setClusterMarkers(it) }
+                    onCheckedChange = { enabled -> viewModel.setClusterMarkers(enabled) }
                 )
             }
             
             item {
                 SettingsItemSwitch(
                     icon = Icons.Default.Traffic,
-                    title = "Show Traffic",
-                    subtitle = "Display traffic information on the map",
+                    title = stringResource(R.string.settings_show_traffic),
+                    subtitle = stringResource(R.string.settings_show_traffic_desc),
                     checked = uiState.showTraffic,
-                    onCheckedChange = { viewModel.setShowTraffic(it) }
+                    onCheckedChange = { enabled -> viewModel.setShowTraffic(enabled) }
                 )
             }
             
@@ -131,26 +133,26 @@ fun SettingsScreen(
             
             // Data & Storage Section
             item {
-                SettingsSectionHeader(title = "Data & Storage")
+                SettingsSectionHeader(title = stringResource(R.string.settings_data_storage))
             }
             
             item {
                 SettingsItemSwitch(
                     icon = Icons.Default.CloudOff,
-                    title = "Offline Mode",
-                    subtitle = "Use cached data when possible",
+                    title = stringResource(R.string.settings_offline_mode),
+                    subtitle = stringResource(R.string.settings_offline_mode_desc),
                     checked = uiState.offlineMode,
-                    onCheckedChange = { viewModel.setOfflineMode(it) }
+                    onCheckedChange = { enabled -> viewModel.setOfflineMode(enabled) }
                 )
             }
             
             item {
                 SettingsItemSwitch(
                     icon = Icons.Default.PhotoLibrary,
-                    title = "Auto-download Images",
-                    subtitle = "Download images for offline viewing",
+                    title = stringResource(R.string.settings_auto_download),
+                    subtitle = stringResource(R.string.settings_auto_download_desc),
                     checked = uiState.autoDownloadImages,
-                    onCheckedChange = { viewModel.setAutoDownloadImages(it) },
+                    onCheckedChange = { enabled -> viewModel.setAutoDownloadImages(enabled) },
                     enabled = !uiState.offlineMode
                 )
             }
@@ -158,8 +160,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Storage,
-                    title = "Clear Cache",
-                    subtitle = "Free up storage space",
+                    title = stringResource(R.string.settings_clear_cache),
+                    subtitle = stringResource(R.string.settings_clear_cache_desc),
                     onClick = { showCacheDialog = true }
                 )
             }
@@ -170,26 +172,26 @@ fun SettingsScreen(
             
             // Notifications Section
             item {
-                SettingsSectionHeader(title = "Notifications")
+                SettingsSectionHeader(title = stringResource(R.string.settings_notifications))
             }
             
             item {
                 SettingsItemSwitch(
                     icon = Icons.Default.Notifications,
-                    title = "Push Notifications",
-                    subtitle = "Receive updates about new attractions",
+                    title = stringResource(R.string.settings_push_notifications),
+                    subtitle = stringResource(R.string.settings_push_notifications_desc),
                     checked = uiState.pushNotifications,
-                    onCheckedChange = { viewModel.setPushNotifications(it) }
+                    onCheckedChange = { enabled -> viewModel.setPushNotifications(enabled) }
                 )
             }
             
             item {
                 SettingsItemSwitch(
                     icon = Icons.Default.LocationOn,
-                    title = "Location-based Alerts",
-                    subtitle = "Notify when near attractions",
+                    title = stringResource(R.string.settings_location_alerts),
+                    subtitle = stringResource(R.string.settings_location_alerts_desc),
                     checked = uiState.locationAlerts,
-                    onCheckedChange = { viewModel.setLocationAlerts(it) },
+                    onCheckedChange = { enabled -> viewModel.setLocationAlerts(enabled) },
                     enabled = uiState.pushNotifications
                 )
             }
@@ -200,14 +202,14 @@ fun SettingsScreen(
             
             // About Section
             item {
-                SettingsSectionHeader(title = "About")
+                SettingsSectionHeader(title = stringResource(R.string.settings_about))
             }
             
             item {
                 SettingsItem(
                     icon = Icons.Default.Info,
-                    title = "About Adygyes",
-                    subtitle = "Version ${uiState.appVersion}",
+                    title = stringResource(R.string.settings_about_app),
+                    subtitle = "${stringResource(R.string.settings_version)} ${uiState.appVersion}",
                     onClick = {
                         viewModel.onVersionClick()
                         onNavigateToAbout()
@@ -218,8 +220,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.PrivacyTip,
-                    title = "Privacy Policy",
-                    subtitle = "Learn how we protect your data",
+                    title = stringResource(R.string.settings_privacy),
+                    subtitle = stringResource(R.string.settings_privacy_desc),
                     onClick = onNavigateToPrivacy
                 )
             }
@@ -227,8 +229,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Article,
-                    title = "Terms of Service",
-                    subtitle = "Read our terms and conditions",
+                    title = stringResource(R.string.settings_terms),
+                    subtitle = stringResource(R.string.settings_terms_desc),
                     onClick = onNavigateToTerms
                 )
             }
@@ -236,8 +238,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.RateReview,
-                    title = "Rate Us",
-                    subtitle = "Share your feedback on Google Play",
+                    title = stringResource(R.string.settings_rate_us),
+                    subtitle = stringResource(R.string.settings_rate_us_desc),
                     onClick = { /* Open Play Store */ }
                 )
             }
@@ -245,8 +247,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Share,
-                    title = "Share App",
-                    subtitle = "Recommend Adygyes to friends",
+                    title = stringResource(R.string.settings_share_app),
+                    subtitle = stringResource(R.string.settings_share_app_desc),
                     onClick = { /* Share app link */ }
                 )
             }
@@ -291,9 +293,9 @@ fun SettingsScreen(
                     contentDescription = null
                 )
             },
-            title = { Text("Clear Cache?") },
+            title = { Text(stringResource(R.string.settings_clear_cache_title)) },
             text = {
-                Text("This will delete all cached data including offline maps and images. You'll need an internet connection to reload this data.")
+                Text(stringResource(R.string.settings_clear_cache_message))
             },
             confirmButton = {
                 TextButton(
@@ -302,135 +304,14 @@ fun SettingsScreen(
                         showCacheDialog = false
                     }
                 ) {
-                    Text("Clear")
+                    Text(stringResource(R.string.clear))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCacheDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
-        )
-    }
-}
-
-@Composable
-private fun SettingsSectionHeader(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = Dimensions.PaddingLarge,
-                vertical = Dimensions.PaddingSmall
-            )
-    )
-}
-
-@Composable
-private fun SettingsItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        enabled = enabled
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Dimensions.PaddingLarge, vertical = Dimensions.PaddingMedium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-            )
-            
-            Spacer(modifier = Modifier.width(Dimensions.SpacingMedium))
-            
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                )
-            }
-            
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsItemSwitch(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(horizontal = Dimensions.PaddingLarge, vertical = Dimensions.PaddingMedium),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-        )
-        
-        Spacer(modifier = Modifier.width(Dimensions.SpacingMedium))
-        
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-            )
-        }
-        
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            enabled = enabled
         )
     }
 }
@@ -443,7 +324,7 @@ private fun LanguageSelectionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Language") },
+        title = { Text(stringResource(R.string.settings_select_language)) },
         text = {
             Column {
                 SettingsViewModel.Language.values().forEach { language ->
@@ -460,7 +341,10 @@ private fun LanguageSelectionDialog(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = language.displayName,
+                            text = when (language) {
+                                SettingsViewModel.Language.RUSSIAN -> stringResource(R.string.settings_language_ru)
+                                SettingsViewModel.Language.ENGLISH -> stringResource(R.string.settings_language_en)
+                            },
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -469,7 +353,7 @@ private fun LanguageSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -483,7 +367,7 @@ private fun ThemeSelectionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Theme") },
+        title = { Text(stringResource(R.string.settings_select_theme)) },
         text = {
             Column {
                 SettingsViewModel.Theme.values().forEach { theme ->
@@ -501,14 +385,18 @@ private fun ThemeSelectionDialog(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = theme.displayName,
+                                text = when (theme) {
+                                    SettingsViewModel.Theme.LIGHT -> stringResource(R.string.settings_theme_light)
+                                    SettingsViewModel.Theme.DARK -> stringResource(R.string.settings_theme_dark)
+                                    SettingsViewModel.Theme.SYSTEM -> stringResource(R.string.settings_theme_system)
+                                },
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
                                 text = when (theme) {
-                                    SettingsViewModel.Theme.LIGHT -> "Always use light theme"
-                                    SettingsViewModel.Theme.DARK -> "Always use dark theme"
-                                    SettingsViewModel.Theme.SYSTEM -> "Follow system settings"
+                                    SettingsViewModel.Theme.LIGHT -> stringResource(R.string.settings_theme_light_desc)
+                                    SettingsViewModel.Theme.DARK -> stringResource(R.string.settings_theme_dark_desc)
+                                    SettingsViewModel.Theme.SYSTEM -> stringResource(R.string.settings_theme_system_desc)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -520,7 +408,7 @@ private fun ThemeSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
