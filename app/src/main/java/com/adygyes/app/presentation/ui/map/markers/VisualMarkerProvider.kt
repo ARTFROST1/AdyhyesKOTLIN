@@ -40,6 +40,32 @@ class VisualMarkerProvider(
         
         Timber.d("📍 Added ${attractions.size} native visual markers")
     }
+
+    /**
+     * Incrementally sync visual markers with provided attractions list without full clear-add.
+     * Keeps existing markers, removes those that are no longer needed, and adds only new ones.
+     */
+    fun updateVisualMarkers(attractions: List<Attraction>) {
+        val desiredIds = attractions.map { it.id }.toSet()
+
+        // Remove markers that are no longer present
+        val toRemove = markers.keys.toSet() - desiredIds
+        toRemove.forEach { id ->
+            markers.remove(id)?.let { placemark ->
+                mapObjectCollection.remove(placemark)
+            }
+        }
+
+        // Add new markers that don't exist yet
+        val currentIds = markers.keys
+        attractions.forEach { attraction ->
+            if (!currentIds.contains(attraction.id)) {
+                addVisualMarker(attraction)
+            }
+        }
+
+        Timber.d("📍 Synced native visual markers: now ${markers.size} (added ${desiredIds.size - currentIds.size}, removed ${toRemove.size})")
+    }
     
     /**
      * Add a single visual marker

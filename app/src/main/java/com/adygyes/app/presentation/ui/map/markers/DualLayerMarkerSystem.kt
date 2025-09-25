@@ -31,24 +31,22 @@ fun DualLayerMarkerSystem(
     // IMPORTANT: Box to ensure proper layering
     Box(modifier = modifier.fillMaxSize()) {
         // Layer 1: Native visual markers (bottom layer)
-        // Use remember to keep stable reference to provider
+        // Persist provider across navigation via registry to avoid re-creating markers
         val visualMarkerProvider = remember(mapView) {
-            mapView?.let {
-                VisualMarkerProvider(mapView = it, imageCacheManager = imageCacheManager)
+            mapView?.let { mv ->
+                VisualMarkerRegistry.getOrCreate(mv, imageCacheManager)
             }
         }
-        
-        DisposableEffect(mapView, attractions) {
-            
-            // Create native markers for visual representation
-            visualMarkerProvider?.addVisualMarkers(attractions)
-            
-            onDispose {
-                // Clean up native markers when composable leaves composition
-                visualMarkerProvider?.clearMarkers()
+
+        // Incremental sync of markers on attractions changes
+        LaunchedEffect(mapView, attractions) {
+            if (mapView != null && visualMarkerProvider != null) {
+                visualMarkerProvider.updateVisualMarkers(attractions)
+                VisualMarkerRegistry.setLastIds(mapView, attractions.map { it.id }.toSet())
+                Timber.d("📍 Incremental sync of visual markers: ${attractions.size}")
             }
         }
-        
+
         // Update visual selection state
         LaunchedEffect(selectedAttraction) {
             visualMarkerProvider?.updateSelectedMarker(selectedAttraction)
