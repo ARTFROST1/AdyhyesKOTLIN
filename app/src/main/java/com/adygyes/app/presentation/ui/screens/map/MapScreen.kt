@@ -2,6 +2,7 @@ package com.adygyes.app.presentation.ui.screens.map
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.WindowInsets
@@ -335,40 +336,124 @@ fun MapScreen(
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
                 .padding(horizontal = Dimensions.PaddingMedium)
                 .padding(
-                    top = Dimensions.PaddingSmall,
-                    bottom = if (viewMode == ViewMode.LIST) Dimensions.PaddingMedium else 0.dp
                 )
         ) {
             // Top bar with animated layout for expandable search
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-            ) {
-                // Animated layout based on search field focus
-                AnimatedContent(
-                    targetState = isSearchFieldFocused,
-                    transitionSpec = {
-                        slideInHorizontally(
-                            animationSpec = tween(300, easing = FastOutSlowInEasing)
-                        ) { if (targetState) -it else it } + fadeIn(
-                            animationSpec = tween(300)
-                        ) togetherWith slideOutHorizontally(
-                            animationSpec = tween(300, easing = FastOutSlowInEasing)
-                        ) { if (targetState) it else -it } + fadeOut(
-                            animationSpec = tween(300)
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
                         )
-                    },
-                    modifier = Modifier.fillMaxSize()
-                ) { focused ->
-                    if (focused) {
-                        // Expanded search field layout
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            shape = RoundedCornerShape(24.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                            shadowElevation = 8.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Left button - View Mode Toggle (Map/List) - hide when focused
+                AnimatedVisibility(
+                    visible = !isSearchFieldFocused,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            delayMillis = 100,
+                            easing = LinearOutSlowInEasing
+                        )
+                    ) + scaleIn(
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            delayMillis = 100,
+                            easing = LinearOutSlowInEasing
+                        ),
+                        initialScale = 0.8f
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = FastOutLinearInEasing
+                        )
+                    ) + scaleOut(
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = FastOutLinearInEasing
+                        ),
+                        targetScale = 0.8f
+                    )
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .size(48.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        shadowElevation = 8.dp
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.toggleViewMode() },
+                            modifier = Modifier.fillMaxSize()
                         ) {
+                            AnimatedContent(
+                                targetState = viewMode,
+                                transitionSpec = {
+                                    fadeIn(
+                                        animationSpec = tween(
+                                            durationMillis = 200,
+                                            easing = LinearOutSlowInEasing
+                                        )
+                                    ) + scaleIn(
+                                        animationSpec = tween(
+                                            durationMillis = 200,
+                                            easing = LinearOutSlowInEasing
+                                        ),
+                                        initialScale = 0.8f
+                                    ) togetherWith fadeOut(
+                                        animationSpec = tween(
+                                            durationMillis = 100,
+                                            easing = FastOutLinearInEasing
+                                        )
+                                    ) + scaleOut(
+                                        animationSpec = tween(
+                                            durationMillis = 100,
+                                            easing = FastOutLinearInEasing
+                                        ),
+                                        targetScale = 1.2f
+                                    )
+                                }
+                            ) { mode ->
+                                Icon(
+                                    imageVector = when (mode) {
+                                        ViewMode.MAP -> Icons.Default.List
+                                        ViewMode.LIST -> Icons.Default.Map
+                                    },
+                                    contentDescription = when (mode) {
+                                        ViewMode.MAP -> "Switch to list view"
+                                        ViewMode.LIST -> "Switch to map view"
+                                    },
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Expandable search field - grows to fill available space
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    shadowElevation = 8.dp
+                ) {
+                    Crossfade(
+                        targetState = isSearchFieldFocused,
+                        animationSpec = tween(
+                            durationMillis = 250,
+                            easing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1.0f)
+                        )
+                    ) { focused ->
+                        if (focused) {
                             if (viewMode == ViewMode.LIST) {
                                 // Enhanced search field for list mode with sort and view toggle
                                 EnhancedSearchTextField(
@@ -406,142 +491,86 @@ fun MapScreen(
                                         }
                                     },
                                     placeholder = stringResource(R.string.search_attractions),
-                                    onFilterClick = { 
-                                        showCategoryCarousel = !showCategoryCarousel
-                                    },
                                     onCloseClick = { isSearchFieldFocused = false },
-                                    hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
-                                    isCarouselVisible = showCategoryCarousel,
                                     onFocusChange = { focused -> isSearchFieldFocused = focused },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .fillMaxHeight()
                                 )
                             }
-                        }
-                    } else {
-                        // Normal three-button layout
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Left button - View Mode Toggle (Map/List)
-                            Surface(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .fillMaxHeight(),
-                                shape = RoundedCornerShape(24.dp),
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                shadowElevation = 8.dp
-                            ) {
-                                IconButton(
-                                    onClick = { viewModel.toggleViewMode() },
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    AnimatedContent(
-                                        targetState = viewMode,
-                                        transitionSpec = {
-                                            (scaleIn(animationSpec = tween(220)) + fadeIn(animationSpec = tween(220)))
-                                                .togetherWith(scaleOut(animationSpec = tween(90)) + fadeOut(animationSpec = tween(90)))
-                                        }
-                                    ) { mode ->
-                                        Icon(
-                                            imageVector = if (mode == ViewMode.MAP) {
-                                                Icons.Filled.List
-                                            } else {
-                                                Icons.Filled.Map
-                                            },
-                                            contentDescription = if (mode == ViewMode.MAP) {
-                                                stringResource(R.string.switch_to_list_view)
-                                            } else {
-                                                stringResource(R.string.switch_to_map_view)
-                                            },
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
+                        } else {
+                            // Normal search field when not focused
+                            UnifiedSearchTextField(
+                                value = searchQuery,
+                                onValueChange = { query: String ->
+                                    viewModel.updateSearchQuery(query)
+                                    searchJob?.cancel()
+                                    searchJob = scope.launch {
+                                        delay(300)
+                                        viewModel.search()
                                     }
-                                }
-                            }
-                            
-                            // Center - Search field container
-                            Surface(
+                                },
+                                placeholder = stringResource(R.string.search_attractions),
+                                onFilterClick = { 
+                                    showCategoryCarousel = !showCategoryCarousel
+                                },
+                                hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
+                                isCarouselVisible = showCategoryCarousel,
+                                onFocusChange = { focused -> isSearchFieldFocused = focused },
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight(),
-                                shape = RoundedCornerShape(24.dp),
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                shadowElevation = 8.dp
-                            ) {
-                                if (viewMode == ViewMode.LIST) {
-                                    // Enhanced search field for list mode with sort and view toggle
-                                    EnhancedSearchTextField(
-                                        value = searchQuery,
-                                        onValueChange = { query: String ->
-                                            viewModel.updateSearchQuery(query)
-                                            searchJob?.cancel()
-                                            searchJob = scope.launch {
-                                                delay(300)
-                                                viewModel.search()
-                                            }
-                                        },
-                                        placeholder = stringResource(R.string.search_attractions),
-                                        sortBy = sortBy,
-                                        onSortChange = { viewModel.setSortBy(it) },
-                                        viewMode = listViewMode,
-                                        onViewModeToggle = { viewModel.toggleListViewMode() },
-                                        isExpanded = false,
-                                        onFocusChange = { focused -> isSearchFieldFocused = focused },
-                                        onCloseClick = { },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .fillMaxHeight()
-                                    )
-                                } else {
-                                    // Simple search field for map mode
-                                    UnifiedSearchTextField(
-                                        value = searchQuery,
-                                        onValueChange = { query: String ->
-                                            viewModel.updateSearchQuery(query)
-                                            searchJob?.cancel()
-                                            searchJob = scope.launch {
-                                                delay(300)
-                                                viewModel.search()
-                                            }
-                                        },
-                                        placeholder = stringResource(R.string.search_attractions),
-                                        onFilterClick = { 
-                                            showCategoryCarousel = !showCategoryCarousel
-                                        },
-                                        hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
-                                        isCarouselVisible = showCategoryCarousel,
-                                        onFocusChange = { focused -> isSearchFieldFocused = focused },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .fillMaxHeight()
-                                    )
-                                }
-                            }
-                            
-                            // Right button - Settings
-                            Surface(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .fillMaxHeight(),
-                                shape = RoundedCornerShape(24.dp),
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                shadowElevation = 8.dp
-                            ) {
-                                IconButton(
-                                    onClick = onNavigateToSettings,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Settings,
-                                        contentDescription = stringResource(R.string.nav_settings),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                            )
+                        }
+                    }
+                }
+
+                // Right button - Settings - hide when focused
+                AnimatedVisibility(
+                    visible = !isSearchFieldFocused,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            delayMillis = 120,
+                            easing = LinearOutSlowInEasing
+                        )
+                    ) + scaleIn(
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            delayMillis = 120,
+                            easing = LinearOutSlowInEasing
+                        ),
+                        initialScale = 0.8f
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = FastOutLinearInEasing
+                        )
+                    ) + scaleOut(
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = FastOutLinearInEasing
+                        ),
+                        targetScale = 0.8f
+                    )
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .size(48.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        shadowElevation = 8.dp
+                    ) {
+                        IconButton(
+                            onClick = onNavigateToSettings,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Settings,
+                                contentDescription = stringResource(R.string.nav_settings),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
                 }
@@ -730,10 +759,7 @@ private fun ExpandedSearchTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    onFilterClick: () -> Unit,
     onCloseClick: () -> Unit,
-    hasActiveFilters: Boolean,
-    isCarouselVisible: Boolean = false,
     onFocusChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -770,48 +796,19 @@ private fun ExpandedSearchTextField(
             )
         },
         trailingIcon = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Filter button with badge (if filters are available)
-                BadgedBox(
-                    badge = {
-                        if (hasActiveFilters) {
-                            Badge(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                ) {
-                    IconButton(onClick = onFilterClick) {
-                        Icon(
-                            imageVector = if (isCarouselVisible) {
-                                Icons.Default.ExpandLess
-                            } else {
-                                Icons.Default.FilterList
-                            },
-                            contentDescription = stringResource(R.string.filters),
-                            tint = if (isCarouselVisible) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                    }
+            // Close button with dual function: clear text and remove focus
+            IconButton(
+                onClick = {
+                    onValueChange("") // Clear text
+                    focusManager.clearFocus() // Remove focus from input field
+                    onCloseClick() // Close expanded mode
                 }
-                
-                // Close button with dual function: clear text and remove focus
-                IconButton(
-                    onClick = {
-                        onValueChange("") // Clear text
-                        focusManager.clearFocus() // Remove focus from input field
-                        onCloseClick() // Close expanded mode
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.common_close),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.common_close),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         singleLine = true,
