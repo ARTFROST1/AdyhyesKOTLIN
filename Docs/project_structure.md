@@ -1,21 +1,21 @@
 # Project Structure Guide
 
 **Last Updated:** 2025-09-26  
-**Current Version:** Stage 10 + Map Preloading & Background Rendering System
+**Current Version:** Stage 10 - Quality Assurance & Optimization (91% Complete)
 
 > Branding: User-facing app name is "AdygGIS". Internal code/package retains "Adygyes" to avoid breaking changes.
 
 ## 🎯 Key Architecture Updates:
-- **🚀 NEW: Map Preloading System:** MapPreloadManager for background loading during splash screen
-- **⚡ NEW: Background Map Rendering:** BackgroundMarkerRenderer for instant map display
-- **🎯 NEW: Smart Progress Tracking:** Real-time progress indicators with blocked navigation
-- **🏗️ NEW: Layered Architecture:** Background Map → NavHost → Interaction Layer
-- **Simplified Data Management:** JsonFileManager now only reads from assets/attractions.json
-- **Developer Mode Removed:** DeveloperScreen, DeveloperViewModel, AttractionEditorScreen replaced with stubs
-- **New LocaleViewModel:** Added for runtime language switching support
-- **Preserved MapScreenReliable:** Kept as backup map implementation with reliable tap handling
-- **✨ ImageCacheManager:** Advanced image caching system with version-based cache invalidation
-- **✨ Hardware Bitmap Fix:** Resolved Canvas compatibility issues for map markers
+- **✅ Dual-Layer Marker System:** Native visual markers + Compose interactive overlay for 100% click reliability
+- **✅ Map Clustering:** Dynamic marker clustering based on zoom level with visual cluster indicators
+- **✅ Bottom Navigation:** Integrated bottom navigation with Map/List toggle
+- **✅ Favorites Integration:** CategoryCarousel + List/Grid toggle + Sorting integrated into MapScreen
+- **✅ ImageCacheManager:** Advanced image caching system with version-based cache invalidation
+- **✅ Simplified Data Management:** JsonFileManager now only reads from assets/attractions.json
+- **✅ Developer Mode Removed:** DeveloperScreen, DeveloperViewModel, AttractionEditorScreen replaced with stubs
+- **✅ LocaleViewModel:** Runtime language switching support
+- **✅ Hardware Bitmap Fix:** Resolved Canvas compatibility issues for map markers
+- **🚧 In Progress:** Performance optimization, testing implementation, Firebase integration
 
 ## Project Directory Layout
 
@@ -82,24 +82,24 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   └── Typography.kt
 │   │   │   │   │   ├── ui/               # Screens and components
 │   │   │   │   │   │   ├── screens/
-│   │   │   │   │   │   │   ├── splash/   # Splash screen with preloading
-│   │   │   │   │   │   │   │   └── SplashScreen.kt           # ⭐ NEW: Smart preloading with progress tracking
+│   │   │   │   │   │   │   ├── splash/   # Splash screen
+│   │   │   │   │   │   │   │   └── SplashScreen.kt           # App launch screen with logo
 │   │   │   │   │   │   │   ├── map/      # Map screen with dual-layer markers
-│   │   │   │   │   │   │   │   ├── MapScreen.kt              # ⭐ OPTIMIZED: Uses background markers + interaction layer
-│   │   │   │   │   │   │   │   ├── MapHost.kt                # ⭐ ENHANCED: Background rendering + persistent MapView
+│   │   │   │   │   │   │   │   ├── MapScreen.kt              # Main map screen with bottom nav
+│   │   │   │   │   │   │   │   ├── MapHost.kt                # Map container with persistent MapView
 │   │   │   │   │   │   │   │   ├── MapScreenTablet.kt        # Tablet version
-│   │   │   │   │   │   │   │   ├── CategoryMarkerProvider.kt
-│   │   │   │   │   │   │   │   ├── GeoObjectProvider.kt
-│   │   │   │   │   │   │   │   ├── MapStyleProvider.kt
-│   │   │   │   │   │   │   │   ├── TextImageProvider.kt
-│   │   │   │   │   │   │   │   ├── WaypointMarkerProvider.kt
-│   │   │   │   │   │   │   │   └── markers/                  # ⭐ DUAL-LAYER SYSTEM
-│   │   │   │   │   │   │   │       ├── DualLayerMarkerSystem.kt    # Main orchestrator (uses registry, incremental sync)
-│   │   │   │   │   │   │   │       ├── VisualMarkerProvider.kt     # Native markers (incremental updates)
-│   │   │   │   │   │   │   │       ├── VisualMarkerRegistry.kt     # ⭐ NEW: Persist provider across navigation
-│   │   │   │   │   │   │   │       ├── CircularImageMarker.kt      # Compose markers
+│   │   │   │   │   │   │   │   ├── ClusteringAlgorithm.kt    # Marker clustering logic
+│   │   │   │   │   │   │   │   ├── ClusterMarker.kt          # Cluster visualization
+│   │   │   │   │   │   │   │   ├── GeoObjectProvider.kt      # Geo objects support
+│   │   │   │   │   │   │   │   ├── MapStyleProvider.kt       # Map styling
+│   │   │   │   │   │   │   │   ├── WaypointMarkerProvider.kt # Waypoint markers
+│   │   │   │   │   │   │   │   └── markers/                  # Dual-layer marker system
+│   │   │   │   │   │   │   │       ├── DualLayerMarkerSystem.kt    # Main orchestrator
+│   │   │   │   │   │   │   │       ├── VisualMarkerProvider.kt     # Native visual markers
+│   │   │   │   │   │   │   │       ├── VisualMarkerRegistry.kt     # Marker persistence
+│   │   │   │   │   │   │   │       ├── CircularImageMarker.kt      # Compose click overlay
 │   │   │   │   │   │   │   │       ├── MarkerOverlay.kt            # Positioning system
-│   │   │   │   │   │   │   │       ├── MapCoordinateConverter.kt   # Coordinate utils
+│   │   │   │   │   │   │   │       ├── MapCoordinateConverter.kt   # Coordinate conversion
 │   │   │   │   │   │   │   │       └── MarkerState.kt              # State management
 │   │   │   │   │   │   │   ├── detail/   # Attraction details
 │   │   │   │   │   │   │   │   └── AttractionDetailScreen.kt
@@ -108,17 +108,23 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   │   ├── search/   # Search functionality
 │   │   │   │   │   │   │   │   └── SearchScreen.kt
 │   │   │   │   │   │   │   ├── settings/ # App settings
-│   │   │   │   │   │   │   │   └── SettingsScreen.kt
-│   │   │   │   │   │   │   └── onboarding/ # First launch
-│   │   │   │   │   │   │       └── OnboardingScreen.kt
+│   │   │   │   │   │   │   │   ├── SettingsScreen.kt
+│   │   │   │   │   │   │   │   └── SettingsComponents.kt    # Settings UI components
+│   │   │   │   │   │   │   ├── onboarding/ # First launch
+│   │   │   │   │   │   │   │   └── OnboardingScreen.kt
+│   │   │   │   │   │   │   └── developer/ # Developer mode (stubs)
+│   │   │   │   │   │   │       ├── DeveloperScreen.kt        # Stub file
+│   │   │   │   │   │   │       ├── DeveloperViewModel.kt     # Stub file
+│   │   │   │   │   │   │       └── AttractionEditorScreen.kt # Stub file
 │   │   │   │   │   │   └── components/   # Reusable UI components
 │   │   │   │   │   │       ├── AccessibilityHelper.kt
-│   │   │   │   │   │       ├── AdygyesBottomNavigation.kt  # ⭐ BOTTOM NAV
-│   │   │   │   │   │       ├── AttractionBottomSheet.kt
-│   │   │   │   │   │       ├── AttractionCard.kt
-│   │   │   │   │   │       ├── AttractionsList.kt
-│   │   │   │   │   │       ├── CategoryChip.kt
-│   │   │   │   │   │       ├── CategoryFilterBottomSheet.kt # ⭐ NEW
+│   │   │   │   │   │       ├── AdygyesBottomNavigation.kt    # Bottom navigation bar
+│   │   │   │   │   │       ├── AttractionBottomSheet.kt      # Attraction detail sheet
+│   │   │   │   │   │       ├── AttractionCard.kt             # Attraction card component
+│   │   │   │   │   │       ├── AttractionsList.kt            # List/Grid view with sorting
+│   │   │   │   │   │       ├── CategoryCarousel.kt           # Horizontal category scroll
+│   │   │   │   │   │       ├── CategoryChip.kt               # Category chip component
+│   │   │   │   │   │       ├── CategoryFilterBottomSheet.kt  # Category filter UI
 │   │   │   │   │   │       ├── EmptyState.kt
 │   │   │   │   │   │       ├── HapticFeedback.kt
 │   │   │   │   │   │       ├── LoadingShimmer.kt
@@ -131,13 +137,14 @@ AdyhyesKOTLIN/
 │   │   │   │   │       ├── FavoritesViewModel.kt
 │   │   │   │   │       ├── ImageCacheViewModel.kt # ⭐ NEW: Image cache management
 │   │   │   │   │       ├── LocaleViewModel.kt    # Language switching
-│   │   │   │   │       ├── MapViewModel.kt
-│   │   │   │   │       ├── MapPreloadViewModel.kt          # ⭐ NEW: Preload manager wrapper for Hilt
-│   │   │   │   │       ├── MapStateViewModel.kt            # ⭐ NEW: Camera state persistence
+│   │   │   │   │       ├── MapViewModel.kt                 # Map state and filtering
+│   │   │   │   │       ├── MapPreloadViewModel.kt          # Map preloading support
+│   │   │   │   │       ├── MapStateViewModel.kt            # Camera state persistence
 │   │   │   │   │       ├── SearchViewModel.kt
-│   │   │   │   │       └── SettingsViewModel.kt
+│   │   │   │   │       ├── SettingsViewModel.kt
+│   │   │   │   │       └── ThemeViewModel.kt              # Theme management
 │   │   │   │   │   └── util/               # Utilities
-│   │   │   │   │       └── MapPreloadManager.kt          # ⭐ NEW: Background map preloading system
+│   │   │   │   │       └── MapPreloadManager.kt          # Map preloading utilities
 │   │   │   │   ├── AdygyesApplication.kt  # Application class
 │   │   │   │   └── MainActivity.kt        # Main activity (renders MapHost { AdygyesNavHost(...) })
 │   │   │   └── res/
@@ -156,15 +163,19 @@ AdyhyesKOTLIN/
 │   ├── wrapper/
 │   └── libs.versions.toml          # Version catalog
 ├── Docs/                           # Documentation
-│   ├── Implementation_Plan.md      # Development roadmap
+│   ├── Implementation_Plan.md      # Development roadmap (Stage 10 in progress)
 │   ├── AppMap_adygyes.md          # App flow and UI structure
 │   ├── project_structure.md       # This file
-│   ├── MAP_PRELOADING_IMPLEMENTATION.md  # ⭐ NEW: Map preloading system docs
-│   ├── BACKGROUND_MAP_RENDERING.md      # ⭐ NEW: Background rendering architecture
 │   ├── PRD_adygyes.md            # Product requirements
 │   ├── Bug_tracking.md           # Known issues and fixes
 │   ├── UI_UX_doc.md             # Design specifications
-│   └── Technical_Specs.md        # Technical specifications
+│   ├── Technical_Specs.md        # Technical specifications
+│   ├── DATA_VERSIONING_GUIDE.md  # Data versioning system
+│   ├── IMAGE_CACHING_SYSTEM.md   # Image caching documentation
+│   └── markers_update/            # Marker system documentation
+│       ├── DUAL_LAYER_FINAL_SUCCESS.md
+│       ├── MARKER_COMPONENTS_SPEC.md
+│       └── MAP_MARKER_REDESIGN_PLAN.md
 ├── build.gradle.kts               # Project build configuration
 ├── settings.gradle.kts            # Project settings
 ├── gradle.properties             # Gradle properties
@@ -181,15 +192,15 @@ AdyhyesKOTLIN/
 
 ### 🎯 **Key Features Implemented**
 
-#### 🚀 **Stage 10 In Progress - Map Preloading & Background Rendering:**
-- **MapPreloadManager**: Complete background loading system during splash screen
-- **BackgroundMarkerRenderer**: Pre-renders markers before user navigation
-- **Smart Progress Tracking**: Real-time indicators with blocked navigation until ready
-- **Instant Map Display**: Zero loading time when navigating to map
-- **Layered Architecture**: Background Map → NavHost → Interaction Layer
-- **Perfect UX**: Users see fully loaded map immediately, like returning from settings
+#### 🚧 **Stage 10 In Progress - Quality Assurance & Optimization (91% Complete):**
+- **UI/UX Review**: Comprehensive review of all screens and interactions
+- **Performance Optimization**: Map performance and memory usage improvements
+- **Image Caching**: Advanced caching system with lazy loading
+- **Testing**: Unit tests, UI tests, integration tests in development
+- **Firebase Integration**: Crashlytics and analytics planned
+- **Bug Fixes**: Addressing all identified issues
 
-#### ⭐ **Stage 9 Completed - Dual-Layer Marker System + Persistent Map:**
+#### ✅ **Stage 9 Completed - Advanced Map Features:**
 - **Revolutionary Architecture** - Native visual + Compose interactive layers
 - **100% Click Reliability** - Perfect marker tap handling with transparent overlay
 - **Zero Visual Lag** - Native MapKit rendering with hardware acceleration
@@ -203,22 +214,33 @@ AdyhyesKOTLIN/
 - **Category filtering** - Bottom sheet with category selection
 
 #### 🗺️ **Map Features:**
-- **Yandex MapKit integration** - Interactive map with clustering
-- **Location services** - GPS positioning and permission handling
-- **Marker providers** - Category-based colored markers; visual markers use attraction photos, and if no photo is available or loading fails, the marker remains transparent (no colored background, no emoji) with a white border and shadow
-- **Geo-objects support** - Polygons and polylines for parks/trails
+- **Yandex MapKit v4.8.0** - Full interactive map integration
+- **Location Services** - GPS positioning with permission handling
+- **Dual-Layer Markers** - Native visual markers with Compose overlay for clicks
+- **Dynamic Clustering** - Automatic grouping with ClusteringAlgorithm
+- **Circular Image Markers** - Attraction photos with fallback to transparent
+- **Geo-objects Support** - Polygons and polylines for parks/trails
+- **Map Styles** - Light/Dark theme support with MapStyleProvider
 
 #### 📱 **UI Components:**
-- **Material Design 3** - Modern theming and components
-- **Responsive design** - Tablet support with MapScreenTablet.kt
-- **Accessibility** - Screen reader and haptic feedback support
-- **Animations** - Smooth transitions and loading states
+- **Material Design 3** - Complete theme system with Typography, Colors, Shapes
+- **Responsive Design** - Phone and tablet layouts
+- **Bottom Navigation** - Map, List, Favorites, Settings tabs
+- **Search Bar** - Real-time search with suggestions
+- **Category Carousel** - Horizontal scrolling category filter
+- **Photo Gallery** - Swipeable gallery with zoom support
+- **Loading Shimmers** - Skeleton loading animations
+- **Empty States** - Contextual empty state messages
+- **Haptic Feedback** - Touch feedback for interactions
 
 #### 💾 **Data Management:**
-- **Room Database** - Local data persistence
-- **DataStore** - User preferences storage
-- **JSON Assets** - 10 real Adygea attractions data
-- **Cache management** - Offline-first architecture
+- **Room Database** - Local persistence with migrations support
+- **DataStore Preferences** - User settings and preferences
+- **JSON Assets** - 10+ real Adygea attractions with full details
+- **Image Caching** - Coil-based caching with version invalidation
+- **Data Versioning** - Automatic updates when JSON version changes
+- **Offline Support** - Full offline functionality
+- **Repository Pattern** - Clean separation of data sources
 
 ## Development Guidelines
 
@@ -228,12 +250,16 @@ AdyhyesKOTLIN/
 - ViewModels follow MVVM pattern with StateFlow
 - Use cases encapsulate business logic
 
-### 🔧 **Dependencies**
-- **Jetpack Compose** - Modern UI toolkit
-- **Hilt** - Dependency injection
-- **Room** - Local database
-- **Yandex MapKit** - Map functionality
-- **Accompanist** - Compose utilities
+### 🔧 **Key Dependencies**
+- **Jetpack Compose** - UI toolkit (BOM 2024.12.01)
+- **Hilt** - Dependency injection (2.52)
+- **Room** - Local database (2.6.1)
+- **Yandex MapKit** - Map functionality (4.8.0-full)
+- **Coil** - Image loading and caching (2.7.0)
+- **Accompanist** - Permissions and utilities
+- **Kotlinx Serialization** - JSON parsing (1.7.3)
+- **DataStore** - Preferences storage
+- **Timber** - Logging
 
 ### 🎨 **UI Standards**
 - Material Design 3 components
@@ -242,34 +268,26 @@ AdyhyesKOTLIN/
 - ✅ **Полная локализация на русский язык** - весь интерфейс переведен и адаптирован
 - English localization (архитектура готова для будущего расширения)
 
-## Recent Changes (Stage 8)
+## Recent Major Updates
 
-### ✅ **MapScreen Unification:**
-- Merged 6 different MapScreen files into single unified version
-- Removed: MapScreenReliable, MapScreenWithBottomNav, MapScreenEnhanced, etc.
-- Kept: MapScreen.kt (main), MapScreenTablet.kt (tablet support)
+### ✅ **Stage 9 - Advanced Map Features:**
+- Implemented dual-layer marker system for 100% click reliability
+- Added dynamic marker clustering with zoom-based grouping
+- Integrated bottom navigation with Map/List toggle
+- Added CategoryCarousel for quick filtering
+- Implemented favorites integration in main map screen
 
-### ✅ **New Components Added:**
-- `CategoryFilterBottomSheet.kt` - Category filtering UI
-- Enhanced `AdygyesBottomNavigation.kt` - Bottom navigation bar
-- Improved marker tap handling with userData validation
+### ✅ **Stage 8 - Navigation & UI Enhancement:**
+- Unified multiple MapScreen implementations into single version
+- Added bottom navigation bar with tabs
+- Implemented category filtering with bottom sheet
+- Enhanced search with real-time suggestions
 
-### ✅ **Architecture Improvements:**
-- Edge-to-edge display support with WindowInsets
-- Proper MapKit lifecycle management
-- Reliable state management with debug logging
-- Optimized marker updates to prevent unnecessary recreation
-│   ├── Implementation_Plan.md
-│   ├── TechStack_Complete_Guide.md
-│   ├── project_structure.md
-│   ├── UI_UX_doc.md
-│   └── Bug_tracking.md
-├── build.gradle.kts                # Project-level build file
-├── settings.gradle.kts
-├── gradle.properties
-├── local.properties                # Local configuration (not in VCS)
-└── README.md
-```
+### ✅ **Data Architecture Simplification:**
+- Removed Developer Mode completely
+- Simplified to single JSON data source (assets/attractions.json)
+- Implemented automatic data versioning system
+- Added comprehensive image caching with Coil
 
 ## Architecture Pattern: MVVM + Clean Architecture
 
@@ -408,6 +426,7 @@ The app now features a sophisticated image caching system that optimizes perform
 - **Repository**: AttractionRepositoryImpl integrates with cache versioning
 
 ## Changelog
+- 2025-09-26: **Favorites Integration** — Integrated favorites functionality into MapScreen with CategoryCarousel, List/Grid toggle, and sorting. Enhanced AttractionsList with compact card mode matching FavoritesScreen design.
 - 2025-09-26: **Branding Update** — App display name changed to "AdygGIS" (no internal package rename). Adaptive icon updated (green gradient background + gold compass foreground). `AndroidManifest.xml` `android:label` set to `AdygGIS`; `values/strings.xml` and `values-en/strings.xml` updated accordingly.
 - 2025-09-26: **Marker Visuals Update** — Removed colored background and emoji fallback for markers without photos. Default fallback is now fully transparent with a white border and shadow until an image loads. Updated `AppMap_adygyes.md`, `Implementation_Plan.md`, and `IMAGE_CACHING_SYSTEM.md` accordingly.
 - 2025-09-25: **MAJOR UPDATE** - Added ImageCacheManager system with version-based invalidation, fixed hardware bitmap issues in map markers, integrated lazy loading in PhotoGallery
