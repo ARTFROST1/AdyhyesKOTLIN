@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 // import removed: AndroidView no longer needed in overlay mode
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -33,6 +34,8 @@ import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
 import com.adygyes.app.presentation.ui.components.AdygyesBottomNavigation
 import com.adygyes.app.presentation.ui.components.ViewMode
 import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
+import com.adygyes.app.presentation.ui.map.markers.MarkerOverlay
+import com.adygyes.app.presentation.ui.map.markers.VisualMarkerRegistry
 import com.adygyes.app.presentation.viewmodel.ImageCacheViewModel
 import com.adygyes.app.presentation.viewmodel.MapViewModel
 import com.adygyes.app.presentation.viewmodel.MapUiState
@@ -74,8 +77,10 @@ fun MapScreen(
     imageCacheViewModel: ImageCacheViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    // Get persistent MapView from MapHost
-    val mapView: MapView? = LocalMapHostController.current?.mapView
+    // Get persistent MapView and preload manager from MapHost
+    val mapHostController = LocalMapHostController.current
+    val mapView: MapView? = mapHostController?.mapView
+    val preloadManager = mapHostController?.preloadManager
     
     // State collection
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -119,11 +124,35 @@ fun MapScreen(
         }
     }
     
+    // Check if data is preloaded and skip loading if already done
+    val preloadState = preloadManager?.preloadState?.collectAsStateWithLifecycle()
+    
+    LaunchedEffect(preloadState?.value?.dataLoaded) {
+        if (preloadState?.value?.dataLoaded == true && filteredAttractions.isEmpty()) {
+            // Trigger data loading in ViewModel if not already loaded
+            // The ViewModel will automatically load data when needed
+            Timber.d("🚀 Preloaded data available, ViewModel will use it")
+        }
+    }
+    
+    // Log when MapScreen becomes active with preloaded markers
+    LaunchedEffect(mapView, preloadState?.value?.allMarkersReady) {
+        if (mapView != null && preloadState?.value?.allMarkersReady == true) {
+            val existingIds = preloadManager?.let { VisualMarkerRegistry.getLastIds(mapView) }
+            Timber.d("🎯 MapScreen active with MapView: ${mapView.hashCode()}, preloaded markers: ${existingIds?.size ?: 0}")
+        }
+    }
+    
     // Force marker update when attractions are loaded
     LaunchedEffect(filteredAttractions.size, isMapReady) {
         if (isMapReady && filteredAttractions.isNotEmpty()) {
-            viewModel.updateMarkerPositions()
-            Timber.d("🔄 Attractions loaded: ${filteredAttractions.size}, updating markers")
+            // Only update if not already created by preloader
+            if (preloadState?.value?.markersCreated != true) {
+                viewModel.updateMarkerPositions()
+                Timber.d("🔄 Attractions loaded: ${filteredAttractions.size}, updating markers")
+            } else {
+                Timber.d("✅ Markers already created by preloader")
+            }
         }
     }
     
@@ -224,20 +253,42 @@ fun MapScreen(
                         }
 
                         if (mapView != null && isMapReady) {
-                            DualLayerMarkerSystem(
-                                mapView = mapView,
-                                attractions = filteredAttractions,
-                                selectedAttraction = selectedAttraction,
-                                imageCacheManager = remember { 
-                                    com.adygyes.app.data.local.cache.ImageCacheManager(context) 
-                                },
-                                onMarkerClick = { attraction ->
-                                    Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
-                                    viewModel.onMarkerClick(attraction)
-                                },
-                                modifier = Modifier.fillMaxSize(),
-                                composeVisualMode = easterEggActive
-                            )
+                            // Check if markers are already rendered in background
+                            val backgroundMarkersReady = preloadState?.value?.allMarkersReady == true
+                            
+                            if (backgroundMarkersReady) {
+                                // Markers already rendered in background, only add interaction layer
+                                Timber.d("🎯 Using background markers, adding interaction layer only")
+                                MarkerOverlay(
+                                    mapView = mapView,
+                                    attractions = filteredAttractions,
+                                    selectedAttraction = selectedAttraction,
+                                    onMarkerClick = { attraction ->
+                                        Timber.d("🎯 MARKER CLICKED: ${attraction.name}")
+                                        viewModel.onMarkerClick(attraction)
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                    enableClustering = false,
+                                    animationDuration = 0,
+                                    transparentMode = true // Only interactions, no visuals
+                                )
+                            } else {
+                                // Fallback: render full DualLayerMarkerSystem if background not ready
+                                DualLayerMarkerSystem(
+                                    mapView = mapView,
+                                    attractions = filteredAttractions,
+                                    selectedAttraction = selectedAttraction,
+                                    imageCacheManager = remember { 
+                                        com.adygyes.app.data.local.cache.ImageCacheManager(context) 
+                                    },
+                                    onMarkerClick = { attraction ->
+                                        Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
+                                        viewModel.onMarkerClick(attraction)
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                    composeVisualMode = easterEggActive
+                                )
+                            }
                         }
                     }
                 }

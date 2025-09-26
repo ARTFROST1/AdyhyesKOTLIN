@@ -36,7 +36,7 @@ class VisualMarkerProvider(
             addVisualMarker(attraction)
         }
         
-        Timber.d("📍 Added ${attractions.size} native visual markers")
+        Timber.d("📍 Added ${attractions.size} native visual markers to MapView: ${mapView.hashCode()}")
     }
 
     /**
@@ -62,7 +62,7 @@ class VisualMarkerProvider(
             }
         }
 
-        Timber.d("📍 Synced native visual markers: now ${markers.size} (added ${desiredIds.size - currentIds.size}, removed ${toRemove.size})")
+        Timber.d("📍 Synced native visual markers on MapView ${mapView.hashCode()}: now ${markers.size} (added ${desiredIds.size - currentIds.size}, removed ${toRemove.size})")
     }
     
     /**
@@ -89,6 +89,8 @@ class VisualMarkerProvider(
         
         // Set user data for debugging (not for click handling)
         placemark.userData = attraction
+        
+        Timber.d("✅ Created marker for ${attraction.name} at ${attraction.location.latitude}, ${attraction.location.longitude} on MapView: ${mapView.hashCode()}")
     }
     
     /**

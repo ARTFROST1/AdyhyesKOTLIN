@@ -1,16 +1,21 @@
 package com.adygyes.app.presentation.ui.screens.splash
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -21,7 +26,10 @@ import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adygyes.app.R
+import com.adygyes.app.presentation.ui.screens.map.LocalMapHostController
+import kotlinx.coroutines.delay
 
 /**
  * Splash screen with background image and styled button
@@ -30,6 +38,24 @@ import com.adygyes.app.R
 fun SplashScreen(
     onNavigateToMain: () -> Unit
 ) {
+    // Get preload manager from MapHost
+    val preloadManager = LocalMapHostController.current?.preloadManager
+    val preloadState = preloadManager?.preloadState?.collectAsStateWithLifecycle()
+    
+    // Track if button was clicked and loading is complete
+    var navigateWhenReady by remember { mutableStateOf(false) }
+    
+    // Auto-navigate when preload is complete and button was clicked
+    LaunchedEffect(preloadState?.value?.allMarkersReady, navigateWhenReady) {
+        if (navigateWhenReady && preloadState?.value?.allMarkersReady == true) {
+            // Small delay for smooth transition
+            delay(100)
+            onNavigateToMain()
+        }
+    }
+    
+    // Check if everything is fully loaded
+    val isFullyLoaded = preloadState?.value?.allMarkersReady == true
     // Downloadable Google Font: Raleway with specific weights
     val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
@@ -102,42 +128,104 @@ fun SplashScreen(
                     .padding(bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Preload progress indicator (visible while loading)
+                val progress = preloadState?.value?.progress ?: 0f
+                val isLoading = preloadState?.value?.isLoading ?: false
+                
+                AnimatedVisibility(
+                    visible = isLoading && !navigateWhenReady,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        LinearProgressIndicator(
+                            progress = progress,
+                            modifier = Modifier
+                                .width(194.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp)),
+                            color = Color(0xFFF6CA5F),
+                            trackColor = Color(0xFF0C5329).copy(alpha = 0.3f)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = when {
+                                progress < 0.3f -> "Загружаем данные..."
+                                progress < 0.5f -> "Создаём маркеры на карте..."
+                                progress < 0.8f -> "Загружаем изображения..."
+                                progress < 1.0f -> "Финальная подготовка..."
+                                else -> "Всё готово!"
+                            },
+                            fontSize = 12.sp,
+                            fontFamily = ralewayFontFamily,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+                
                 // Start button with airplane icon
                 Row(
                     modifier = Modifier
                         .defaultMinSize(minWidth = 194.dp, minHeight = 40.dp)
+                        .alpha(if (!isFullyLoaded) 0.5f else 1f)
                         .background(
-                            color = Color(0xFF0C5329),
+                            color = if (isFullyLoaded) 
+                                Color(0xFF0C5329) 
+                            else 
+                                Color(0xFF0C5329).copy(alpha = 0.7f),
                             shape = RoundedCornerShape(25.dp)
                         )
                         .border(
                             width = 1.dp,
-                            color = Color(0xFFF6CA5F),
+                            color = if (isFullyLoaded) Color(0xFFF6CA5F) else Color(0xFFF6CA5F).copy(alpha = 0.5f),
                             shape = RoundedCornerShape(25.dp)
                         )
                         .clip(RoundedCornerShape(25.dp))
-                        .clickable { onNavigateToMain() }
+                        .clickable(enabled = isFullyLoaded) { 
+                            // Only allow click when fully loaded
+                            if (isFullyLoaded) {
+                                onNavigateToMain()
+                            }
+                        }
                         .padding(horizontal = 24.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Airplane icon
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_airplane),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = Color(0xFFF6CA5F)
-                    )
+                    if (!isFullyLoaded) {
+                        // Show loading spinner when not ready
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = Color(0xFFF6CA5F).copy(alpha = 0.7f),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        // Airplane icon when ready
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_airplane),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = Color(0xFFF6CA5F)
+                        )
+                    }
                     
                     Spacer(modifier = Modifier.width(10.dp))
                     
                     // Button text - Semibold 16px
                     Text(
-                        text = "В путешествие",
+                        text = if (!isFullyLoaded) 
+                            "Подготавливаем карту..." 
+                        else 
+                            "В путешествие",
                         fontSize = 16.sp,
                         fontFamily = ralewayFontFamily,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFF6CA5F),
+                        color = if (isFullyLoaded) Color(0xFFF6CA5F) else Color(0xFFF6CA5F).copy(alpha = 0.7f),
                         maxLines = 1
                     )
                 }

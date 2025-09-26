@@ -9,6 +9,7 @@ import com.adygyes.app.data.local.cache.ImageCacheManager
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.mapkit.map.PlacemarkMapObject
 import timber.log.Timber
+import kotlinx.coroutines.delay
 
 /**
  * Dual-layer marker system that combines:
@@ -36,22 +37,51 @@ fun DualLayerMarkerSystem(
             // Persist provider across navigation via registry to avoid re-creating markers
             val visualMarkerProvider = remember(mapView) {
                 mapView?.let { mv ->
-                    VisualMarkerRegistry.getOrCreate(mv, imageCacheManager)
+                    val provider = VisualMarkerRegistry.getOrCreate(mv, imageCacheManager)
+                    Timber.d("🎯 DualLayerMarkerSystem: Got VisualMarkerProvider for MapView: ${mv.hashCode()}")
+                    provider
                 }
             }
 
             // Incremental sync of markers on attractions changes
+            // Only update if the markers haven't been preloaded or attractions have changed
             LaunchedEffect(mapView, attractions) {
                 if (mapView != null && visualMarkerProvider != null) {
-                    visualMarkerProvider.updateVisualMarkers(attractions)
-                    VisualMarkerRegistry.setLastIds(mapView, attractions.map { it.id }.toSet())
-                    Timber.d("📍 Incremental sync of visual markers: ${attractions.size}")
+                    val currentIds = VisualMarkerRegistry.getLastIds(mapView)
+                    val newIds = attractions.map { it.id }.toSet()
+                    
+                    // Only update if there's a difference in attractions
+                    if (currentIds != newIds) {
+                        visualMarkerProvider.updateVisualMarkers(attractions)
+                        VisualMarkerRegistry.setLastIds(mapView, newIds)
+                        Timber.d("📍 Incremental sync of visual markers: ${attractions.size} (changed from ${currentIds.size})")
+                    } else {
+                        Timber.d("📍 Markers already loaded: ${attractions.size}, skipping sync")
+                    }
                 }
             }
 
             // Update visual selection state
             LaunchedEffect(selectedAttraction) {
                 visualMarkerProvider?.updateSelectedMarker(selectedAttraction)
+            }
+            
+            // Force markers to be visible when DualLayerMarkerSystem first appears
+            LaunchedEffect(mapView) {
+                if (mapView != null) {
+                    val existingIds = VisualMarkerRegistry.getLastIds(mapView)
+                    if (existingIds.isNotEmpty()) {
+                        Timber.d("🎯 DualLayerMarkerSystem: Found ${existingIds.size} preloaded markers, forcing visibility")
+                        // Force a small delay and then refresh
+                        delay(50)
+                        try {
+                            mapView.invalidate()
+                            Timber.d("🔄 Forced MapView invalidation for preloaded markers")
+                        } catch (e: Exception) {
+                            Timber.w(e, "Failed to invalidate MapView")
+                        }
+                    }
+                }
             }
         } else {
             // Compose visual mode: render visual markers using Compose overlay
