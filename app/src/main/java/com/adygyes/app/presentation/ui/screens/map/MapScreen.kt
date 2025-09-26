@@ -293,7 +293,8 @@ fun MapScreen(
                                     viewModel.onMarkerClick(attraction)
                                 },
                                 modifier = Modifier.fillMaxSize(),
-                                composeVisualMode = easterEggActive
+                                composeVisualMode = easterEggActive,
+                                enableAppearAnimation = true // Enable smooth appearance animation
                             )
                         }
                     }

@@ -28,7 +28,8 @@ fun DualLayerMarkerSystem(
     imageCacheManager: ImageCacheManager,
     onMarkerClick: (Attraction) -> Unit,
     modifier: Modifier = Modifier,
-    composeVisualMode: Boolean = false // When true, render visual markers with Compose and skip native markers
+    composeVisualMode: Boolean = false, // When true, render visual markers with Compose and skip native markers
+    enableAppearAnimation: Boolean = true // Enable smooth appearance animation for initial markers
 ) {
     // IMPORTANT: Box to ensure proper layering
     Box(modifier = modifier.fillMaxSize()) {
@@ -43,6 +44,11 @@ fun DualLayerMarkerSystem(
                 }
             }
 
+            // Configure animation settings
+            LaunchedEffect(enableAppearAnimation) {
+                visualMarkerProvider?.setAppearAnimation(enableAppearAnimation)
+            }
+
             // Incremental sync of markers on attractions changes
             // Only update if the markers haven't been preloaded or attractions have changed
             LaunchedEffect(mapView, attractions) {
@@ -55,7 +61,16 @@ fun DualLayerMarkerSystem(
                     
                     // Only update if there's a difference in attractions
                     if (currentIds != newIds) {
-                        visualMarkerProvider.updateVisualMarkers(attractions)
+                        // For initial load (empty -> populated), use animation
+                        // For filtering (populated -> different populated), don't animate
+                        val isInitialLoad = currentIds.isEmpty() && newIds.isNotEmpty()
+                        if (isInitialLoad && enableAppearAnimation) {
+                            visualMarkerProvider.setAppearAnimation(true)
+                            visualMarkerProvider.addVisualMarkers(attractions)
+                        } else {
+                            visualMarkerProvider.setAppearAnimation(false)
+                            visualMarkerProvider.updateVisualMarkers(attractions)
+                        }
                         VisualMarkerRegistry.setLastIds(mapView, newIds)
                         Timber.d("📍 FILTER APPLIED: Updated visual markers from ${currentIds.size} to ${attractions.size}")
                     } else {

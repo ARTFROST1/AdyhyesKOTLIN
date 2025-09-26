@@ -4,6 +4,7 @@ import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import com.adygyes.app.domain.model.Attraction
+import com.adygyes.app.domain.model.AttractionCategory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
 import com.yandex.mapkit.mapview.MapView
@@ -26,17 +27,51 @@ class VisualMarkerProvider(
     private val markerImages = mutableMapOf<String, ImageProvider>()
     private var coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
+    // Animation settings
+    private var enableAppearAnimation = true
+    private val animationDelayMs = 100L // Delay between each marker appearance
+    private val animationDurationMs = 300L // Duration of each marker's fade-in
+    
     /**
-     * Add visual markers for attractions
+     * Set whether to enable appear animation for new markers
+     */
+    fun setAppearAnimation(enabled: Boolean) {
+        enableAppearAnimation = enabled
+    }
+    
+    /**
+     * Add visual markers for attractions with optional animation
      */
     fun addVisualMarkers(attractions: List<Attraction>) {
         clearMarkers()
         
-        attractions.forEach { attraction ->
-            addVisualMarker(attraction)
+        if (enableAppearAnimation) {
+            addVisualMarkersWithAnimation(attractions)
+        } else {
+            attractions.forEach { attraction ->
+                addVisualMarker(attraction, animated = false)
+            }
         }
         
         Timber.d("📍 Added ${attractions.size} native visual markers to MapView: ${mapView.hashCode()}")
+    }
+    
+    /**
+     * Add visual markers with staggered animation
+     */
+    private fun addVisualMarkersWithAnimation(attractions: List<Attraction>) {
+        coroutineScope.launch {
+            attractions.forEachIndexed { index, attraction ->
+                // Add marker with animation
+                addVisualMarker(attraction, animated = true)
+                
+                // Stagger the appearance of each marker
+                if (index < attractions.size - 1) {
+                    delay(animationDelayMs)
+                }
+            }
+            Timber.d("🎬 Animated appearance of ${attractions.size} markers completed")
+        }
     }
 
     /**
@@ -63,11 +98,11 @@ class VisualMarkerProvider(
             }
         }
 
-        // Add new markers that don't exist yet
+        // Add new markers that don't exist yet (without animation for filtering)
         val currentIds = markers.keys.toSet()
         attractions.forEach { attraction ->
             if (!currentIds.contains(attraction.id)) {
-                addVisualMarker(attraction)
+                addVisualMarker(attraction, animated = false)
                 Timber.d("➕ FILTER: Added marker for: ${attraction.name} (id: ${attraction.id})")
             }
         }
@@ -76,9 +111,9 @@ class VisualMarkerProvider(
     }
     
     /**
-     * Add a single visual marker
+     * Add a single visual marker with optional animation
      */
-    private fun addVisualMarker(attraction: Attraction) {
+    private fun addVisualMarker(attraction: Attraction, animated: Boolean = false) {
         val point = Point(
             attraction.location.latitude,
             attraction.location.longitude
@@ -91,7 +126,6 @@ class VisualMarkerProvider(
         val placemark = mapObjectCollection.addPlacemark(point, imageProvider)
         
         // IMPORTANT: Make placemark non-interactive to not block Compose clicks
-        placemark.isVisible = true
         placemark.zIndex = 0f // Ensure it's at the bottom
         
         // Store reference
@@ -100,7 +134,205 @@ class VisualMarkerProvider(
         // Set user data for debugging (not for click handling)
         placemark.userData = attraction
         
+        if (animated) {
+            // Start with invisible marker and animate appearance
+            placemark.isVisible = false
+            animateMarkerAppearance(placemark)
+        } else {
+            // Show marker immediately
+            placemark.isVisible = true
+        }
+        
         Timber.d("✅ Created marker for ${attraction.name} at ${attraction.location.latitude}, ${attraction.location.longitude} on MapView: ${mapView.hashCode()}")
+    }
+    
+    /**
+     * Animate marker appearance with scale-up effect using actual loaded image
+     */
+    private fun animateMarkerAppearance(placemark: PlacemarkMapObject) {
+        coroutineScope.launch {
+            val attraction = placemark.userData as? Attraction ?: return@launch
+            
+            // First, ensure the image is loaded
+            val finalImageProvider = getOrCreateImageProvider(attraction)
+            
+            // Load the actual image from cache/URL
+            attraction.images.firstOrNull()?.let { imageUrl ->
+                try {
+                    val loadedBitmap = loadImageBitmap(imageUrl)
+                    if (loadedBitmap != null) {
+                        // Animate with the actual loaded image at different scales
+                        animateWithLoadedImage(placemark, attraction, loadedBitmap)
+                    } else {
+                        // Fallback to immediate show if image loading fails
+                        placemark.setIcon(finalImageProvider)
+                        placemark.isVisible = true
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to load image for animation: ${attraction.name}")
+                    // Fallback to immediate show
+                    placemark.setIcon(finalImageProvider)
+                    placemark.isVisible = true
+                }
+            } ?: run {
+                // No image URL, show immediately
+                placemark.setIcon(finalImageProvider)
+                placemark.isVisible = true
+            }
+            
+            Timber.d("🎬 Completed appearance animation for ${attraction.name}")
+        }
+    }
+    
+    /**
+     * Load image bitmap from cache or URL
+     */
+    private suspend fun loadImageBitmap(imageUrl: String): Bitmap? = withContext(Dispatchers.IO) {
+        try {
+            val request = ImageRequest.Builder(mapView.context)
+                .data(imageUrl)
+                .crossfade(false)
+                .allowHardware(false)
+                .build()
+            
+            val result = imageCacheManager.imageLoader.execute(request)
+            val drawable = result.drawable
+            
+            when {
+                drawable is BitmapDrawable -> {
+                    val originalBitmap = drawable.bitmap
+                    if (originalBitmap.config == Bitmap.Config.HARDWARE) {
+                        originalBitmap.copy(Bitmap.Config.ARGB_8888, false) ?: originalBitmap
+                    } else {
+                        originalBitmap
+                    }
+                }
+                drawable != null -> {
+                    val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 100
+                    val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 100
+                    val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(bmp)
+                    drawable.setBounds(0, 0, canvas.width, canvas.height)
+                    drawable.draw(canvas)
+                    bmp
+                }
+                else -> null
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to load bitmap for animation")
+            null
+        }
+    }
+    
+    /**
+     * Animate marker with loaded image at different scales
+     */
+    private suspend fun animateWithLoadedImage(
+        placemark: PlacemarkMapObject,
+        attraction: Attraction,
+        loadedBitmap: Bitmap
+    ) = withContext(Dispatchers.Main) {
+        val steps = 8
+        val stepDelay = animationDurationMs / steps
+        
+        for (i in 1..steps) {
+            val scale = 0.3f + (0.7f * i / steps) // From 0.3 to 1.0
+            val animatedIcon = createAnimatedMarkerWithImage(attraction, loadedBitmap, scale)
+            placemark.setIcon(animatedIcon)
+            placemark.isVisible = true
+            delay(stepDelay)
+        }
+        
+        // Set final normal icon with full-size image
+        val finalIcon = createCircularBitmapWithImage(
+            bitmap = loadedBitmap,
+            attraction = attraction,
+            isSelected = false
+        )
+        placemark.setIcon(ImageProvider.fromBitmap(finalIcon))
+    }
+    
+    /**
+     * Create animated marker with loaded image at specific scale
+     */
+    private fun createAnimatedMarkerWithImage(
+        attraction: Attraction,
+        loadedBitmap: Bitmap,
+        scale: Float
+    ): ImageProvider {
+        val baseSize = 52
+        val size = (baseSize * scale).toInt().coerceAtLeast(8) // Minimum 8dp
+        val sizePx = (size * mapView.context.resources.displayMetrics.density).toInt()
+        val borderWidth = 2
+        val borderWidthPx = (borderWidth * mapView.context.resources.displayMetrics.density).toInt()
+        
+        val output = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
+        
+        val paint = Paint().apply {
+            isAntiAlias = true
+            alpha = (255 * scale).toInt().coerceIn(100, 255) // Fade in effect
+        }
+        
+        val centerX = sizePx / 2f
+        val centerY = sizePx / 2f
+        val radius = (sizePx - borderWidthPx) / 2f - 4f
+        
+        // Draw shadow
+        paint.color = Color.argb((50 * scale).toInt().coerceIn(20, 50), 0, 0, 0)
+        paint.maskFilter = BlurMaskFilter(8f * scale, BlurMaskFilter.Blur.NORMAL)
+        canvas.drawCircle(centerX + 2, centerY + 2, radius, paint)
+        paint.maskFilter = null
+        
+        // Create circular clip path
+        val path = android.graphics.Path().apply {
+            addCircle(centerX, centerY, radius, android.graphics.Path.Direction.CW)
+        }
+        canvas.clipPath(path)
+        
+        // Draw scaled image with fade effect
+        try {
+            val safeBitmap = if (loadedBitmap.config == Bitmap.Config.HARDWARE) {
+                loadedBitmap.copy(Bitmap.Config.ARGB_8888, false) ?: loadedBitmap
+            } else {
+                loadedBitmap
+            }
+            val scaledBitmap = Bitmap.createScaledBitmap(safeBitmap, sizePx, sizePx, true)
+            paint.alpha = (255 * scale).toInt().coerceIn(100, 255)
+            canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
+            scaledBitmap.recycle()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to draw animated image for marker ${attraction.name}")
+            // Fallback to category color
+            paint.color = getCategoryColor(attraction.category)
+            paint.alpha = (255 * scale).toInt().coerceIn(100, 255)
+            canvas.drawCircle(centerX, centerY, radius, paint)
+        }
+        
+        // Draw border
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = borderWidthPx.toFloat()
+        paint.color = Color.WHITE
+        paint.alpha = (255 * scale).toInt().coerceIn(100, 255)
+        canvas.drawCircle(centerX, centerY, radius, paint)
+        
+        return ImageProvider.fromBitmap(output)
+    }
+    
+    /**
+     * Get category color for marker background
+     */
+    private fun getCategoryColor(category: AttractionCategory): Int {
+        return when (category) {
+            AttractionCategory.NATURE -> Color.rgb(76, 175, 80)  // Green
+            AttractionCategory.HISTORY -> Color.rgb(121, 85, 72)  // Brown
+            AttractionCategory.CULTURE -> Color.rgb(156, 39, 176) // Purple
+            AttractionCategory.ENTERTAINMENT -> Color.rgb(255, 152, 0) // Orange
+            AttractionCategory.RECREATION -> Color.rgb(33, 150, 243) // Blue
+            AttractionCategory.GASTRONOMY -> Color.rgb(255, 193, 7) // Amber
+            AttractionCategory.RELIGIOUS -> Color.rgb(96, 125, 139) // Blue Grey
+            AttractionCategory.ADVENTURE -> Color.rgb(255, 87, 34) // Deep Orange
+        }
     }
     
     /**
