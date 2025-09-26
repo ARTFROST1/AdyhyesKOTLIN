@@ -18,6 +18,7 @@ import com.adygyes.app.presentation.ui.components.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -413,7 +414,15 @@ class MapViewModel @Inject constructor(
     
     // New functions for list view enhancements
     fun selectCategoryFilter(filter: CategoryFilter) {
+        Timber.d("🔍 CATEGORY FILTER: Selecting filter: $filter")
         _selectedCategoryFilter.value = filter
+        
+        // Log the effect on attractions
+        viewModelScope.launch {
+            delay(100) // Small delay to ensure flow updates
+            Timber.d("🔍 CATEGORY FILTER: After filter, attractions count: ${filteredAttractions.value.size}")
+            Timber.d("🔍 CATEGORY FILTER: Filtered attractions: ${filteredAttractions.value.map { it.name }.joinToString(", ")}")
+        }
     }
     
     fun setSortBy(sortOption: SortBy) {

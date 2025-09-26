@@ -46,23 +46,33 @@ class VisualMarkerProvider(
     fun updateVisualMarkers(attractions: List<Attraction>) {
         val desiredIds = attractions.map { it.id }.toSet()
 
+        Timber.d("🎯 FILTER: updateVisualMarkers called with ${attractions.size} attractions")
+        Timber.d("🎯 FILTER: Current markers: ${markers.keys.joinToString(", ")}")
+        Timber.d("🎯 FILTER: Desired markers: ${desiredIds.joinToString(", ")}")
+
         // Remove markers that are no longer present
         val toRemove = markers.keys.toSet() - desiredIds
         toRemove.forEach { id ->
-            markers.remove(id)?.let { placemark ->
+            val removedMarker = markers.remove(id)?.let { placemark ->
                 mapObjectCollection.remove(placemark)
+                Timber.d("🗑️ FILTER: Removed marker with id: $id")
+                true
+            } ?: false
+            if (!removedMarker) {
+                Timber.w("⚠️ FILTER: Failed to remove marker with id: $id")
             }
         }
 
         // Add new markers that don't exist yet
-        val currentIds = markers.keys
+        val currentIds = markers.keys.toSet()
         attractions.forEach { attraction ->
             if (!currentIds.contains(attraction.id)) {
                 addVisualMarker(attraction)
+                Timber.d("➕ FILTER: Added marker for: ${attraction.name} (id: ${attraction.id})")
             }
         }
 
-        Timber.d("📍 Synced native visual markers on MapView ${mapView.hashCode()}: now ${markers.size} (added ${desiredIds.size - currentIds.size}, removed ${toRemove.size})")
+        Timber.d("✅ FILTER COMPLETE: Synced native visual markers on MapView ${mapView.hashCode()}: now ${markers.size} (added ${desiredIds.size - currentIds.size}, removed ${toRemove.size})")
     }
     
     /**

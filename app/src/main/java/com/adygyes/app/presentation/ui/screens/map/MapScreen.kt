@@ -10,6 +10,12 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -35,7 +41,7 @@ import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
 import com.adygyes.app.presentation.ui.components.AdygyesBottomNavigation
 import com.adygyes.app.presentation.ui.components.ViewMode
 import com.adygyes.app.presentation.ui.components.SearchResultsHeader
-import com.adygyes.app.presentation.ui.components.SearchResultsWithCategories
+import com.adygyes.app.presentation.ui.components.UnifiedCategoryCarousel
 import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
 import com.adygyes.app.presentation.ui.map.markers.MarkerOverlay
 import com.adygyes.app.presentation.ui.map.markers.VisualMarkerRegistry
@@ -46,6 +52,7 @@ import com.adygyes.app.presentation.viewmodel.ThemeViewModel
 import com.adygyes.app.presentation.navigation.NavDestination
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.domain.model.Attraction
+import com.adygyes.app.domain.model.AttractionCategory
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
@@ -99,13 +106,24 @@ fun MapScreen(
     
     // UI State
     var showFilterSheet by remember { mutableStateOf(false) }
-    var isMapReady by remember { mutableStateOf(false) }
-    val easterEggActive by EasterEggManager.isActive.collectAsState()
     
-    // Search debouncing
-    val scope = rememberCoroutineScope()
+    // Unified state for category carousel - always visible in LIST mode, toggleable in MAP mode
+    var showCategoryCarousel by remember { mutableStateOf(false) }
+    
+    // Auto-show carousel in LIST mode
+    LaunchedEffect(viewMode) {
+        if (viewMode == ViewMode.LIST) {
+            showCategoryCarousel = true
+        }
+        // Keep previous state when switching to MAP mode
+    }
+    
     var searchJob by remember { mutableStateOf<Job?>(null) }
+    val scope = rememberCoroutineScope()
+    var isMapReady by remember { mutableStateOf(false) }
     
+    // Easter egg state
+    val easterEggActive by EasterEggManager.isActive.collectAsState()
     // Location permissions
     val locationPermissionsState = rememberMultiplePermissionsState(
         listOf(
@@ -252,67 +270,35 @@ fun MapScreen(
                         }
 
                         if (mapView != null && isMapReady) {
-                            // Check if markers are already rendered in background
-                            val backgroundMarkersReady = preloadState?.value?.allMarkersReady == true
-                            
-                            if (backgroundMarkersReady) {
-                                // Markers already rendered in background, only add interaction layer
-                                Timber.d("🎯 Using background markers, adding interaction layer only")
-                                MarkerOverlay(
-                                    mapView = mapView,
-                                    attractions = filteredAttractions,
-                                    selectedAttraction = selectedAttraction,
-                                    onMarkerClick = { attraction ->
-                                        Timber.d("🎯 MARKER CLICKED: ${attraction.name}")
-                                        viewModel.onMarkerClick(attraction)
-                                    },
-                                    modifier = Modifier.fillMaxSize(),
-                                    enableClustering = false,
-                                    animationDuration = 0,
-                                    transparentMode = true // Only interactions, no visuals
-                                )
-                            } else {
-                                // Fallback: render full DualLayerMarkerSystem if background not ready
-                                DualLayerMarkerSystem(
-                                    mapView = mapView,
-                                    attractions = filteredAttractions,
-                                    selectedAttraction = selectedAttraction,
-                                    imageCacheManager = remember { 
-                                        com.adygyes.app.data.local.cache.ImageCacheManager(context) 
-                                    },
-                                    onMarkerClick = { attraction ->
-                                        Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
-                                        viewModel.onMarkerClick(attraction)
-                                    },
-                                    modifier = Modifier.fillMaxSize(),
-                                    composeVisualMode = easterEggActive
-                                )
-                            }
+                            // Always use DualLayerMarkerSystem for proper filtering
+                            // This ensures visual markers update when filters change
+                            DualLayerMarkerSystem(
+                                mapView = mapView,
+                                attractions = filteredAttractions, // This updates with filters!
+                                selectedAttraction = selectedAttraction,
+                                imageCacheManager = remember { 
+                                    com.adygyes.app.data.local.cache.ImageCacheManager(context) 
+                                },
+                                onMarkerClick = { attraction ->
+                                    Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
+                                    viewModel.onMarkerClick(attraction)
+                                },
+                                modifier = Modifier.fillMaxSize(),
+                                composeVisualMode = easterEggActive
+                            )
                         }
                     }
                 }
                 
                 ViewMode.LIST -> {
-                    // List View with category carousel
+                    // List View - now uses the same unified carousel
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-                            .padding(top = 80.dp) // Increased space for search field with bottom padding
+                            .padding(top = if (showCategoryCarousel) 140.dp else 90.dp) // Dynamic padding based on carousel visibility
                     ) {
-                        // Combined search results header and category carousel
-                        SearchResultsWithCategories(
-                            attractionsCount = filteredAttractions.size,
-                            searchQuery = searchQuery,
-                            selectedCategories = selectedCategories.map { it.displayName }.toSet(),
-                            selectedFilter = selectedCategoryFilter,
-                            onFilterSelected = { filter ->
-                                viewModel.selectCategoryFilter(filter)
-                            },
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                        )
-                        
-                        // Attractions list/grid
+                        // Attractions list/grid (unified carousel is displayed above as part of search area)
                         AttractionsList(
                             attractions = filteredAttractions,
                             onAttractionClick = onAttractionClick,
@@ -321,7 +307,7 @@ fun MapScreen(
                             isLoading = uiState.isLoading,
                             searchQuery = searchQuery,
                             selectedCategories = selectedCategories.map { it.displayName }.toSet(),
-                            showResultCount = false, // Отключаем встроенный счетчик, так как используем SearchResultsHeader
+                            showResultCount = false, // Count is shown in unified carousel
                             viewMode = if (listViewMode == MapViewModel.ListViewMode.LIST) {
                                 com.adygyes.app.presentation.ui.components.ListViewMode.LIST
                             } else {
@@ -333,8 +319,8 @@ fun MapScreen(
             }
         }
         
-        // Floating search field at top
-        Box(
+        // Floating search field and category carousel at top
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
@@ -345,6 +331,7 @@ fun MapScreen(
                     bottom = if (viewMode == ViewMode.LIST) Dimensions.PaddingMedium else 0.dp
                 )
         ) {
+            // Search field
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
@@ -383,12 +370,32 @@ fun MapScreen(
                             }
                         },
                         placeholder = stringResource(R.string.search_attractions),
-                        onFilterClick = { showFilterSheet = true },
-                        hasActiveFilters = selectedCategories.isNotEmpty(),
+                        onFilterClick = { 
+                            // Toggle category carousel instead of showing filter sheet
+                            showCategoryCarousel = !showCategoryCarousel
+                        },
+                        hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
+                        isCarouselVisible = showCategoryCarousel, // Pass state to change icon
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
+            
+            // Unified category carousel for both Map and List modes
+            // Shows when filter button is clicked or always in list mode
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            UnifiedCategoryCarousel(
+                attractionsCount = filteredAttractions.size,
+                searchQuery = searchQuery,
+                selectedCategories = selectedCategories.map { it.displayName }.toSet(),
+                selectedFilter = selectedCategoryFilter,
+                onFilterSelected = { filter ->
+                    viewModel.selectCategoryFilter(filter)
+                },
+                visible = showCategoryCarousel,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
         
         
@@ -496,6 +503,7 @@ private fun UnifiedSearchTextField(
     placeholder: String,
     onFilterClick: () -> Unit,
     hasActiveFilters: Boolean,
+    isCarouselVisible: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     TextField(
@@ -541,8 +549,17 @@ private fun UnifiedSearchTextField(
                 ) {
                     IconButton(onClick = onFilterClick) {
                         Icon(
-                            imageVector = Icons.Default.FilterList,
-                            contentDescription = stringResource(R.string.filters)
+                            imageVector = if (isCarouselVisible) {
+                                Icons.Default.ExpandLess
+                            } else {
+                                Icons.Default.FilterList
+                            },
+                            contentDescription = stringResource(R.string.filters),
+                            tint = if (isCarouselVisible) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     }
                 }
@@ -558,6 +575,9 @@ private fun UnifiedSearchTextField(
         )
     )
 }
+
+// MapCategoryCarousel and CategoryFilterChip components have been replaced by UnifiedCategoryCarousel
+// The unified component ensures consistent behavior across Map and List view modes
 
 /**
  * Enhanced search text field with sort and view toggle for list mode

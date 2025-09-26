@@ -50,13 +50,16 @@ fun DualLayerMarkerSystem(
                     val currentIds = VisualMarkerRegistry.getLastIds(mapView)
                     val newIds = attractions.map { it.id }.toSet()
                     
+                    Timber.d("🔍 FILTER UPDATE: Current markers: ${currentIds.size}, New filtered: ${newIds.size}")
+                    Timber.d("🔍 FILTER UPDATE: Attractions: ${attractions.map { it.name }.joinToString(", ")}")
+                    
                     // Only update if there's a difference in attractions
                     if (currentIds != newIds) {
                         visualMarkerProvider.updateVisualMarkers(attractions)
                         VisualMarkerRegistry.setLastIds(mapView, newIds)
-                        Timber.d("📍 Incremental sync of visual markers: ${attractions.size} (changed from ${currentIds.size})")
+                        Timber.d("📍 FILTER APPLIED: Updated visual markers from ${currentIds.size} to ${attractions.size}")
                     } else {
-                        Timber.d("📍 Markers already loaded: ${attractions.size}, skipping sync")
+                        Timber.d("📍 Markers already match filter: ${attractions.size}, skipping sync")
                     }
                 }
             }
