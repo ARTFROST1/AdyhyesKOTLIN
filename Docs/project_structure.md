@@ -1,17 +1,21 @@
 # Project Structure Guide
 
 **Last Updated:** 2025-09-26  
-**Current Version:** Stage 9 + Persistent MapHost & Camera/Marker Persistence
+**Current Version:** Stage 10 + Map Preloading & Background Rendering System
 
 > Branding: User-facing app name is "AdygGIS". Internal code/package retains "Adygyes" to avoid breaking changes.
 
 ## 🎯 Key Architecture Updates:
+- **🚀 NEW: Map Preloading System:** MapPreloadManager for background loading during splash screen
+- **⚡ NEW: Background Map Rendering:** BackgroundMarkerRenderer for instant map display
+- **🎯 NEW: Smart Progress Tracking:** Real-time progress indicators with blocked navigation
+- **🏗️ NEW: Layered Architecture:** Background Map → NavHost → Interaction Layer
 - **Simplified Data Management:** JsonFileManager now only reads from assets/attractions.json
 - **Developer Mode Removed:** DeveloperScreen, DeveloperViewModel, AttractionEditorScreen replaced with stubs
 - **New LocaleViewModel:** Added for runtime language switching support
 - **Preserved MapScreenReliable:** Kept as backup map implementation with reliable tap handling
-- **✨ NEW: ImageCacheManager:** Advanced image caching system with version-based cache invalidation
-- **✨ NEW: Hardware Bitmap Fix:** Resolved Canvas compatibility issues for map markers
+- **✨ ImageCacheManager:** Advanced image caching system with version-based cache invalidation
+- **✨ Hardware Bitmap Fix:** Resolved Canvas compatibility issues for map markers
 
 ## Project Directory Layout
 
@@ -78,8 +82,11 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   └── Typography.kt
 │   │   │   │   │   ├── ui/               # Screens and components
 │   │   │   │   │   │   ├── screens/
+│   │   │   │   │   │   │   ├── splash/   # Splash screen with preloading
+│   │   │   │   │   │   │   │   └── SplashScreen.kt           # ⭐ NEW: Smart preloading with progress tracking
 │   │   │   │   │   │   │   ├── map/      # Map screen with dual-layer markers
-│   │   │   │   │   │   │   │   ├── MapScreen.kt              # ⭐ MAIN UNIFIED OVERLAY SCREEN (over persistent MapHost)
+│   │   │   │   │   │   │   │   ├── MapScreen.kt              # ⭐ OPTIMIZED: Uses background markers + interaction layer
+│   │   │   │   │   │   │   │   ├── MapHost.kt                # ⭐ ENHANCED: Background rendering + persistent MapView
 │   │   │   │   │   │   │   │   ├── MapScreenTablet.kt        # Tablet version
 │   │   │   │   │   │   │   │   ├── CategoryMarkerProvider.kt
 │   │   │   │   │   │   │   │   ├── GeoObjectProvider.kt
@@ -125,9 +132,12 @@ AdyhyesKOTLIN/
 │   │   │   │   │       ├── ImageCacheViewModel.kt # ⭐ NEW: Image cache management
 │   │   │   │   │       ├── LocaleViewModel.kt    # Language switching
 │   │   │   │   │       ├── MapViewModel.kt
+│   │   │   │   │       ├── MapPreloadViewModel.kt          # ⭐ NEW: Preload manager wrapper for Hilt
 │   │   │   │   │       ├── MapStateViewModel.kt            # ⭐ NEW: Camera state persistence
 │   │   │   │   │       ├── SearchViewModel.kt
 │   │   │   │   │       └── SettingsViewModel.kt
+│   │   │   │   │   └── util/               # Utilities
+│   │   │   │   │       └── MapPreloadManager.kt          # ⭐ NEW: Background map preloading system
 │   │   │   │   ├── AdygyesApplication.kt  # Application class
 │   │   │   │   └── MainActivity.kt        # Main activity (renders MapHost { AdygyesNavHost(...) })
 │   │   │   └── res/
@@ -149,6 +159,8 @@ AdyhyesKOTLIN/
 │   ├── Implementation_Plan.md      # Development roadmap
 │   ├── AppMap_adygyes.md          # App flow and UI structure
 │   ├── project_structure.md       # This file
+│   ├── MAP_PRELOADING_IMPLEMENTATION.md  # ⭐ NEW: Map preloading system docs
+│   ├── BACKGROUND_MAP_RENDERING.md      # ⭐ NEW: Background rendering architecture
 │   ├── PRD_adygyes.md            # Product requirements
 │   ├── Bug_tracking.md           # Known issues and fixes
 │   ├── UI_UX_doc.md             # Design specifications
@@ -168,6 +180,14 @@ AdyhyesKOTLIN/
 - **Presentation Layer**: MVVM with Compose UI
 
 ### 🎯 **Key Features Implemented**
+
+#### 🚀 **Stage 10 In Progress - Map Preloading & Background Rendering:**
+- **MapPreloadManager**: Complete background loading system during splash screen
+- **BackgroundMarkerRenderer**: Pre-renders markers before user navigation
+- **Smart Progress Tracking**: Real-time indicators with blocked navigation until ready
+- **Instant Map Display**: Zero loading time when navigating to map
+- **Layered Architecture**: Background Map → NavHost → Interaction Layer
+- **Perfect UX**: Users see fully loaded map immediately, like returning from settings
 
 #### ⭐ **Stage 9 Completed - Dual-Layer Marker System + Persistent Map:**
 - **Revolutionary Architecture** - Native visual + Compose interactive layers
