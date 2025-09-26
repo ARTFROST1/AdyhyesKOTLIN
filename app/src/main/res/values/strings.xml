@@ -15,7 +15,6 @@
     <string name="map_zoom_out">Отдалить</string>
     <string name="map_loading">Загрузка карты...</string>
     <string name="map_error">Ошибка загрузки карты</string>
-    <string name="map_retry">Повторить</string>
     <string name="switch_to_list_view">Переключить на список</string>
     <string name="switch_to_map_view">Переключить на карту</string>
     <string name="search_attractions">Поиск достопримечательностей</string>
@@ -24,6 +23,9 @@
     <string name="clear_search">Очистить поиск</string>
     <string name="apply_filters">Применить фильтры</string>
     <string name="clear_all">Очистить всё</string>
+    <string name="sort">Сортировка</string>
+    <string name="toggle_view">Переключить вид</string>
+    <string name="all_categories">Все</string>
     <string name="search_results_count">%d результатов</string>
     <string name="filtered_results_count">Найдено: %d</string>
     <string name="attractions_count">Всего мест: %d</string>

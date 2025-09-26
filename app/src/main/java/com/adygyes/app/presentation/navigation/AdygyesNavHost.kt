@@ -45,9 +45,14 @@ fun AdygyesNavHost(
         // Main Map Screen
         composable(NavDestination.Map.route) {
             MapScreen(
-                navController = navController,
                 onAttractionClick = { attractionId ->
                     navController.navigate(NavDestination.AttractionDetail.createRoute(attractionId))
+                },
+                onNavigateToFavorites = {
+                    navController.navigate(NavDestination.Favorites.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(NavDestination.Settings.route)
                 }
             )
         }

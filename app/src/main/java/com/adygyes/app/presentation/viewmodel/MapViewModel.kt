@@ -53,11 +53,24 @@ class MapViewModel @Inject constructor(
     private val _selectedCategories = MutableStateFlow<Set<AttractionCategory>>(emptySet())
     val selectedCategories: StateFlow<Set<AttractionCategory>> = _selectedCategories.asStateFlow()
     
+    // New: Selected category for carousel
+    private val _selectedCategoryFilter = MutableStateFlow<CategoryFilter>(CategoryFilter.All)
+    val selectedCategoryFilter: StateFlow<CategoryFilter> = _selectedCategoryFilter.asStateFlow()
+    
+    // New: Sort options for list view
+    private val _sortBy = MutableStateFlow(SortBy.NAME)
+    val sortBy: StateFlow<SortBy> = _sortBy.asStateFlow()
+    
+    // New: View mode for list (LIST or GRID)
+    private val _listViewMode = MutableStateFlow(ListViewMode.LIST)
+    val listViewMode: StateFlow<ListViewMode> = _listViewMode.asStateFlow()
+    
     val filteredAttractions: StateFlow<List<Attraction>> = combine(
         _attractions,
         _searchQuery,
-        _selectedCategories
-    ) { attractions, query, categories ->
+        _selectedCategoryFilter,
+        _sortBy
+    ) { attractions, query, categoryFilter, sortBy ->
         var filtered = attractions
         
         // Apply search filter
@@ -69,10 +82,21 @@ class MapViewModel @Inject constructor(
             }
         }
         
-        // Apply category filter
-        if (categories.isNotEmpty()) {
-            filtered = filtered.filter { attraction ->
-                categories.contains(attraction.category)
+        // Apply category filter from carousel
+        filtered = when (categoryFilter) {
+            is CategoryFilter.All -> filtered
+            is CategoryFilter.Favorites -> filtered.filter { it.isFavorite }
+            is CategoryFilter.Category -> filtered.filter { it.category == categoryFilter.category }
+        }
+        
+        // Apply sorting
+        filtered = when (sortBy) {
+            SortBy.NAME -> filtered.sortedBy { it.name }
+            SortBy.CATEGORY -> filtered.sortedBy { it.category.displayName }
+            SortBy.RATING -> filtered.sortedByDescending { it.rating ?: 0f }
+            SortBy.DISTANCE -> {
+                // TODO: Implement distance sorting when user location is available
+                filtered
             }
         }
         
@@ -380,6 +404,41 @@ class MapViewModel @Inject constructor(
     fun onMarkerClick(attraction: Attraction) {
         Timber.d("✅ Marker clicked via overlay: ${attraction.name}")
         selectAttraction(attraction)
+    }
+    
+    // New functions for list view enhancements
+    fun selectCategoryFilter(filter: CategoryFilter) {
+        _selectedCategoryFilter.value = filter
+    }
+    
+    fun setSortBy(sortOption: SortBy) {
+        _sortBy.value = sortOption
+    }
+    
+    fun toggleListViewMode() {
+        _listViewMode.value = when (_listViewMode.value) {
+            ListViewMode.LIST -> ListViewMode.GRID
+            ListViewMode.GRID -> ListViewMode.LIST
+        }
+    }
+    
+    // Enums for new functionality
+    enum class SortBy(val displayName: String) {
+        NAME("По названию"),
+        CATEGORY("По категории"),
+        RATING("По рейтингу"),
+        DISTANCE("По расстоянию")
+    }
+    
+    enum class ListViewMode {
+        LIST,
+        GRID
+    }
+    
+    sealed class CategoryFilter {
+        object All : CategoryFilter()
+        object Favorites : CategoryFilter()
+        data class Category(val category: AttractionCategory) : CategoryFilter()
     }
 }
 

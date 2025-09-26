@@ -181,7 +181,7 @@ fun AttractionCard(
                     // Distance if available
                     if (showDistance && distance != null) {
                         Text(
-                            text = formatDistance(distance),
+                            text = formatDistanceForCard(distance),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -192,11 +192,21 @@ fun AttractionCard(
     }
 }
 
-
 /**
  * Extract settlement from address
  */
 private fun extractSettlement(address: String): String {
     val parts = address.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     return if (parts.isNotEmpty()) parts.last() else address
+}
+
+/**
+ * Format distance for display in attraction cards
+ */
+private fun formatDistanceForCard(distance: Float): String {
+    return when {
+        distance < 1000 -> "${distance.toInt()} м"
+        distance < 10000 -> "${"%.1f".format(distance / 1000)} км"
+        else -> "${(distance / 1000).toInt()} км"
+    }
 }

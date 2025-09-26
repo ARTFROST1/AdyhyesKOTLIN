@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.runtime.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Alignment
@@ -71,10 +72,10 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
-    navController: NavController,
     onAttractionClick: (String) -> Unit,
-    viewModel: MapViewModel = hiltViewModel(),
-    imageCacheViewModel: ImageCacheViewModel = hiltViewModel()
+    onNavigateToFavorites: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
+    viewModel: MapViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     // Get persistent MapView and preload manager from MapHost
@@ -84,18 +85,14 @@ fun MapScreen(
     
     // State collection
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val attractions by viewModel.attractions.collectAsStateWithLifecycle()
+    val filteredAttractions by viewModel.filteredAttractions.collectAsStateWithLifecycle()
     val selectedAttraction by viewModel.selectedAttraction.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
-    val filteredAttractions by viewModel.filteredAttractions.collectAsStateWithLifecycle()
-    // Observe app theme (light/dark/system) and compute dark flag
-    val themeViewModel: ThemeViewModel = hiltViewModel()
-    val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
-    val isDarkTheme = when (themeMode) {
-        "dark" -> true
-        "light" -> false
-        else -> isSystemInDarkTheme()
-    }
+    val selectedCategoryFilter by viewModel.selectedCategoryFilter.collectAsStateWithLifecycle()
+    val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()
+    val listViewMode by viewModel.listViewMode.collectAsStateWithLifecycle()
     
     // UI State
     var viewMode by remember { mutableStateOf(ViewMode.MAP) }
@@ -294,20 +291,39 @@ fun MapScreen(
                 }
                 
                 ViewMode.LIST -> {
-                    // List View
-                    AttractionsList(
-                        attractions = filteredAttractions,
-                        onAttractionClick = onAttractionClick,
-                        onFavoriteClick = { viewModel.toggleFavorite(it) },
+                    // List View with category carousel
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-                            .padding(top = 64.dp), // Space for search
-                        isLoading = uiState.isLoading,
-                        searchQuery = searchQuery,
-                        selectedCategories = selectedCategories.map { it.displayName }.toSet(),
-                        showResultCount = true
-                    )
+                            .padding(top = 64.dp) // Space for search
+                    ) {
+                        // Category carousel
+                        CategoryCarousel(
+                            selectedFilter = selectedCategoryFilter,
+                            onFilterSelected = { filter ->
+                                viewModel.selectCategoryFilter(filter)
+                            },
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                        
+                        // Attractions list/grid
+                        AttractionsList(
+                            attractions = filteredAttractions,
+                            onAttractionClick = onAttractionClick,
+                            onFavoriteClick = { viewModel.toggleFavorite(it) },
+                            modifier = Modifier.fillMaxSize(),
+                            isLoading = uiState.isLoading,
+                            searchQuery = searchQuery,
+                            selectedCategories = selectedCategories.map { it.displayName }.toSet(),
+                            showResultCount = true,
+                            viewMode = if (listViewMode == MapViewModel.ListViewMode.LIST) {
+                                com.adygyes.app.presentation.ui.components.ListViewMode.LIST
+                            } else {
+                                com.adygyes.app.presentation.ui.components.ListViewMode.GRID
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -327,21 +343,43 @@ fun MapScreen(
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                 shadowElevation = 8.dp
             ) {
-                UnifiedSearchTextField(
-                    value = searchQuery,
-                    onValueChange = { query: String ->
-                        viewModel.updateSearchQuery(query)
-                        searchJob?.cancel()
-                        searchJob = scope.launch {
-                            delay(300)
-                            viewModel.search()
-                        }
-                    },
-                    placeholder = stringResource(R.string.search_attractions),
-                    onFilterClick = { showFilterSheet = true },
-                    hasActiveFilters = selectedCategories.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (viewMode == ViewMode.LIST) {
+                    // Enhanced search field for list mode with sort and view toggle
+                    EnhancedSearchTextField(
+                        value = searchQuery,
+                        onValueChange = { query: String ->
+                            viewModel.updateSearchQuery(query)
+                            searchJob?.cancel()
+                            searchJob = scope.launch {
+                                delay(300)
+                                viewModel.search()
+                            }
+                        },
+                        placeholder = stringResource(R.string.search_attractions),
+                        sortBy = sortBy,
+                        onSortChange = { viewModel.setSortBy(it) },
+                        viewMode = listViewMode,
+                        onViewModeToggle = { viewModel.toggleListViewMode() },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    // Simple search field for map mode
+                    UnifiedSearchTextField(
+                        value = searchQuery,
+                        onValueChange = { query: String ->
+                            viewModel.updateSearchQuery(query)
+                            searchJob?.cancel()
+                            searchJob = scope.launch {
+                                delay(300)
+                                viewModel.search()
+                            }
+                        },
+                        placeholder = stringResource(R.string.search_attractions),
+                        onFilterClick = { showFilterSheet = true },
+                        hasActiveFilters = selectedCategories.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
         
@@ -389,12 +427,8 @@ fun MapScreen(
                 onViewModeToggle = { 
                     viewMode = if (viewMode == ViewMode.MAP) ViewMode.LIST else ViewMode.MAP
                 },
-                onFavoritesClick = {
-                    navController.navigate(NavDestination.Favorites.route)
-                },
-                onSettingsClick = {
-                    navController.navigate(NavDestination.Settings.route)
-                },
+                onFavoritesClick = onNavigateToFavorites,
+                onSettingsClick = onNavigateToSettings,
                 showBadgeOnFavorites = filteredAttractions.any { it.isFavorite },
                 favoritesCount = filteredAttractions.count { it.isFavorite }
             )
@@ -444,7 +478,7 @@ fun MapScreen(
 }
 
 /**
- * Unified search text field for the map screen
+ * Simple search text field for map mode
  */
 @Composable
 private fun UnifiedSearchTextField(
@@ -502,6 +536,124 @@ private fun UnifiedSearchTextField(
                             contentDescription = stringResource(R.string.filters)
                         )
                     }
+                }
+            }
+        },
+        singleLine = true,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        )
+    )
+}
+
+/**
+ * Enhanced search text field with sort and view toggle for list mode
+ */
+@Composable
+private fun EnhancedSearchTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    sortBy: MapViewModel.SortBy,
+    onSortChange: (MapViewModel.SortBy) -> Unit,
+    viewMode: MapViewModel.ListViewMode,
+    onViewModeToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showSortMenu by remember { mutableStateOf(false) }
+    
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        placeholder = { 
+            Text(
+                text = placeholder,
+                style = MaterialTheme.typography.bodyMedium
+            ) 
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        trailingIcon = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Clear button
+                AnimatedVisibility(visible = value.isNotEmpty()) {
+                    IconButton(
+                        onClick = { onValueChange("") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear_search),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                // Sort dropdown
+                Box {
+                    IconButton(
+                        onClick = { showSortMenu = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sort,
+                            contentDescription = stringResource(R.string.sort),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false }
+                    ) {
+                        MapViewModel.SortBy.values().forEach { sortOption ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(sortOption.displayName)
+                                        if (sortBy == sortOption) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    onSortChange(sortOption)
+                                    showSortMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                // View mode toggle
+                IconButton(
+                    onClick = onViewModeToggle
+                ) {
+                    Icon(
+                        imageVector = if (viewMode == MapViewModel.ListViewMode.GRID) {
+                            Icons.Default.ViewList
+                        } else {
+                            Icons.Default.GridView
+                        },
+                        contentDescription = stringResource(R.string.toggle_view),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         },

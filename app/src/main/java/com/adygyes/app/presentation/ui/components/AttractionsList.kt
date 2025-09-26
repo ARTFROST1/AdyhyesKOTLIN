@@ -3,6 +3,10 @@ package com.adygyes.app.presentation.ui.components
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -24,9 +28,15 @@ import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
 
+enum class ListViewMode {
+    LIST,
+    GRID
+}
+
 /**
  * Reusable attractions list component for displaying search results
  * Can be used in both MapScreen (list view) and SearchScreen
+ * Now supports both List and Grid view modes
  */
 @Composable
 fun AttractionsList(
@@ -39,6 +49,7 @@ fun AttractionsList(
     selectedCategories: Set<String> = emptySet(),
     emptyStateMessage: String? = null,
     showResultCount: Boolean = true,
+    viewMode: ListViewMode = ListViewMode.LIST,
     contentPadding: PaddingValues = PaddingValues(
         horizontal = Dimensions.PaddingMedium,
         vertical = Dimensions.PaddingMedium
@@ -83,93 +94,134 @@ fun AttractionsList(
             }
             
             else -> {
-                // Success state with attractions list
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = contentPadding,
-                    verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
-                ) {
-                    // Result count header
+                // Success state with attractions list or grid
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Result count header (shown for both view modes)
                     if (showResultCount) {
-                        item {
-                            AnimatedContent(
-                                targetState = attractions.size,
-                                transitionSpec = {
-                                    fadeIn() + slideInVertically() togetherWith 
-                                    fadeOut() + slideOutVertically()
-                                }
-                            ) { count ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = Dimensions.PaddingSmall),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = when {
-                                            searchQuery.isNotEmpty() -> 
-                                                stringResource(R.string.search_results_count, count)
-                                            selectedCategories.isNotEmpty() -> 
-                                                stringResource(R.string.filtered_results_count, count)
-                                            else -> 
-                                                stringResource(R.string.attractions_count, count)
-                                        },
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    
-                                    // Applied filters indicator
-                                    if (searchQuery.isNotEmpty() || selectedCategories.isNotEmpty()) {
-                                        Surface(
-                                            shape = MaterialTheme.shapes.small,
-                                            color = MaterialTheme.colorScheme.primaryContainer
-                                        ) {
-                                            Text(
-                                                text = buildString {
-                                                    var filterCount = 0
-                                                    if (searchQuery.isNotEmpty()) filterCount++
-                                                    filterCount += selectedCategories.size
-                                                    append("$filterCount ")
-                                                    append(if (filterCount == 1) "filter" else "filters")
-                                                },
-                                                modifier = Modifier.padding(
-                                                    horizontal = 8.dp,
-                                                    vertical = 4.dp
-                                                ),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
+                        AnimatedContent(
+                            targetState = attractions.size,
+                            transitionSpec = {
+                                fadeIn() + slideInVertically() togetherWith 
+                                fadeOut() + slideOutVertically()
+                            }
+                        ) { count ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        horizontal = Dimensions.PaddingMedium,
+                                        vertical = Dimensions.PaddingSmall
+                                    ),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = when {
+                                        searchQuery.isNotEmpty() -> 
+                                            stringResource(R.string.search_results_count, count)
+                                        selectedCategories.isNotEmpty() -> 
+                                            stringResource(R.string.filtered_results_count, count)
+                                        else -> 
+                                            stringResource(R.string.attractions_count, count)
+                                    },
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                
+                                // Applied filters indicator
+                                if (searchQuery.isNotEmpty() || selectedCategories.isNotEmpty()) {
+                                    Surface(
+                                        shape = MaterialTheme.shapes.small,
+                                        color = MaterialTheme.colorScheme.primaryContainer
+                                    ) {
+                                        Text(
+                                            text = buildString {
+                                                var filterCount = 0
+                                                if (searchQuery.isNotEmpty()) filterCount++
+                                                filterCount += selectedCategories.size
+                                                append("$filterCount ")
+                                                append(if (filterCount == 1) "filter" else "filters")
+                                            },
+                                            modifier = Modifier.padding(
+                                                horizontal = 8.dp,
+                                                vertical = 4.dp
+                                            ),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
                                     }
                                 }
                             }
                         }
                     }
                     
-                    // Attractions list items
-                    items(
-                        items = attractions,
-                        key = { it.id }
-                    ) { attraction ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically()
-                        ) {
-                            AttractionListItem(
-                                attraction = attraction,
-                                onClick = { onAttractionClick(attraction.id) },
-                                onFavoriteClick = { onFavoriteClick(attraction.id) },
-                                highlightQuery = searchQuery.takeIf { it.isNotEmpty() }
-                            )
+                    // Content based on view mode
+                    when (viewMode) {
+                        ListViewMode.LIST -> {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = contentPadding,
+                                verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
+                            ) {
+                                // Attractions list items
+                                items(
+                                    items = attractions,
+                                    key = { it.id }
+                                ) { attraction ->
+                                    AnimatedVisibility(
+                                        visible = true,
+                                        enter = fadeIn() + expandVertically(),
+                                        exit = fadeOut() + shrinkVertically()
+                                    ) {
+                                        AttractionListItem(
+                                            attraction = attraction,
+                                            onClick = { onAttractionClick(attraction.id) },
+                                            onFavoriteClick = { onFavoriteClick(attraction.id) },
+                                            highlightQuery = searchQuery.takeIf { it.isNotEmpty() }
+                                        )
+                                    }
+                                }
+                                
+                                // Bottom spacing for FAB
+                                item {
+                                    Spacer(modifier = Modifier.height(80.dp))
+                                }
+                            }
                         }
-                    }
-                    
-                    // Bottom spacing for FAB
-                    item {
-                        Spacer(modifier = Modifier.height(80.dp))
+                        
+                        else -> { // GRID mode - точно как на экране избранного
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = contentPadding,
+                                horizontalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall),
+                                verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
+                            ) {
+                                items(
+                                    items = attractions,
+                                    key = { it.id }
+                                ) { attraction ->
+                                    AnimatedVisibility(
+                                        visible = true,
+                                        enter = fadeIn() + scaleIn(),
+                                        exit = fadeOut() + scaleOut()
+                                    ) {
+                                        AttractionCard(
+                                            attraction = attraction,
+                                            onClick = { onAttractionClick(attraction.id) },
+                                            onFavoriteClick = { onFavoriteClick(attraction.id) },
+                                            compactForFavorites = true // Точно как на экране избранного!
+                                        )
+                                    }
+                                }
+                                
+                                // Bottom spacing for FAB (spanning 2 columns)
+                                item(span = { GridItemSpan(2) }) {
+                                    Spacer(modifier = Modifier.height(80.dp))
+                                }
+                            }
+                        }
                     }
                 }
             }
