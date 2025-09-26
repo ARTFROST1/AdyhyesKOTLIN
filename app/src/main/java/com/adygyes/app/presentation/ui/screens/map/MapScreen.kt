@@ -34,6 +34,8 @@ import com.adygyes.app.presentation.ui.components.*
 import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
 import com.adygyes.app.presentation.ui.components.AdygyesBottomNavigation
 import com.adygyes.app.presentation.ui.components.ViewMode
+import com.adygyes.app.presentation.ui.components.SearchResultsHeader
+import com.adygyes.app.presentation.ui.components.SearchResultsWithCategories
 import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
 import com.adygyes.app.presentation.ui.map.markers.MarkerOverlay
 import com.adygyes.app.presentation.ui.map.markers.VisualMarkerRegistry
@@ -296,15 +298,18 @@ fun MapScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-                            .padding(top = 64.dp) // Space for search
+                            .padding(top = 80.dp) // Increased space for search field with bottom padding
                     ) {
-                        // Category carousel
-                        CategoryCarousel(
+                        // Combined search results header and category carousel
+                        SearchResultsWithCategories(
+                            attractionsCount = filteredAttractions.size,
+                            searchQuery = searchQuery,
+                            selectedCategories = selectedCategories.map { it.displayName }.toSet(),
                             selectedFilter = selectedCategoryFilter,
                             onFilterSelected = { filter ->
                                 viewModel.selectCategoryFilter(filter)
                             },
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                         )
                         
                         // Attractions list/grid
@@ -316,7 +321,7 @@ fun MapScreen(
                             isLoading = uiState.isLoading,
                             searchQuery = searchQuery,
                             selectedCategories = selectedCategories.map { it.displayName }.toSet(),
-                            showResultCount = true,
+                            showResultCount = false, // Отключаем встроенный счетчик, так как используем SearchResultsHeader
                             viewMode = if (listViewMode == MapViewModel.ListViewMode.LIST) {
                                 com.adygyes.app.presentation.ui.components.ListViewMode.LIST
                             } else {
@@ -335,7 +340,10 @@ fun MapScreen(
                 .align(Alignment.TopCenter)
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
                 .padding(horizontal = Dimensions.PaddingMedium)
-                .padding(top = Dimensions.PaddingSmall)
+                .padding(
+                    top = Dimensions.PaddingSmall,
+                    bottom = if (viewMode == ViewMode.LIST) Dimensions.PaddingMedium else 0.dp
+                )
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -382,6 +390,7 @@ fun MapScreen(
                 }
             }
         }
+        
         
         // Location FAB (only in MAP mode)
         if (viewMode == ViewMode.MAP) {

@@ -32,10 +32,23 @@ import com.adygyes.app.presentation.viewmodel.MapViewModel
 fun CategoryCarousel(
     selectedFilter: MapViewModel.CategoryFilter,
     onFilterSelected: (MapViewModel.CategoryFilter) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    withBackground: Boolean = false
 ) {
+    val carouselModifier = if (withBackground) {
+        modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(vertical = 8.dp)
+    } else {
+        modifier.fillMaxWidth()
+    }
+    
     LazyRow(
-        modifier = modifier.fillMaxWidth(),
+        modifier = carouselModifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(horizontal = Dimensions.PaddingMedium)
     ) {

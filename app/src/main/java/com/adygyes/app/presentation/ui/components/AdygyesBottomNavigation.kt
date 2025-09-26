@@ -42,27 +42,19 @@ fun AdygyesBottomNavigation(
                             .togetherWith(scaleOut(animationSpec = tween(90)) + fadeOut(animationSpec = tween(90)))
                     }
                 ) { mode ->
-                    Surface(
-                        shape = androidx.compose.foundation.shape.CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        tonalElevation = 0.dp
-                    ) {
-                        Icon(
-                            imageVector = if (mode == ViewMode.MAP) {
-                                Icons.Filled.List
-                            } else {
-                                Icons.Filled.Map
-                            },
-                            contentDescription = if (mode == ViewMode.MAP) {
-                                stringResource(R.string.switch_to_list_view)
-                            } else {
-                                stringResource(R.string.switch_to_map_view)
-                            },
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier
-                                .padding(8.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = if (mode == ViewMode.MAP) {
+                            Icons.Filled.List
+                        } else {
+                            Icons.Filled.Map
+                        },
+                        contentDescription = if (mode == ViewMode.MAP) {
+                            stringResource(R.string.switch_to_list_view)
+                        } else {
+                            stringResource(R.string.switch_to_map_view)
+                        },
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             },
             label = { 
@@ -78,13 +70,21 @@ fun AdygyesBottomNavigation(
                             stringResource(R.string.nav_list)
                         } else {
                             stringResource(R.string.nav_map)
-                        }
+                        },
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             },
-            selected = true, // Always selected as it's a toggle
+            selected = false,
             onClick = onViewModeToggle,
-            alwaysShowLabel = true
+            alwaysShowLabel = true,
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+                indicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            )
         )
         
         // Favorites
@@ -103,16 +103,27 @@ fun AdygyesBottomNavigation(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.FavoriteBorder,
-                        contentDescription = stringResource(R.string.nav_favorites)
+                        contentDescription = stringResource(R.string.nav_favorites),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             },
             label = { 
-                Text(stringResource(R.string.nav_favorites))
+                Text(
+                    text = stringResource(R.string.nav_favorites),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             },
             selected = false,
             onClick = onFavoritesClick,
-            alwaysShowLabel = true
+            alwaysShowLabel = true,
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+                indicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            )
         )
         
         // Settings
@@ -120,15 +131,26 @@ fun AdygyesBottomNavigation(
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Settings,
-                    contentDescription = stringResource(R.string.nav_settings)
+                    contentDescription = stringResource(R.string.nav_settings),
+                    tint = MaterialTheme.colorScheme.primary
                 )
             },
             label = { 
-                Text(stringResource(R.string.nav_settings))
+                Text(
+                    text = stringResource(R.string.nav_settings),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             },
             selected = false,
             onClick = onSettingsClick,
-            alwaysShowLabel = true
+            alwaysShowLabel = true,
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+                indicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            )
         )
     }
 }
