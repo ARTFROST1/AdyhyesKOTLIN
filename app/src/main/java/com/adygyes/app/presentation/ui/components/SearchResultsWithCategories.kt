@@ -38,7 +38,7 @@ fun SearchResultsWithCategories(
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
-        visible = attractionsCount > 0 || searchQuery.isNotEmpty() || selectedCategories.isNotEmpty(),
+        visible = true, // Always show the container so users can change filters
         enter = fadeIn() + slideInVertically(),
         exit = fadeOut() + slideOutVertically(),
         modifier = modifier

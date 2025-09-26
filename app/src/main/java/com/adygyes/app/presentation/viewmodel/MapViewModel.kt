@@ -14,6 +14,7 @@ import com.adygyes.app.domain.usecase.SortCriteria
 import com.adygyes.app.domain.usecase.NetworkStatus
 import com.adygyes.app.presentation.ui.map.markers.MarkerOverlayState
 import com.adygyes.app.presentation.ui.map.markers.MarkerState
+import com.adygyes.app.presentation.ui.components.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -64,6 +65,10 @@ class MapViewModel @Inject constructor(
     // New: View mode for list (LIST or GRID)
     private val _listViewMode = MutableStateFlow(ListViewMode.LIST)
     val listViewMode: StateFlow<ListViewMode> = _listViewMode.asStateFlow()
+    
+    // Main view mode (MAP or LIST)
+    private val _viewMode = MutableStateFlow(ViewMode.MAP)
+    val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
     
     val filteredAttractions: StateFlow<List<Attraction>> = combine(
         _attractions,
@@ -419,6 +424,13 @@ class MapViewModel @Inject constructor(
         _listViewMode.value = when (_listViewMode.value) {
             ListViewMode.LIST -> ListViewMode.GRID
             ListViewMode.GRID -> ListViewMode.LIST
+        }
+    }
+    
+    fun toggleViewMode() {
+        _viewMode.value = when (_viewMode.value) {
+            ViewMode.MAP -> ViewMode.LIST
+            ViewMode.LIST -> ViewMode.MAP
         }
     }
     

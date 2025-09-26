@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.LocationOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -67,29 +68,73 @@ fun AttractionsList(
             }
             
             attractions.isEmpty() -> {
-                // Empty state
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(Dimensions.PaddingLarge),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    val message = when {
-                        emptyStateMessage != null -> emptyStateMessage
-                        searchQuery.isNotEmpty() && selectedCategories.isNotEmpty() -> 
-                            stringResource(R.string.no_results_with_filters, searchQuery)
-                        searchQuery.isNotEmpty() -> 
-                            stringResource(R.string.no_results_for_query, searchQuery)
-                        selectedCategories.isNotEmpty() -> 
-                            stringResource(R.string.no_results_for_categories)
-                        else -> stringResource(R.string.no_attractions_available)
+                // Empty state with card-style message
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Show empty results with same layout as normal results
+                    if (showResultCount) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    horizontal = Dimensions.PaddingMedium,
+                                    vertical = Dimensions.PaddingSmall
+                                ),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.attractions_count, 0),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            // Applied filters indicator
+                            if (searchQuery.isNotEmpty() || selectedCategories.isNotEmpty()) {
+                                Surface(
+                                    shape = MaterialTheme.shapes.small,
+                                    color = MaterialTheme.colorScheme.primaryContainer
+                                ) {
+                                    Text(
+                                        text = buildString {
+                                            var filterCount = 0
+                                            if (searchQuery.isNotEmpty()) filterCount++
+                                            filterCount += selectedCategories.size
+                                            append("$filterCount ")
+                                            append(if (filterCount == 1) "filter" else "filters")
+                                        },
+                                        modifier = Modifier.padding(
+                                            horizontal = 8.dp,
+                                            vertical = 4.dp
+                                        ),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
                     }
                     
-                    NoResultsState(
-                        message = message,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // Empty state card
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = contentPadding,
+                        verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
+                    ) {
+                        item {
+                            EmptyStateAttractionCard(
+                                message = when {
+                                    emptyStateMessage != null -> emptyStateMessage
+                                    searchQuery.isNotEmpty() && selectedCategories.isNotEmpty() -> 
+                                        stringResource(R.string.no_results_with_filters, searchQuery)
+                                    searchQuery.isNotEmpty() -> 
+                                        stringResource(R.string.no_results_for_query, searchQuery)
+                                    selectedCategories.isNotEmpty() -> 
+                                        stringResource(R.string.no_results_for_categories)
+                                    else -> stringResource(R.string.no_attractions_available)
+                                }
+                            )
+                        }
+                    }
                 }
             }
             
@@ -374,6 +419,70 @@ fun NoResultsState(
                 modifier = Modifier.padding(top = Dimensions.SpacingMedium)
             ) {
                 Text(actionLabel)
+            }
+        }
+    }
+}
+
+/**
+ * Empty state card that looks like a regular attraction card
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EmptyStateAttractionCard(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimensions.PaddingMedium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Empty image placeholder
+            Surface(
+                modifier = Modifier
+                    .size(64.dp),
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.width(Dimensions.SpacingMedium))
+            
+            // Message text
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Text(
+                    text = "Попробуйте изменить фильтры или поисковый запрос",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
             }
         }
     }

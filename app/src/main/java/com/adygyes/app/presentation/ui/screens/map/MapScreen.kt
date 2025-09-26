@@ -95,9 +95,9 @@ fun MapScreen(
     val selectedCategoryFilter by viewModel.selectedCategoryFilter.collectAsStateWithLifecycle()
     val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()
     val listViewMode by viewModel.listViewMode.collectAsStateWithLifecycle()
+    val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
     
     // UI State
-    var viewMode by remember { mutableStateOf(ViewMode.MAP) }
     var showFilterSheet by remember { mutableStateOf(false) }
     var isMapReady by remember { mutableStateOf(false) }
     val easterEggActive by EasterEggManager.isActive.collectAsState()
@@ -434,7 +434,7 @@ fun MapScreen(
             AdygyesBottomNavigation(
                 currentViewMode = viewMode,
                 onViewModeToggle = { 
-                    viewMode = if (viewMode == ViewMode.MAP) ViewMode.LIST else ViewMode.MAP
+                    viewModel.toggleViewMode()
                 },
                 onFavoritesClick = onNavigateToFavorites,
                 onSettingsClick = onNavigateToSettings,
