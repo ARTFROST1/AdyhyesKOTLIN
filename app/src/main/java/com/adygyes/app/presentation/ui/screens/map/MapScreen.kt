@@ -331,23 +331,26 @@ fun MapScreen(
                     bottom = if (viewMode == ViewMode.LIST) Dimensions.PaddingMedium else 0.dp
                 )
         ) {
-            // Top bar with navigation buttons and search field
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                shadowElevation = 8.dp
+            // Top bar with three separate containers - all same height
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp), // Fixed height for all elements
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
+                // Left button - View Mode Toggle (Map/List)
+                Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .size(48.dp)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(24.dp), // Circular
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    shadowElevation = 8.dp
                 ) {
-                    // View Mode Toggle button (Map/List) - left side
                     IconButton(
                         onClick = { viewModel.toggleViewMode() },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         AnimatedContent(
                             targetState = viewMode,
@@ -371,60 +374,76 @@ fun MapScreen(
                             )
                         }
                     }
-                    
-                    // Search field in the center
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 8.dp)
-                    ) {
-                        if (viewMode == ViewMode.LIST) {
-                            // Enhanced search field for list mode with sort and view toggle
-                            EnhancedSearchTextField(
-                                value = searchQuery,
-                                onValueChange = { query: String ->
-                                    viewModel.updateSearchQuery(query)
-                                    searchJob?.cancel()
-                                    searchJob = scope.launch {
-                                        delay(300)
-                                        viewModel.search()
-                                    }
-                                },
-                                placeholder = stringResource(R.string.search_attractions),
-                                sortBy = sortBy,
-                                onSortChange = { viewModel.setSortBy(it) },
-                                viewMode = listViewMode,
-                                onViewModeToggle = { viewModel.toggleListViewMode() },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        } else {
-                            // Simple search field for map mode
-                            UnifiedSearchTextField(
-                                value = searchQuery,
-                                onValueChange = { query: String ->
-                                    viewModel.updateSearchQuery(query)
-                                    searchJob?.cancel()
-                                    searchJob = scope.launch {
-                                        delay(300)
-                                        viewModel.search()
-                                    }
-                                },
-                                placeholder = stringResource(R.string.search_attractions),
-                                onFilterClick = { 
-                                    // Toggle category carousel instead of showing filter sheet
-                                    showCategoryCarousel = !showCategoryCarousel
-                                },
-                                hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
-                                isCarouselVisible = showCategoryCarousel, // Pass state to change icon
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                }
+                
+                // Center - Search field container
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(24.dp), // Same radius as buttons for consistency
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    shadowElevation = 8.dp
+                ) {
+                    if (viewMode == ViewMode.LIST) {
+                        // Enhanced search field for list mode with sort and view toggle
+                        EnhancedSearchTextField(
+                            value = searchQuery,
+                            onValueChange = { query: String ->
+                                viewModel.updateSearchQuery(query)
+                                searchJob?.cancel()
+                                searchJob = scope.launch {
+                                    delay(300)
+                                    viewModel.search()
+                                }
+                            },
+                            placeholder = stringResource(R.string.search_attractions),
+                            sortBy = sortBy,
+                            onSortChange = { viewModel.setSortBy(it) },
+                            viewMode = listViewMode,
+                            onViewModeToggle = { viewModel.toggleListViewMode() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                        )
+                    } else {
+                        // Simple search field for map mode
+                        UnifiedSearchTextField(
+                            value = searchQuery,
+                            onValueChange = { query: String ->
+                                viewModel.updateSearchQuery(query)
+                                searchJob?.cancel()
+                                searchJob = scope.launch {
+                                    delay(300)
+                                    viewModel.search()
+                                }
+                            },
+                            placeholder = stringResource(R.string.search_attractions),
+                            onFilterClick = { 
+                                // Toggle category carousel instead of showing filter sheet
+                                showCategoryCarousel = !showCategoryCarousel
+                            },
+                            hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
+                            isCarouselVisible = showCategoryCarousel, // Pass state to change icon
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                        )
                     }
-                    
-                    // Settings button - right side
+                }
+                
+                // Right button - Settings
+                Surface(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(24.dp), // Circular
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    shadowElevation = 8.dp
+                ) {
                     IconButton(
                         onClick = onNavigateToSettings,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Settings,
