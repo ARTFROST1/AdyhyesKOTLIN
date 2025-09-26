@@ -1,8 +1,6 @@
 package com.adygyes.app.presentation.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -67,7 +65,7 @@ fun AttractionCard(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Brush.verticalGradient(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
                                 Color.Black.copy(alpha = 0.7f)
@@ -98,24 +96,42 @@ fun AttractionCard(
                         onClick = onFavoriteClick,
                         modifier = Modifier
                             .size(if (compactForFavorites) 44.dp else 40.dp)
-                            .then(
-                                if (compactForFavorites) Modifier
-                                    .border(1.dp, Color.White, RoundedCornerShape(50))
-                                else Modifier
-                                    .background(
-                                        Color.White.copy(alpha = 0.9f),
-                                        RoundedCornerShape(50)
-                                    )
-                            )
                     ) {
-                        Icon(
-                            imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
-                                R.string.cd_add_to_favorites
-                            ),
-                            tint = if (compactForFavorites) MaterialTheme.colorScheme.primary else if (attraction.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray,
-                            modifier = Modifier.size(if (compactForFavorites) 28.dp else 24.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(if (compactForFavorites) 36.dp else 32.dp)
+                                .then(
+                                    if (!attraction.isFavorite) {
+                                        Modifier.background(
+                                            Color.Black.copy(alpha = 0.3f),
+                                            RoundedCornerShape(50)
+                                        )
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Белая обводка в форме сердца (рисуется первой)
+                            if (attraction.isFavorite) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(if (compactForFavorites) 28.dp else 26.dp)
+                                )
+                            }
+                            
+                            // Основная иконка
+                            Icon(
+                                imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
+                                    R.string.cd_add_to_favorites
+                                ),
+                                tint = if (attraction.isFavorite) MaterialTheme.colorScheme.primary else Color.White,
+                                modifier = Modifier.size(if (compactForFavorites) 24.dp else 22.dp)
+                            )
+                        }
                     }
                 }
 
@@ -146,7 +162,6 @@ fun AttractionCard(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -188,6 +203,71 @@ fun AttractionCard(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Extract first sentence from description
+ */
+private fun getFirstSentence(description: String): String {
+    val sentences = description.split(". ", "! ", "? ")
+    return if (sentences.isNotEmpty()) {
+        val firstSentence = sentences[0].trim()
+        if (firstSentence.endsWith(".") || firstSentence.endsWith("!") || firstSentence.endsWith("?")) {
+            firstSentence
+        } else {
+            "$firstSentence."
+        }
+    } else {
+        description
+    }
+}
+
+/**
+ * Rating component for attraction cards
+ */
+@Composable
+private fun AttractionRating(
+    rating: Float?,
+    showDistance: Boolean = false,
+    distance: Float? = null
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Rating with star (only show if rating exists)
+        if (rating != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "⭐",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = String.format("%.1f", rating),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        } else {
+            // Empty space if no rating
+            Spacer(modifier = Modifier.width(1.dp))
+        }
+
+        // Distance if available
+        if (showDistance && distance != null) {
+            Text(
+                text = formatDistanceForCard(distance),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

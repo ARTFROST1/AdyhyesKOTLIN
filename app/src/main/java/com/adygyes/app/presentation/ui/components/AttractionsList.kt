@@ -1,8 +1,10 @@
 package com.adygyes.app.presentation.ui.components
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -11,14 +13,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.LocationOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -288,102 +295,141 @@ fun AttractionListItem(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(260.dp), // Further increased height for horizontal cards
+        shape = RoundedCornerShape(Dimensions.CornerRadiusMedium),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.PaddingMedium),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Attraction image
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(attraction.images.firstOrNull() ?: "")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = attraction.name,
-                contentScale = ContentScale.Crop,
+            // Image section (takes about 50% of card height)
+            Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(MaterialTheme.shapes.small)
-            )
-            
-            Spacer(modifier = Modifier.width(Dimensions.SpacingMedium))
-            
-            // Attraction details
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .fillMaxWidth()
+                    .height(120.dp)
             ) {
-                // Name with optional highlighting
-                Text(
-                    text = attraction.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(attraction.images.firstOrNull() ?: "")
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = attraction.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(
+                            topStart = Dimensions.CornerRadiusMedium,
+                            topEnd = Dimensions.CornerRadiusMedium
+                        ))
                 )
-                
-                // Category chip
-                Surface(
-                    shape = MaterialTheme.shapes.extraSmall,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    modifier = Modifier.padding(vertical = 2.dp)
+
+                // Favorite button positioned on image
+                IconButton(
+                    onClick = onFavoriteClick,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(32.dp)
                 ) {
-                    Text(
-                        text = attraction.category.displayName,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-                
-                // Rating
-                attraction.rating?.let { rating ->
-                    if (rating > 0) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            RatingBar(
-                                rating = rating,
-                                size = 12.dp,
-                                maxRating = 5
-                            )
-                            Text(
-                                text = String.format("%.1f", rating),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .then(
+                                if (!attraction.isFavorite) {
+                                    Modifier.background(
+                                        Color.Black.copy(alpha = 0.3f),
+                                        RoundedCornerShape(50)
+                                    )
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Белая обводка в форме сердца (рисуется первой)
+                        if (attraction.isFavorite) {
+                            Icon(
+                                imageVector = Icons.Filled.Favorite,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
+                        
+                        // Основная иконка
+                        Icon(
+                            imageVector = if (attraction.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = if (attraction.isFavorite) 
+                                stringResource(R.string.remove_from_favorites) 
+                            else 
+                                stringResource(R.string.add_to_favorites),
+                            tint = if (attraction.isFavorite) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                Color.White,
+                            modifier = Modifier.size(if (attraction.isFavorite) 18.dp else 20.dp)
+                        )
                     }
                 }
             }
-            
-            // Favorite button
-            IconButton(
-                onClick = onFavoriteClick,
-                modifier = Modifier.size(40.dp)
+
+            // Content section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f) // Take remaining space after image
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = Dimensions.PaddingMedium, vertical = 6.dp)
             ) {
-                Icon(
-                    imageVector = if (attraction.isFavorite) {
-                        Icons.Filled.Favorite
-                    } else {
-                        Icons.Outlined.FavoriteBorder
-                    },
-                    contentDescription = if (attraction.isFavorite) {
-                        stringResource(R.string.remove_from_favorites)
-                    } else {
-                        stringResource(R.string.add_to_favorites)
-                    },
-                    tint = if (attraction.isFavorite) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                // Category tag with minimal spacing
+                CategoryChip(
+                    category = attraction.category,
+                    compact = true
                 )
+                
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Attraction name - увеличенный размер
+                Text(
+                    text = attraction.name,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Short description (first sentence) - увеличенный размер
+                Text(
+                    text = getFirstSentence(attraction.description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Rating section at the bottom - using RatingBar component
+                attraction.rating?.let { rating ->
+                    if (rating > 0) {
+                        RatingBar(
+                            rating = rating,
+                            size = 14.dp,
+                            showNumericValue = true,
+                            totalReviews = null, // Can be added later if needed
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
         }
     }
@@ -485,5 +531,22 @@ fun EmptyStateAttractionCard(
                 )
             }
         }
+    }
+}
+
+/**
+ * Extract first sentence from description
+ */
+private fun getFirstSentence(description: String): String {
+    val sentences = description.split(". ", "! ", "? ")
+    return if (sentences.isNotEmpty()) {
+        val firstSentence = sentences[0].trim()
+        if (firstSentence.endsWith(".") || firstSentence.endsWith("!") || firstSentence.endsWith("?")) {
+            firstSentence
+        } else {
+            "$firstSentence."
+        }
+    } else {
+        description
     }
 }
