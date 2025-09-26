@@ -351,17 +351,7 @@ fun AttractionListItem(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Белая обводка в форме сердца (рисуется первой)
-                        if (attraction.isFavorite) {
-                            Icon(
-                                imageVector = Icons.Filled.Favorite,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        
-                        // Основная иконка
+                        // Основная иконка без белой обводки
                         Icon(
                             imageVector = if (attraction.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = if (attraction.isFavorite) 
@@ -369,10 +359,10 @@ fun AttractionListItem(
                             else 
                                 stringResource(R.string.add_to_favorites),
                             tint = if (attraction.isFavorite) 
-                                MaterialTheme.colorScheme.primary 
+                                Color(0xFF4CAF50) // Зеленый цвет
                             else 
                                 Color.White,
-                            modifier = Modifier.size(if (attraction.isFavorite) 18.dp else 20.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -386,11 +376,30 @@ fun AttractionListItem(
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = Dimensions.PaddingMedium, vertical = 6.dp)
             ) {
-                // Category tag with minimal spacing
-                CategoryChip(
-                    category = attraction.category,
-                    compact = true
-                )
+                // Category tag and rating on the same level
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CategoryChip(
+                        category = attraction.category,
+                        compact = true
+                    )
+                    
+                    // Rating section - moved to the same level as category
+                    attraction.rating?.let { rating ->
+                        if (rating > 0) {
+                            RatingBar(
+                                rating = rating,
+                                size = 12.dp,
+                                showNumericValue = true,
+                                totalReviews = null,
+                                compact = true
+                            )
+                        }
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(2.dp))
 
@@ -417,19 +426,6 @@ fun AttractionListItem(
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
-
-                // Rating section at the bottom - using RatingBar component
-                attraction.rating?.let { rating ->
-                    if (rating > 0) {
-                        RatingBar(
-                            rating = rating,
-                            size = 14.dp,
-                            showNumericValue = true,
-                            totalReviews = null, // Can be added later if needed
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
             }
         }
     }

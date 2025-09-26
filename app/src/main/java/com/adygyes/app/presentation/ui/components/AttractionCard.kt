@@ -112,24 +112,14 @@ fun AttractionCard(
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Белая обводка в форме сердца (рисуется первой)
-                            if (attraction.isFavorite) {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(if (compactForFavorites) 28.dp else 26.dp)
-                                )
-                            }
-                            
-                            // Основная иконка
+                            // Основная иконка без белой обводки
                             Icon(
                                 imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
                                     R.string.cd_add_to_favorites
                                 ),
-                                tint = if (attraction.isFavorite) MaterialTheme.colorScheme.primary else Color.White,
-                                modifier = Modifier.size(if (compactForFavorites) 24.dp else 22.dp)
+                                tint = if (attraction.isFavorite) Color(0xFF4CAF50) else Color.White, // Зеленый цвет для избранного
+                                modifier = Modifier.size(if (compactForFavorites) 26.dp else 24.dp)
                             )
                         }
                     }
