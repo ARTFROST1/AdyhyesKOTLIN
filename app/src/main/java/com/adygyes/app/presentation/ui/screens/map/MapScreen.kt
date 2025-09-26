@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.runtime.*
@@ -38,7 +39,6 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.adygyes.app.R
 import com.adygyes.app.presentation.ui.components.*
 import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
-import com.adygyes.app.presentation.ui.components.AdygyesBottomNavigation
 import com.adygyes.app.presentation.ui.components.ViewMode
 import com.adygyes.app.presentation.ui.components.SearchResultsHeader
 import com.adygyes.app.presentation.ui.components.UnifiedCategoryCarousel
@@ -319,7 +319,7 @@ fun MapScreen(
             }
         }
         
-        // Floating search field and category carousel at top
+        // Top navigation bar with buttons and search field
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -331,53 +331,107 @@ fun MapScreen(
                     bottom = if (viewMode == ViewMode.LIST) Dimensions.PaddingMedium else 0.dp
                 )
         ) {
-            // Search field
+            // Top bar with navigation buttons and search field
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                 shadowElevation = 8.dp
             ) {
-                if (viewMode == ViewMode.LIST) {
-                    // Enhanced search field for list mode with sort and view toggle
-                    EnhancedSearchTextField(
-                        value = searchQuery,
-                        onValueChange = { query: String ->
-                            viewModel.updateSearchQuery(query)
-                            searchJob?.cancel()
-                            searchJob = scope.launch {
-                                delay(300)
-                                viewModel.search()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // View Mode Toggle button (Map/List) - left side
+                    IconButton(
+                        onClick = { viewModel.toggleViewMode() },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        AnimatedContent(
+                            targetState = viewMode,
+                            transitionSpec = {
+                                (scaleIn(animationSpec = tween(220)) + fadeIn(animationSpec = tween(220)))
+                                    .togetherWith(scaleOut(animationSpec = tween(90)) + fadeOut(animationSpec = tween(90)))
                             }
-                        },
-                        placeholder = stringResource(R.string.search_attractions),
-                        sortBy = sortBy,
-                        onSortChange = { viewModel.setSortBy(it) },
-                        viewMode = listViewMode,
-                        onViewModeToggle = { viewModel.toggleListViewMode() },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    // Simple search field for map mode
-                    UnifiedSearchTextField(
-                        value = searchQuery,
-                        onValueChange = { query: String ->
-                            viewModel.updateSearchQuery(query)
-                            searchJob?.cancel()
-                            searchJob = scope.launch {
-                                delay(300)
-                                viewModel.search()
-                            }
-                        },
-                        placeholder = stringResource(R.string.search_attractions),
-                        onFilterClick = { 
-                            // Toggle category carousel instead of showing filter sheet
-                            showCategoryCarousel = !showCategoryCarousel
-                        },
-                        hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
-                        isCarouselVisible = showCategoryCarousel, // Pass state to change icon
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        ) { mode ->
+                            Icon(
+                                imageVector = if (mode == ViewMode.MAP) {
+                                    Icons.Filled.List
+                                } else {
+                                    Icons.Filled.Map
+                                },
+                                contentDescription = if (mode == ViewMode.MAP) {
+                                    stringResource(R.string.switch_to_list_view)
+                                } else {
+                                    stringResource(R.string.switch_to_map_view)
+                                },
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    
+                    // Search field in the center
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        if (viewMode == ViewMode.LIST) {
+                            // Enhanced search field for list mode with sort and view toggle
+                            EnhancedSearchTextField(
+                                value = searchQuery,
+                                onValueChange = { query: String ->
+                                    viewModel.updateSearchQuery(query)
+                                    searchJob?.cancel()
+                                    searchJob = scope.launch {
+                                        delay(300)
+                                        viewModel.search()
+                                    }
+                                },
+                                placeholder = stringResource(R.string.search_attractions),
+                                sortBy = sortBy,
+                                onSortChange = { viewModel.setSortBy(it) },
+                                viewMode = listViewMode,
+                                onViewModeToggle = { viewModel.toggleListViewMode() },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            // Simple search field for map mode
+                            UnifiedSearchTextField(
+                                value = searchQuery,
+                                onValueChange = { query: String ->
+                                    viewModel.updateSearchQuery(query)
+                                    searchJob?.cancel()
+                                    searchJob = scope.launch {
+                                        delay(300)
+                                        viewModel.search()
+                                    }
+                                },
+                                placeholder = stringResource(R.string.search_attractions),
+                                onFilterClick = { 
+                                    // Toggle category carousel instead of showing filter sheet
+                                    showCategoryCarousel = !showCategoryCarousel
+                                },
+                                hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
+                                isCarouselVisible = showCategoryCarousel, // Pass state to change icon
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                    
+                    // Settings button - right side
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = stringResource(R.string.nav_settings),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
             
@@ -432,23 +486,7 @@ fun MapScreen(
             }
         }
         
-        // Bottom navigation
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-        ) {
-            AdygyesBottomNavigation(
-                currentViewMode = viewMode,
-                onViewModeToggle = { 
-                    viewModel.toggleViewMode()
-                },
-                onFavoritesClick = onNavigateToFavorites,
-                onSettingsClick = onNavigateToSettings,
-                showBadgeOnFavorites = filteredAttractions.any { it.isFavorite },
-                favoritesCount = filteredAttractions.count { it.isFavorite }
-            )
-        }
+        // Bottom navigation removed - buttons moved to top bar
         
         // CRITICAL: Bottom sheet must be last to render on top
         selectedAttraction?.let { attraction ->

@@ -17,7 +17,7 @@
     <string name="map_error">Ошибка загрузки карты</string>
     <string name="switch_to_list_view">Переключить на список</string>
     <string name="switch_to_map_view">Переключить на карту</string>
-    <string name="search_attractions">Поиск достопримечательностей</string>
+    <string name="search_attractions">Поиск</string>
     <string name="my_location">Моё местоположение</string>
     <string name="filters">Фильтры</string>
     <string name="clear_search">Очистить поиск</string>
