@@ -345,8 +345,8 @@ fun MapScreen(
                     .height(48.dp)
                     .animateContentSize(
                         animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMediumLow
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessVeryLow
                         )
                     ),
                 verticalAlignment = Alignment.CenterVertically,
@@ -357,29 +357,29 @@ fun MapScreen(
                     visible = !isSearchFieldFocused,
                     enter = fadeIn(
                         animationSpec = tween(
-                            durationMillis = 300,
-                            delayMillis = 100,
-                            easing = LinearOutSlowInEasing
+                            durationMillis = 400,
+                            delayMillis = 200,
+                            easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
                         )
                     ) + scaleIn(
                         animationSpec = tween(
-                            durationMillis = 300,
-                            delayMillis = 100,
-                            easing = LinearOutSlowInEasing
+                            durationMillis = 400,
+                            delayMillis = 200,
+                            easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
                         ),
-                        initialScale = 0.8f
+                        initialScale = 0.7f
                     ),
                     exit = fadeOut(
                         animationSpec = tween(
-                            durationMillis = 150,
-                            easing = FastOutLinearInEasing
+                            durationMillis = 250,
+                            easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)
                         )
                     ) + scaleOut(
                         animationSpec = tween(
-                            durationMillis = 150,
-                            easing = FastOutLinearInEasing
+                            durationMillis = 250,
+                            easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)
                         ),
-                        targetScale = 0.8f
+                        targetScale = 0.7f
                     )
                 ) {
                     Surface(
@@ -446,12 +446,27 @@ fun MapScreen(
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                     shadowElevation = 8.dp
                 ) {
-                    Crossfade(
+                    AnimatedContent(
                         targetState = isSearchFieldFocused,
-                        animationSpec = tween(
-                            durationMillis = 250,
-                            easing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1.0f)
-                        )
+                        transitionSpec = {
+                            fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 450,
+                                    delayMillis = 100,
+                                    easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
+                                )
+                            ) togetherWith fadeOut(
+                                animationSpec = tween(
+                                    durationMillis = 200,
+                                    easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)
+                                )
+                            ) using SizeTransform { initialSize, targetSize ->
+                                spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessVeryLow
+                                )
+                            }
+                        }
                     ) { focused ->
                         if (focused) {
                             if (viewMode == ViewMode.LIST) {
@@ -500,27 +515,54 @@ fun MapScreen(
                             }
                         } else {
                             // Normal search field when not focused
-                            UnifiedSearchTextField(
-                                value = searchQuery,
-                                onValueChange = { query: String ->
-                                    viewModel.updateSearchQuery(query)
-                                    searchJob?.cancel()
-                                    searchJob = scope.launch {
-                                        delay(300)
-                                        viewModel.search()
-                                    }
-                                },
-                                placeholder = stringResource(R.string.search_attractions),
-                                onFilterClick = { 
-                                    showCategoryCarousel = !showCategoryCarousel
-                                },
-                                hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
-                                isCarouselVisible = showCategoryCarousel,
-                                onFocusChange = { focused -> isSearchFieldFocused = focused },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight()
-                            )
+                            if (viewMode == ViewMode.LIST) {
+                                // Enhanced search field for list mode with sort and view toggle (not expanded)
+                                EnhancedSearchTextField(
+                                    value = searchQuery,
+                                    onValueChange = { query: String ->
+                                        viewModel.updateSearchQuery(query)
+                                        searchJob?.cancel()
+                                        searchJob = scope.launch {
+                                            delay(300)
+                                            viewModel.search()
+                                        }
+                                    },
+                                    placeholder = stringResource(R.string.search_attractions),
+                                    sortBy = sortBy,
+                                    onSortChange = { viewModel.setSortBy(it) },
+                                    viewMode = listViewMode,
+                                    onViewModeToggle = { viewModel.toggleListViewMode() },
+                                    isExpanded = false,
+                                    onFocusChange = { focused -> isSearchFieldFocused = focused },
+                                    onCloseClick = { },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .fillMaxHeight()
+                                )
+                            } else {
+                                // Simple search field for map mode
+                                UnifiedSearchTextField(
+                                    value = searchQuery,
+                                    onValueChange = { query: String ->
+                                        viewModel.updateSearchQuery(query)
+                                        searchJob?.cancel()
+                                        searchJob = scope.launch {
+                                            delay(300)
+                                            viewModel.search()
+                                        }
+                                    },
+                                    placeholder = stringResource(R.string.search_attractions),
+                                    onFilterClick = { 
+                                        showCategoryCarousel = !showCategoryCarousel
+                                    },
+                                    hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
+                                    isCarouselVisible = showCategoryCarousel,
+                                    onFocusChange = { focused -> isSearchFieldFocused = focused },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .fillMaxHeight()
+                                )
+                            }
                         }
                     }
                 }
@@ -530,29 +572,29 @@ fun MapScreen(
                     visible = !isSearchFieldFocused,
                     enter = fadeIn(
                         animationSpec = tween(
-                            durationMillis = 300,
-                            delayMillis = 120,
-                            easing = LinearOutSlowInEasing
+                            durationMillis = 400,
+                            delayMillis = 250,
+                            easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
                         )
                     ) + scaleIn(
                         animationSpec = tween(
-                            durationMillis = 300,
-                            delayMillis = 120,
-                            easing = LinearOutSlowInEasing
+                            durationMillis = 400,
+                            delayMillis = 250,
+                            easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
                         ),
-                        initialScale = 0.8f
+                        initialScale = 0.7f
                     ),
                     exit = fadeOut(
                         animationSpec = tween(
-                            durationMillis = 150,
-                            easing = FastOutLinearInEasing
+                            durationMillis = 250,
+                            easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)
                         )
                     ) + scaleOut(
                         animationSpec = tween(
-                            durationMillis = 150,
-                            easing = FastOutLinearInEasing
+                            durationMillis = 250,
+                            easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)
                         ),
-                        targetScale = 0.8f
+                        targetScale = 0.7f
                     )
                 ) {
                     Surface(
