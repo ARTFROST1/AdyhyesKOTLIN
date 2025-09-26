@@ -49,32 +49,38 @@ fun DualLayerMarkerSystem(
                 visualMarkerProvider?.setAppearAnimation(enableAppearAnimation)
             }
 
-            // Incremental sync of markers on attractions changes
-            // Only update if the markers haven't been preloaded or attractions have changed
+            // Handle markers - either use preloaded or create new ones
             LaunchedEffect(mapView, attractions) {
                 if (mapView != null && visualMarkerProvider != null) {
                     val currentIds = VisualMarkerRegistry.getLastIds(mapView)
                     val newIds = attractions.map { it.id }.toSet()
                     
-                    Timber.d("🔍 FILTER UPDATE: Current markers: ${currentIds.size}, New filtered: ${newIds.size}")
-                    Timber.d("🔍 FILTER UPDATE: Attractions: ${attractions.map { it.name }.joinToString(", ")}")
+                    Timber.d("🔍 MARKER UPDATE: Current markers: ${currentIds.size}, New attractions: ${newIds.size}")
                     
-                    // Only update if there's a difference in attractions
-                    if (currentIds != newIds) {
-                        // For initial load (empty -> populated), use animation
-                        // For filtering (populated -> different populated), don't animate
-                        val isInitialLoad = currentIds.isEmpty() && newIds.isNotEmpty()
-                        if (isInitialLoad && enableAppearAnimation) {
-                            visualMarkerProvider.setAppearAnimation(true)
+                    when {
+                        // Case 1: Check if we have preloaded markers that match
+                        visualMarkerProvider.hasPreloadedMarkers() && currentIds == newIds -> {
+                            Timber.d("📍 Using preloaded markers: ${currentIds.size}")
+                            // Markers are already preloaded and match - do nothing
+                        }
+                        // Case 2: No markers exist, need to create them
+                        currentIds.isEmpty() && newIds.isNotEmpty() -> {
+                            Timber.d("📍 Creating initial markers (no preload)")
+                            visualMarkerProvider.setAppearAnimation(enableAppearAnimation)
                             visualMarkerProvider.addVisualMarkers(attractions)
-                        } else {
+                            VisualMarkerRegistry.setLastIds(mapView, newIds)
+                        }
+                        // Case 3: Filtering - update existing markers
+                        currentIds != newIds && currentIds.isNotEmpty() -> {
+                            Timber.d("📍 Filtering markers: ${currentIds.size} → ${newIds.size}")
                             visualMarkerProvider.setAppearAnimation(false)
                             visualMarkerProvider.updateVisualMarkers(attractions)
+                            VisualMarkerRegistry.setLastIds(mapView, newIds)
                         }
-                        VisualMarkerRegistry.setLastIds(mapView, newIds)
-                        Timber.d("📍 FILTER APPLIED: Updated visual markers from ${currentIds.size} to ${attractions.size}")
-                    } else {
-                        Timber.d("📍 Markers already match filter: ${attractions.size}, skipping sync")
+                        // Case 4: Markers already match
+                        else -> {
+                            Timber.d("📍 Markers already exist: ${currentIds.size}")
+                        }
                     }
                 }
             }

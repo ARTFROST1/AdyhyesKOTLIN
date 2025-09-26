@@ -27,16 +27,103 @@ class VisualMarkerProvider(
     private val markerImages = mutableMapOf<String, ImageProvider>()
     private var coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
-    // Animation settings
+    // Animation settings - optimized for maximum smoothness
     private var enableAppearAnimation = true
-    private val animationDelayMs = 100L // Delay between each marker appearance
-    private val animationDurationMs = 300L // Duration of each marker's fade-in
+    private val animationDelayMs = 50L // Reduced delay for faster appearance
+    private val animationDurationMs = 200L // Shorter duration for snappier animation
+    private var markersPreloaded = false // Track if markers were created during preload
+    private val preloadedImages = mutableMapOf<String, Bitmap>() // Cache loaded images
     
     /**
      * Set whether to enable appear animation for new markers
      */
     fun setAppearAnimation(enabled: Boolean) {
         enableAppearAnimation = enabled
+    }
+    
+    /**
+     * Preload markers during splash screen - creates markers with loaded images but keeps them invisible
+     */
+    fun preloadMarkers(attractions: List<Attraction>) {
+        clearMarkers()
+        
+        coroutineScope.launch {
+            // First, preload all images in parallel
+            val imageLoadJobs = attractions.mapNotNull { attraction ->
+                attraction.images.firstOrNull()?.let { imageUrl ->
+                    async(Dispatchers.IO) {
+                        try {
+                            val bitmap = loadImageBitmap(imageUrl)
+                            if (bitmap != null) {
+                                preloadedImages[attraction.id] = bitmap
+                                Timber.d("✅ Preloaded image for ${attraction.name}")
+                            }
+                            bitmap
+                        } catch (e: Exception) {
+                            Timber.e(e, "Failed to preload image for ${attraction.name}")
+                            null
+                        }
+                    }
+                }
+            }
+            
+            // Wait for all images to load
+            imageLoadJobs.awaitAll()
+            
+            // Then create markers with preloaded images
+            withContext(Dispatchers.Main) {
+                attractions.forEach { attraction ->
+                    addVisualMarkerWithPreloadedImage(attraction, visible = false)
+                }
+                
+                markersPreloaded = true
+                Timber.d("📍 Preloaded ${attractions.size} invisible markers with images for instant animation")
+            }
+        }
+    }
+    
+    /**
+     * Animate appearance of preloaded markers
+     */
+    fun animatePreloadedMarkers() {
+        if (!markersPreloaded) {
+            Timber.w("No preloaded markers to animate")
+            return
+        }
+        
+        coroutineScope.launch {
+            val markerList = markers.values.toList()
+            markerList.forEachIndexed { index, placemark ->
+                launch {
+                    // Stagger animation start
+                    delay(index * animationDelayMs)
+                    animateMarkerAppearance(placemark)
+                }
+            }
+            Timber.d("🎬 Started animation for ${markerList.size} preloaded markers")
+        }
+    }
+    
+    /**
+     * Show preloaded markers immediately without animation (fallback)
+     */
+    fun showPreloadedMarkers() {
+        if (!markersPreloaded) {
+            Timber.w("No preloaded markers to show")
+            return
+        }
+        
+        markers.values.forEach { placemark ->
+            placemark.isVisible = true
+        }
+        Timber.d("👁️ Showed ${markers.size} preloaded markers immediately")
+    }
+    
+    /**
+     * Check if markers are preloaded and ready
+     */
+    fun hasPreloadedMarkers(): Boolean {
+        return markersPreloaded && markers.isNotEmpty()
     }
     
     /**
@@ -111,9 +198,9 @@ class VisualMarkerProvider(
     }
     
     /**
-     * Add a single visual marker with optional animation
+     * Add a single visual marker with optional animation and visibility
      */
-    private fun addVisualMarker(attraction: Attraction, animated: Boolean = false) {
+    private fun addVisualMarker(attraction: Attraction, animated: Boolean = false, visible: Boolean = true) {
         val point = Point(
             attraction.location.latitude,
             attraction.location.longitude
@@ -139,45 +226,85 @@ class VisualMarkerProvider(
             placemark.isVisible = false
             animateMarkerAppearance(placemark)
         } else {
-            // Show marker immediately
-            placemark.isVisible = true
+            // Set visibility based on parameter
+            placemark.isVisible = visible
         }
         
         Timber.d("✅ Created marker for ${attraction.name} at ${attraction.location.latitude}, ${attraction.location.longitude} on MapView: ${mapView.hashCode()}")
     }
     
     /**
-     * Animate marker appearance with scale-up effect using actual loaded image
+     * Add visual marker with preloaded image for instant animation
+     */
+    private fun addVisualMarkerWithPreloadedImage(attraction: Attraction, visible: Boolean = true) {
+        val point = Point(
+            attraction.location.latitude,
+            attraction.location.longitude
+        )
+        
+        // Use preloaded image if available
+        val preloadedBitmap = preloadedImages[attraction.id]
+        val imageProvider = if (preloadedBitmap != null) {
+            // Create image provider with preloaded bitmap
+            val circularBitmap = createCircularBitmapWithImage(
+                bitmap = preloadedBitmap,
+                attraction = attraction,
+                isSelected = false
+            )
+            ImageProvider.fromBitmap(circularBitmap)
+        } else {
+            // Fallback to default image provider
+            getOrCreateImageProvider(attraction)
+        }
+        
+        // Create native placemark
+        val placemark = mapObjectCollection.addPlacemark(point, imageProvider)
+        
+        // IMPORTANT: Make placemark non-interactive to not block Compose clicks
+        placemark.zIndex = 0f // Ensure it's at the bottom
+        placemark.isVisible = visible
+        
+        // Store reference
+        markers[attraction.id] = placemark
+        
+        // Set user data for debugging (not for click handling)
+        placemark.userData = attraction
+        
+        Timber.d("✅ Created preloaded marker for ${attraction.name} with ${if (preloadedBitmap != null) "image" else "fallback"}")
+    }
+    
+    /**
+     * Animate marker appearance with scale-up effect using preloaded image for maximum smoothness
      */
     private fun animateMarkerAppearance(placemark: PlacemarkMapObject) {
         coroutineScope.launch {
             val attraction = placemark.userData as? Attraction ?: return@launch
             
-            // First, ensure the image is loaded
-            val finalImageProvider = getOrCreateImageProvider(attraction)
+            // Use preloaded image if available for instant animation
+            val preloadedBitmap = preloadedImages[attraction.id]
             
-            // Load the actual image from cache/URL
-            attraction.images.firstOrNull()?.let { imageUrl ->
-                try {
-                    val loadedBitmap = loadImageBitmap(imageUrl)
-                    if (loadedBitmap != null) {
-                        // Animate with the actual loaded image at different scales
-                        animateWithLoadedImage(placemark, attraction, loadedBitmap)
-                    } else {
-                        // Fallback to immediate show if image loading fails
-                        placemark.setIcon(finalImageProvider)
+            if (preloadedBitmap != null) {
+                // Animate with preloaded image - instant and smooth
+                animateWithPreloadedImage(placemark, attraction, preloadedBitmap)
+            } else {
+                // Fallback: load image and animate
+                attraction.images.firstOrNull()?.let { imageUrl ->
+                    try {
+                        val loadedBitmap = loadImageBitmap(imageUrl)
+                        if (loadedBitmap != null) {
+                            animateWithLoadedImage(placemark, attraction, loadedBitmap)
+                        } else {
+                            // Immediate show as fallback
+                            placemark.isVisible = true
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to load image for animation: ${attraction.name}")
                         placemark.isVisible = true
                     }
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to load image for animation: ${attraction.name}")
-                    // Fallback to immediate show
-                    placemark.setIcon(finalImageProvider)
+                } ?: run {
+                    // No image URL, show immediately
                     placemark.isVisible = true
                 }
-            } ?: run {
-                // No image URL, show immediately
-                placemark.setIcon(finalImageProvider)
-                placemark.isVisible = true
             }
             
             Timber.d("🎬 Completed appearance animation for ${attraction.name}")
@@ -225,7 +352,42 @@ class VisualMarkerProvider(
     }
     
     /**
-     * Animate marker with loaded image at different scales
+     * Animate marker with preloaded image - maximum smoothness
+     */
+    private suspend fun animateWithPreloadedImage(
+        placemark: PlacemarkMapObject,
+        attraction: Attraction,
+        preloadedBitmap: Bitmap
+    ) = withContext(Dispatchers.Main) {
+        val steps = 12 // More steps for smoother animation
+        val stepDelay = animationDurationMs / steps
+        
+        // Pre-create all animation frames for ultra-smooth playback
+        val animationFrames = mutableListOf<ImageProvider>()
+        for (i in 1..steps) {
+            val scale = 0.2f + (0.8f * i / steps) // From 0.2 to 1.0
+            val frame = createSmoothAnimatedMarkerWithImage(attraction, preloadedBitmap, scale)
+            animationFrames.add(frame)
+        }
+        
+        // Play animation frames with minimal delay
+        animationFrames.forEach { frame ->
+            placemark.setIcon(frame)
+            placemark.isVisible = true
+            delay(stepDelay)
+        }
+        
+        // Set final high-quality icon
+        val finalIcon = createCircularBitmapWithImage(
+            bitmap = preloadedBitmap,
+            attraction = attraction,
+            isSelected = false
+        )
+        placemark.setIcon(ImageProvider.fromBitmap(finalIcon))
+    }
+    
+    /**
+     * Animate marker with loaded image at different scales (fallback)
      */
     private suspend fun animateWithLoadedImage(
         placemark: PlacemarkMapObject,
@@ -314,6 +476,74 @@ class VisualMarkerProvider(
         paint.strokeWidth = borderWidthPx.toFloat()
         paint.color = Color.WHITE
         paint.alpha = (255 * scale).toInt().coerceIn(100, 255)
+        canvas.drawCircle(centerX, centerY, radius, paint)
+        
+        return ImageProvider.fromBitmap(output)
+    }
+    
+    /**
+     * Create smooth animated marker with optimized rendering for preloaded images
+     */
+    private fun createSmoothAnimatedMarkerWithImage(
+        attraction: Attraction,
+        preloadedBitmap: Bitmap,
+        scale: Float
+    ): ImageProvider {
+        val baseSize = 52
+        val size = (baseSize * scale).toInt().coerceAtLeast(8)
+        val sizePx = (size * mapView.context.resources.displayMetrics.density).toInt()
+        val borderWidth = 2
+        val borderWidthPx = (borderWidth * mapView.context.resources.displayMetrics.density).toInt()
+        
+        val output = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
+        
+        // Optimized paint with anti-aliasing
+        val paint = Paint().apply {
+            isAntiAlias = true
+            isFilterBitmap = true // Better quality scaling
+            isDither = true // Smoother gradients
+        }
+        
+        val centerX = sizePx / 2f
+        val centerY = sizePx / 2f
+        val radius = (sizePx - borderWidthPx) / 2f - 4f
+        
+        // Smooth shadow with scale-based intensity
+        val shadowAlpha = (30 * scale).toInt().coerceIn(10, 30)
+        paint.color = Color.argb(shadowAlpha, 0, 0, 0)
+        paint.maskFilter = BlurMaskFilter(6f * scale, BlurMaskFilter.Blur.NORMAL)
+        canvas.drawCircle(centerX + 1.5f, centerY + 1.5f, radius, paint)
+        paint.maskFilter = null
+        
+        // Create smooth circular clip
+        val path = android.graphics.Path().apply {
+            addCircle(centerX, centerY, radius, android.graphics.Path.Direction.CW)
+        }
+        canvas.clipPath(path)
+        
+        // Draw scaled image with smooth interpolation
+        try {
+            val scaledBitmap = Bitmap.createScaledBitmap(preloadedBitmap, sizePx, sizePx, true)
+            
+            // Smooth fade-in effect
+            val alpha = (255 * scale * scale).toInt().coerceIn(100, 255) // Quadratic for smoother fade
+            paint.alpha = alpha
+            canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
+            scaledBitmap.recycle()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to draw smooth animated image for marker ${attraction.name}")
+            // Fallback to category color
+            paint.color = getCategoryColor(attraction.category)
+            paint.alpha = (255 * scale).toInt().coerceIn(100, 255)
+            canvas.drawCircle(centerX, centerY, radius, paint)
+        }
+        
+        // Smooth border with scale-based opacity
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = borderWidthPx.toFloat()
+        paint.color = Color.WHITE
+        paint.alpha = (255 * scale).toInt().coerceIn(150, 255)
         canvas.drawCircle(centerX, centerY, radius, paint)
         
         return ImageProvider.fromBitmap(output)
@@ -576,6 +806,8 @@ class VisualMarkerProvider(
     fun clearMarkers() {
         markers.clear()
         markerImages.clear()
+        preloadedImages.clear() // Clear preloaded image cache
+        markersPreloaded = false
         mapObjectCollection.clear()
         // Cancel existing coroutines and create new scope
         coroutineScope.cancel()

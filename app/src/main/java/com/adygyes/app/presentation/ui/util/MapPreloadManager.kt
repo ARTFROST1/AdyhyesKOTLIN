@@ -85,39 +85,19 @@ class MapPreloadManager @Inject constructor(
                 )
                 Timber.d("Loaded ${loadedAttractions.size} attractions")
                 
-                // Step 2: Create visual markers using VisualMarkerProvider
-                // This creates the native MapKit markers that will be visible immediately
+                // Step 2: Preload visual markers (invisible) using VisualMarkerProvider
+                // This creates the native MapKit markers but keeps them invisible for later animation
                 withContext(Dispatchers.Main) {
                     // Ensure we're on the main thread for MapKit operations
                     visualMarkerProvider = VisualMarkerRegistry.getOrCreate(mapView, imageCacheManager)
                     
                     visualMarkerProvider?.let { provider ->
-                        // Create all visual markers (this happens synchronously)
-                        provider.updateVisualMarkers(loadedAttractions)
+                        // Preload all visual markers (invisible, ready for animation)
+                        provider.preloadMarkers(loadedAttractions)
                         // Store the IDs so they won't be recreated later
                         VisualMarkerRegistry.setLastIds(mapView, loadedAttractions.map { it.id }.toSet())
                         
-                        Timber.d("✅ Created ${loadedAttractions.size} visual markers on MapView: ${mapView.hashCode()}")
-                        
-                        // Force map to refresh and show markers immediately
-                        try {
-                            mapView.invalidate()
-                            // Trigger a small camera movement to force refresh
-                            val currentPosition = mapView.map.cameraPosition
-                            mapView.map.move(
-                                CameraPosition(
-                                    currentPosition.target,
-                                    currentPosition.zoom,
-                                    currentPosition.azimuth,
-                                    currentPosition.tilt
-                                ),
-                                Animation(Animation.Type.SMOOTH, 0.0f),
-                                null
-                            )
-                            Timber.d("🔄 Forced MapView refresh and camera update")
-                        } catch (e: Exception) {
-                            Timber.w(e, "Failed to force map refresh")
-                        }
+                        Timber.d("✅ Preloaded ${loadedAttractions.size} invisible markers on MapView: ${mapView.hashCode()}")
                     }
                 }
                 
@@ -143,9 +123,9 @@ class MapPreloadManager @Inject constructor(
                     progress = 0.8f
                 )
                 
-                // Step 4: Wait a bit for markers to actually load their images
-                // Visual markers load images asynchronously, we need to give them time
-                delay(1500) // Give time for image loading in markers
+                // Step 4: Wait for marker creation and image preloading to complete
+                // Images are now preloaded during marker creation, so less wait time needed
+                delay(500) // Reduced wait time since images are preloaded
                 
                 _preloadState.value = _preloadState.value.copy(
                     allMarkersReady = true,
@@ -179,6 +159,29 @@ class MapPreloadManager @Inject constructor(
     fun isPreloadComplete(): Boolean {
         val state = _preloadState.value
         return state.dataLoaded && state.markersCreated && !state.isLoading
+    }
+    
+    /**
+     * Animate preloaded markers when user navigates to map
+     */
+    fun animatePreloadedMarkers() {
+        visualMarkerProvider?.animatePreloadedMarkers()
+        Timber.d("🎬 Triggered animation for preloaded markers")
+    }
+    
+    /**
+     * Show preloaded markers immediately (fallback)
+     */
+    fun showPreloadedMarkers() {
+        visualMarkerProvider?.showPreloadedMarkers()
+        Timber.d("👁️ Showed preloaded markers immediately")
+    }
+    
+    /**
+     * Check if markers are preloaded and ready
+     */
+    fun hasPreloadedMarkers(): Boolean {
+        return visualMarkerProvider?.hasPreloadedMarkers() == true
     }
     
     fun onDestroy() {

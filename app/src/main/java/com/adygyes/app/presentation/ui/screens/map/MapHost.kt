@@ -35,37 +35,7 @@ class MapHostController(
 
 val LocalMapHostController = compositionLocalOf<MapHostController?> { null }
 
-/**
- * Renders markers on the background map before user navigates to MapScreen
- * This ensures markers are visible immediately when transitioning to map
- */
-@Composable
-private fun BackgroundMarkerRenderer(
-    mapView: MapView,
-    preloadManager: MapPreloadManager,
-    modifier: Modifier = Modifier
-) {
-    val attractions by preloadManager.attractions.collectAsState()
-    val preloadState by preloadManager.preloadState.collectAsState()
-    val imageCacheManager: ImageCacheManager = remember { 
-        ImageCacheManager(mapView.context) 
-    }
-    
-    // Only render when attractions are loaded and markers are ready
-    if (attractions.isNotEmpty() && preloadState.allMarkersReady) {
-        DualLayerMarkerSystem(
-            mapView = mapView,
-            attractions = attractions,
-            selectedAttraction = null, // No selection in background
-            imageCacheManager = imageCacheManager,
-            onMarkerClick = { }, // No clicks in background
-            modifier = modifier,
-            composeVisualMode = false // Use native markers for performance
-        )
-        
-        Timber.d("🎯 BackgroundMarkerRenderer: Displaying ${attractions.size} markers on background map")
-    }
-}
+// BackgroundMarkerRenderer removed - markers are now preloaded directly in MapPreloadManager
 
 @Composable
 fun MapHost(
@@ -173,12 +143,8 @@ fun MapHost(
                 modifier = Modifier.fillMaxSize()
             )
             
-            // Background marker rendering - this makes markers visible BEFORE navigation
-            BackgroundMarkerRenderer(
-                mapView = mapView,
-                preloadManager = preloadManager,
-                modifier = Modifier.fillMaxSize()
-            )
+            // Markers are preloaded invisibly in MapPreloadManager
+            // Animation will be triggered when user navigates to MapScreen
             
             // Top layer: app content (NavHost and overlays)
             content()

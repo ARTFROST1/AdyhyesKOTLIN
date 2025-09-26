@@ -169,15 +169,18 @@ fun MapScreen(
         }
     }
     
-    // Force marker update when attractions are loaded
-    LaunchedEffect(filteredAttractions.size, isMapReady) {
-        if (isMapReady && filteredAttractions.isNotEmpty()) {
-            // Only update if not already created by preloader
-            if (preloadState?.value?.markersCreated != true) {
-                viewModel.updateMarkerPositions()
-                Timber.d("🔄 Attractions loaded: ${filteredAttractions.size}, updating markers")
+    // Handle preloaded markers when MapScreen becomes active
+    LaunchedEffect(isMapReady, preloadState?.value?.allMarkersReady) {
+        if (isMapReady && preloadState?.value?.allMarkersReady == true) {
+            // Check if we have preloaded markers
+            if (preloadManager?.hasPreloadedMarkers() == true) {
+                // Animate preloaded markers
+                preloadManager.animatePreloadedMarkers()
+                Timber.d("🎬 Triggered animation for preloaded markers")
             } else {
-                Timber.d("✅ Markers already created by preloader")
+                // Fallback: show markers immediately if animation fails
+                preloadManager?.showPreloadedMarkers()
+                Timber.d("👁️ Showing preloaded markers immediately (fallback)")
             }
         }
     }
