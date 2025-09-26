@@ -85,7 +85,7 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   │   ├── splash/   # Splash screen
 │   │   │   │   │   │   │   │   └── SplashScreen.kt           # App launch screen with logo
 │   │   │   │   │   │   │   ├── map/      # Map screen with dual-layer markers
-│   │   │   │   │   │   │   │   ├── MapScreen.kt              # Main map screen with bottom nav
+│   │   │   │   │   │   │   │   ├── MapScreen.kt              # 🎬 Main map screen with cinema-quality search animations
 │   │   │   │   │   │   │   │   ├── MapHost.kt                # Map container with persistent MapView
 │   │   │   │   │   │   │   │   ├── MapScreenTablet.kt        # Tablet version
 │   │   │   │   │   │   │   │   ├── ClusteringAlgorithm.kt    # Marker clustering logic
@@ -426,6 +426,13 @@ The app now features a sophisticated image caching system that optimizes perform
 - **Repository**: AttractionRepositoryImpl integrates with cache versioning
 
 ## Changelog
+- 2025-09-27: **Search Field Animation Enhancement** 🎬 — Implemented cinema-quality search field animations in MapScreen.kt:
+  - Replaced `Crossfade` with `AnimatedContent` + `SizeTransform` for smooth expansion
+  - Added spring-based animations (`DampingRatioLowBouncy`, `StiffnessVeryLow`) for organic movement
+  - Implemented Cubic Bezier easing curves for professional Material Design feel
+  - Fixed mode-specific logic: `EnhancedSearchTextField` (List mode) vs `UnifiedSearchTextField` (Map mode)
+  - Sequential button animations with staggered delays (200ms/250ms) for elegant appearance
+  - Enhanced scale effects (0.7f ↔ 1.0f) and optimized timing (450ms fade-in, 200ms fade-out)
 - 2025-09-26: **Favorites Integration** — Integrated favorites functionality into MapScreen with CategoryCarousel, List/Grid toggle, and sorting. Enhanced AttractionsList with compact card mode matching FavoritesScreen design.
 - 2025-09-26: **Branding Update** — App display name changed to "AdygGIS" (no internal package rename). Adaptive icon updated (green gradient background + gold compass foreground). `AndroidManifest.xml` `android:label` set to `AdygGIS`; `values/strings.xml` and `values-en/strings.xml` updated accordingly.
 - 2025-09-26: **Marker Visuals Update** — Removed colored background and emoji fallback for markers without photos. Default fallback is now fully transparent with a white border and shadow until an image loads. Updated `AppMap_adygyes.md`, `Implementation_Plan.md`, and `IMAGE_CACHING_SYSTEM.md` accordingly.
