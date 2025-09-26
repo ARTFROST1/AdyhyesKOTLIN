@@ -37,7 +37,6 @@ fun SettingsScreen(
     
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
-    var showCacheDialog by remember { mutableStateOf(false) }
     // Easter egg: 7 taps on title
     var tapCount by remember { mutableStateOf(0) }
     var lastTapTime by remember { mutableStateOf(0L) }
@@ -132,64 +131,6 @@ fun SettingsScreen(
                 )
             }
             
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.GroupWork,
-                    title = stringResource(R.string.settings_cluster_markers),
-                    subtitle = stringResource(R.string.settings_cluster_markers_desc),
-                    checked = uiState.clusterMarkers,
-                    onCheckedChange = { enabled -> viewModel.setClusterMarkers(enabled) }
-                )
-            }
-            
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.Traffic,
-                    title = stringResource(R.string.settings_show_traffic),
-                    subtitle = stringResource(R.string.settings_show_traffic_desc),
-                    checked = uiState.showTraffic,
-                    onCheckedChange = { enabled -> viewModel.setShowTraffic(enabled) }
-                )
-            }
-            
-            item {
-                Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
-            }
-            
-            // Data & Storage Section
-            item {
-                SettingsSectionHeader(title = stringResource(R.string.settings_data_storage))
-            }
-            
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.CloudOff,
-                    title = stringResource(R.string.settings_offline_mode),
-                    subtitle = stringResource(R.string.settings_offline_mode_desc),
-                    checked = uiState.offlineMode,
-                    onCheckedChange = { enabled -> viewModel.setOfflineMode(enabled) }
-                )
-            }
-            
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.PhotoLibrary,
-                    title = stringResource(R.string.settings_auto_download),
-                    subtitle = stringResource(R.string.settings_auto_download_desc),
-                    checked = uiState.autoDownloadImages,
-                    onCheckedChange = { enabled -> viewModel.setAutoDownloadImages(enabled) },
-                    enabled = !uiState.offlineMode
-                )
-            }
-            
-            item {
-                SettingsItem(
-                    icon = Icons.Default.Storage,
-                    title = stringResource(R.string.settings_clear_cache),
-                    subtitle = stringResource(R.string.settings_clear_cache_desc),
-                    onClick = { showCacheDialog = true }
-                )
-            }
             
             item {
                 Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
@@ -210,16 +151,6 @@ fun SettingsScreen(
                 )
             }
             
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.LocationOn,
-                    title = stringResource(R.string.settings_location_alerts),
-                    subtitle = stringResource(R.string.settings_location_alerts_desc),
-                    checked = uiState.locationAlerts,
-                    onCheckedChange = { enabled -> viewModel.setLocationAlerts(enabled) },
-                    enabled = uiState.pushNotifications
-                )
-            }
             
             item {
                 Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
@@ -308,37 +239,6 @@ fun SettingsScreen(
         )
     }
     
-    // Clear Cache Confirmation Dialog
-    if (showCacheDialog) {
-        AlertDialog(
-            onDismissRequest = { showCacheDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Storage,
-                    contentDescription = null
-                )
-            },
-            title = { Text(stringResource(R.string.settings_clear_cache_title)) },
-            text = {
-                Text(stringResource(R.string.settings_clear_cache_message))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearCache()
-                        showCacheDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.clear))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCacheDialog = false }) {
-                    Text(stringResource(R.string.common_cancel))
-                }
-            }
-        )
-    }
 }
 
 @Composable
