@@ -189,20 +189,31 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             val attraction = _attractions.value.find { it.id == attractionId }
             attraction?.let {
+                val newFavoriteStatus = !it.isFavorite
+                
+                // Обновляем в репозитории
                 attractionRepository.updateFavoriteStatus(
                     attractionId = attractionId,
-                    isFavorite = !it.isFavorite
+                    isFavorite = newFavoriteStatus
                 )
+                
+                // Мгновенно обновляем локальный список без перезагрузки
+                _attractions.value = _attractions.value.map { attr ->
+                    if (attr.id == attractionId) {
+                        attr.copy(isFavorite = newFavoriteStatus)
+                    } else {
+                        attr
+                    }
+                }
                 
                 // Update selected attraction if it's the same one
                 if (_selectedAttraction.value?.id == attractionId) {
                     _selectedAttraction.value = _selectedAttraction.value?.copy(
-                        isFavorite = !it.isFavorite
+                        isFavorite = newFavoriteStatus
                     )
                 }
                 
-                // Refresh attractions list
-                loadAttractions()
+                // НЕ вызываем loadAttractions() - это вызывало пропадание контейнера!
             }
         }
     }

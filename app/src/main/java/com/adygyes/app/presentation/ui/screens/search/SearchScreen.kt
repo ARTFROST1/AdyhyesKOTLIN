@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -45,6 +46,30 @@ fun SearchScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
     val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
+    
+    // Локальное состояние избранного - НЕ вызывает перерисовку всего экрана
+    val localFavoriteStates = remember { mutableStateMapOf<String, Boolean>() }
+    
+    // Инициализируем локальное состояние при изменении uiState
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is SearchViewModel.UiState.Success -> {
+                state.attractions.forEach { attraction ->
+                    if (!localFavoriteStates.containsKey(attraction.id)) {
+                        localFavoriteStates[attraction.id] = attraction.isFavorite
+                    }
+                }
+            }
+            is SearchViewModel.UiState.Initial -> {
+                state.popularAttractions.forEach { attraction ->
+                    if (!localFavoriteStates.containsKey(attraction.id)) {
+                        localFavoriteStates[attraction.id] = attraction.isFavorite
+                    }
+                }
+            }
+            else -> {}
+        }
+    }
     val keyboardController = LocalSoftwareKeyboardController.current
     
     val scope = rememberCoroutineScope()
@@ -191,8 +216,13 @@ fun SearchScreen(
                     } else {
                         SearchResultsList(
                             attractions = state.attractions,
+                            favoriteStates = localFavoriteStates,
                             onAttractionClick = onAttractionClick,
                             onFavoriteClick = { attractionId ->
+                                // Мгновенно обновляем локальное состояние
+                                val currentStatus = localFavoriteStates[attractionId] ?: false
+                                localFavoriteStates[attractionId] = !currentStatus
+                                // Обновляем в ViewModel асинхронно
                                 viewModel.toggleFavorite(attractionId)
                             },
                             modifier = Modifier.fillMaxSize()
@@ -223,11 +253,19 @@ fun SearchScreen(
                     InitialSearchState(
                         recentSearches = state.recentSearches,
                         popularAttractions = state.popularAttractions,
+                        favoriteStates = localFavoriteStates,
                         onSearchClick = { query ->
                             viewModel.updateSearchQuery(query)
                             viewModel.search()
                         },
                         onAttractionClick = onAttractionClick,
+                        onFavoriteClick = { attractionId ->
+                            // Мгновенно обновляем локальное состояние
+                            val currentStatus = localFavoriteStates[attractionId] ?: false
+                            localFavoriteStates[attractionId] = !currentStatus
+                            // Обновляем в ViewModel асинхронно
+                            viewModel.toggleFavorite(attractionId)
+                        },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -255,6 +293,7 @@ fun SearchScreen(
 @Composable
 private fun SearchResultsList(
     attractions: List<Attraction>,
+    favoriteStates: SnapshotStateMap<String, Boolean>,
     onAttractionClick: (String) -> Unit,
     onFavoriteClick: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -271,8 +310,12 @@ private fun SearchResultsList(
             items = attractions,
             key = { it.id }
         ) { attraction ->
+            // Получаем актуальное состояние избранного из отдельного StateFlow
+            val actualFavoriteStatus = favoriteStates[attraction.id] ?: attraction.isFavorite
+            val attractionWithActualFavorite = attraction.copy(isFavorite = actualFavoriteStatus)
+            
             AttractionListItem(
-                attraction = attraction,
+                attraction = attractionWithActualFavorite,
                 onClick = { onAttractionClick(attraction.id) },
                 onFavoriteClick = { onFavoriteClick(attraction.id) }
             )
@@ -284,8 +327,10 @@ private fun SearchResultsList(
 private fun InitialSearchState(
     recentSearches: List<String>,
     popularAttractions: List<Attraction>,
+    favoriteStates: SnapshotStateMap<String, Boolean>,
     onSearchClick: (String) -> Unit,
     onAttractionClick: (String) -> Unit,
+    onFavoriteClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -350,10 +395,14 @@ private fun InitialSearchState(
                 items = popularAttractions,
                 key = { it.id }
             ) { attraction ->
+                // Получаем актуальное состояние избранного из отдельного StateFlow
+                val actualFavoriteStatus = favoriteStates[attraction.id] ?: attraction.isFavorite
+                val attractionWithActualFavorite = attraction.copy(isFavorite = actualFavoriteStatus)
+                
                 AttractionCard(
-                    attraction = attraction,
+                    attraction = attractionWithActualFavorite,
                     onClick = { onAttractionClick(attraction.id) },
-                    onFavoriteClick = { },
+                    onFavoriteClick = { onFavoriteClick(attraction.id) },
                     modifier = Modifier.padding(vertical = Dimensions.PaddingExtraSmall)
                 )
             }

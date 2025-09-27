@@ -1,5 +1,12 @@
 package com.adygyes.app.presentation.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -114,30 +121,43 @@ fun AttractionCard(
                         modifier = Modifier
                             .size(if (compactForFavorites) 44.dp else 40.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(if (compactForFavorites) 36.dp else 32.dp)
-                                .then(
-                                    if (!attraction.isFavorite) {
-                                        Modifier.background(
-                                            Color.Black.copy(alpha = 0.3f),
-                                            RoundedCornerShape(50)
-                                        )
-                                    } else {
-                                        Modifier
-                                    }
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Основная иконка без белой обводки
-                            Icon(
-                                imageVector = if (attraction.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
-                                    R.string.cd_add_to_favorites
-                                ),
-                                tint = if (attraction.isFavorite) Color(0xFF4CAF50) else if (hasImage) getOverlayIconTint() else getContentIconTint(), // Зеленый цвет для избранного
-                                modifier = Modifier.size(if (compactForFavorites) 26.dp else 24.dp)
-                            )
+                        AnimatedContent(
+                            targetState = attraction.isFavorite,
+                            transitionSpec = {
+                                scaleIn(
+                                    animationSpec = androidx.compose.animation.core.spring(
+                                        dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                                    )
+                                ) togetherWith scaleOut(
+                                    animationSpec = androidx.compose.animation.core.tween(150)
+                                )
+                            }
+                        ) { isFavorite ->
+                            Box(
+                                modifier = Modifier
+                                    .size(if (compactForFavorites) 36.dp else 32.dp)
+                                    .then(
+                                        if (!isFavorite) {
+                                            Modifier.background(
+                                                Color.Black.copy(alpha = 0.3f),
+                                                RoundedCornerShape(50)
+                                            )
+                                        } else {
+                                            Modifier
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = if (isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
+                                        R.string.cd_add_to_favorites
+                                    ),
+                                    tint = if (isFavorite) Color(0xFF4CAF50) else if (hasImage) getOverlayIconTint() else getContentIconTint(), // Зеленый цвет для избранного
+                                    modifier = Modifier.size(if (compactForFavorites) 26.dp else 24.dp)
+                                )
+                            }
                         }
                     }
                 }

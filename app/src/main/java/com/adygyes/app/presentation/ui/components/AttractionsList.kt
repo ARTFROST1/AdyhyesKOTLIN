@@ -1,6 +1,9 @@
 package com.adygyes.app.presentation.ui.components
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -221,18 +224,12 @@ fun AttractionsList(
                                     items = attractions,
                                     key = { it.id }
                                 ) { attraction ->
-                                    AnimatedVisibility(
-                                        visible = true,
-                                        enter = fadeIn() + expandVertically(),
-                                        exit = fadeOut() + shrinkVertically()
-                                    ) {
-                                        AttractionListItem(
-                                            attraction = attraction,
-                                            onClick = { onAttractionClick(attraction.id) },
-                                            onFavoriteClick = { onFavoriteClick(attraction.id) },
-                                            highlightQuery = searchQuery.takeIf { it.isNotEmpty() }
-                                        )
-                                    }
+                                    AttractionListItem(
+                                        attraction = attraction,
+                                        onClick = { onAttractionClick(attraction.id) },
+                                        onFavoriteClick = { onFavoriteClick(attraction.id) },
+                                        highlightQuery = searchQuery.takeIf { it.isNotEmpty() }
+                                    )
                                 }
                                 
                                 // Bottom spacing for FAB
@@ -254,18 +251,12 @@ fun AttractionsList(
                                     items = attractions,
                                     key = { it.id }
                                 ) { attraction ->
-                                    AnimatedVisibility(
-                                        visible = true,
-                                        enter = fadeIn() + scaleIn(),
-                                        exit = fadeOut() + scaleOut()
-                                    ) {
-                                        AttractionCard(
-                                            attraction = attraction,
-                                            onClick = { onAttractionClick(attraction.id) },
-                                            onFavoriteClick = { onFavoriteClick(attraction.id) },
-                                            compactForFavorites = true // Точно как на экране избранного!
-                                        )
-                                    }
+                                    AttractionCard(
+                                        attraction = attraction,
+                                        onClick = { onAttractionClick(attraction.id) },
+                                        onFavoriteClick = { onFavoriteClick(attraction.id) },
+                                        compactForFavorites = true // Точно как на экране избранного!
+                                    )
                                 }
                                 
                                 // Bottom spacing for FAB (spanning 2 columns)
@@ -328,7 +319,7 @@ fun AttractionListItem(
                         ))
                 )
 
-                // Favorite button positioned on image
+                // Favorite button positioned on image with animation
                 IconButton(
                     onClick = onFavoriteClick,
                     modifier = Modifier
@@ -336,34 +327,47 @@ fun AttractionListItem(
                         .padding(8.dp)
                         .size(32.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .then(
-                                if (!attraction.isFavorite) {
-                                    Modifier.background(
-                                        Color.Black.copy(alpha = 0.3f),
-                                        RoundedCornerShape(50)
-                                    )
-                                } else {
-                                    Modifier
-                                }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Основная иконка без белой обводки
-                        Icon(
-                            imageVector = if (attraction.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = if (attraction.isFavorite) 
-                                stringResource(R.string.remove_from_favorites) 
-                            else 
-                                stringResource(R.string.add_to_favorites),
-                            tint = if (attraction.isFavorite) 
-                                Color(0xFF4CAF50) // Зеленый цвет
-                            else 
-                                MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    AnimatedContent(
+                        targetState = attraction.isFavorite,
+                        transitionSpec = {
+                            scaleIn(
+                                animationSpec = androidx.compose.animation.core.spring(
+                                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                                    stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                                )
+                            ) togetherWith scaleOut(
+                                animationSpec = androidx.compose.animation.core.tween(150)
+                            )
+                        }
+                    ) { isFavorite ->
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .then(
+                                    if (!isFavorite) {
+                                        Modifier.background(
+                                            Color.Black.copy(alpha = 0.3f),
+                                            RoundedCornerShape(50)
+                                        )
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = if (isFavorite) 
+                                    stringResource(R.string.remove_from_favorites) 
+                                else 
+                                    stringResource(R.string.add_to_favorites),
+                                tint = if (isFavorite) 
+                                    Color(0xFF4CAF50) // Зеленый цвет
+                                else 
+                                    MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
