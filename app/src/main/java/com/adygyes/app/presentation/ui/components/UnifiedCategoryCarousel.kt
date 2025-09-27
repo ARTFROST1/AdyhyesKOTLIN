@@ -55,24 +55,7 @@ fun UnifiedCategoryCarousel(
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                // Count header with context-aware text
-                val headerText = when {
-                    searchQuery.isNotEmpty() -> 
-                        stringResource(R.string.search_results_count, attractionsCount)
-                    selectedCategories.isNotEmpty() || selectedFilter !is MapViewModel.CategoryFilter.All -> 
-                        stringResource(R.string.filtered_results_count, attractionsCount)
-                    else -> 
-                        stringResource(R.string.attractions_count, attractionsCount)
-                }
-                
-                Text(
-                    text = headerText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-                
-                // Category filters carousel
+                // Category filters carousel (убрали заголовок "Всего мест")
                 CategoryFiltersCarousel(
                     selectedFilter = selectedFilter,
                     onFilterSelected = onFilterSelected

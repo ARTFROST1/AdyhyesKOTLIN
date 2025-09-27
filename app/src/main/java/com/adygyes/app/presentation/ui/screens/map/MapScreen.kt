@@ -339,8 +339,7 @@ fun MapScreen(
                 .align(Alignment.TopCenter)
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
                 .padding(horizontal = Dimensions.PaddingMedium)
-                .padding(
-                )
+                .padding(top = 16.dp) // Увеличили верхний отступ
         ) {
             // Top bar with animated layout for expandable search
             Row(
