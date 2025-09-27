@@ -76,7 +76,7 @@ fun RatingBar(
                     fontSize = if (compact) 11.sp else 12.sp,
                     fontWeight = FontWeight.Medium
                 ),
-                color = if (compact) Color.White else MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
             
             totalReviews?.let { count ->
@@ -85,7 +85,7 @@ fun RatingBar(
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = if (compact) 11.sp else 12.sp
                     ),
-                    color = if (compact) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

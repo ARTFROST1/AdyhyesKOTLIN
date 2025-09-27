@@ -25,6 +25,7 @@ import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.domain.model.AttractionCategory
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.ui.components.*
+import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
 import com.adygyes.app.presentation.viewmodel.SearchViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -46,19 +47,25 @@ fun SearchScreen(
     val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     
-    var showFilterSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
+    var showFilterSheet by remember { mutableStateOf(false) }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.nav_search)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.nav_search),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -68,10 +75,18 @@ fun SearchScreen(
                         TextButton(
                             onClick = { viewModel.clearFilters() }
                         ) {
-                            Text("Clear")
+                            Text(
+                                text = "Clear",
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -222,7 +237,7 @@ fun SearchScreen(
     
     // Filter bottom sheet
     if (showFilterSheet) {
-        FilterBottomSheet(
+        CategoryFilterBottomSheet(
             selectedCategories = selectedCategories,
             onCategoryToggle = { category ->
                 viewModel.toggleCategory(category)
@@ -287,7 +302,7 @@ private fun InitialSearchState(
                     modifier = Modifier.padding(bottom = Dimensions.PaddingSmall)
                 )
             }
-            
+
             items(recentSearches) { search ->
                 Surface(
                     onClick = { onSearchClick(search) },
@@ -315,12 +330,12 @@ private fun InitialSearchState(
                     }
                 }
             }
-            
+
             item {
                 Spacer(modifier = Modifier.height(Dimensions.SpacingLarge))
             }
         }
-        
+
         // Popular attractions
         if (popularAttractions.isNotEmpty()) {
             item {
@@ -330,7 +345,7 @@ private fun InitialSearchState(
                     modifier = Modifier.padding(bottom = Dimensions.PaddingSmall)
                 )
             }
-            
+
             items(
                 items = popularAttractions,
                 key = { it.id }
@@ -341,68 +356,6 @@ private fun InitialSearchState(
                     onFavoriteClick = { },
                     modifier = Modifier.padding(vertical = Dimensions.PaddingExtraSmall)
                 )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FilterBottomSheet(
-    selectedCategories: Set<AttractionCategory>,
-    onCategoryToggle: (AttractionCategory) -> Unit,
-    onApply: () -> Unit,
-    onDismiss: () -> Unit,
-    onClearAll: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.PaddingLarge)
-                .padding(bottom = Dimensions.PaddingExtraLarge)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.filters),
-                    style = MaterialTheme.typography.headlineSmall
-                )
-                
-                TextButton(
-                    onClick = onClearAll,
-                    enabled = selectedCategories.isNotEmpty()
-                ) {
-                    Text(stringResource(R.string.clear_all))
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
-            
-            // Category filters
-            CategoryFilterChips(
-                selectedCategories = selectedCategories,
-                onCategoryToggle = onCategoryToggle,
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            Spacer(modifier = Modifier.height(Dimensions.SpacingLarge))
-            
-            // Apply button
-            Button(
-                onClick = onApply,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.apply_filters))
             }
         }
     }

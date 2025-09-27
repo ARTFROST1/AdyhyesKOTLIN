@@ -26,6 +26,12 @@ import coil.request.ImageRequest
 import com.adygyes.app.R
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.presentation.theme.Dimensions
+import com.adygyes.app.presentation.theme.getOverlayTextColor
+import com.adygyes.app.presentation.theme.getOverlayTextColorWithAlpha
+import com.adygyes.app.presentation.theme.getOverlayIconTint
+import com.adygyes.app.presentation.theme.getContentIconTint
+import com.adygyes.app.presentation.theme.getSecondaryTextColor
+import com.adygyes.app.presentation.theme.getContentTextColor
 
 /**
  * Reusable attraction card component
@@ -40,6 +46,8 @@ fun AttractionCard(
     distance: Float? = null,
     compactForFavorites: Boolean = false
 ) {
+    val hasImage = attraction.images.isNotEmpty()
+    val imageUrl = attraction.images.firstOrNull()
     Card(
         onClick = onClick,
         modifier = modifier
@@ -49,31 +57,40 @@ fun AttractionCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box {
-            // Image with gradient overlay
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(attraction.images.firstOrNull() ?: "")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = attraction.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            if (hasImage && imageUrl != null) {
+                // Image with gradient overlay
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = attraction.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
 
-            // Gradient overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.7f)
-                            ),
-                            startY = 100f
+                // Gradient overlay for image
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.7f)
+                                ),
+                                startY = 100f
+                            )
                         )
-                    )
-            )
+                )
+            } else {
+                // Solid background when no image
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            }
 
             // Content
             Column(
@@ -118,7 +135,7 @@ fun AttractionCard(
                                 contentDescription = if (attraction.isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
                                     R.string.cd_add_to_favorites
                                 ),
-                                tint = if (attraction.isFavorite) Color(0xFF4CAF50) else Color.White, // Зеленый цвет для избранного
+                                tint = if (attraction.isFavorite) Color(0xFF4CAF50) else if (hasImage) getOverlayIconTint() else getContentIconTint(), // Зеленый цвет для избранного
                                 modifier = Modifier.size(if (compactForFavorites) 26.dp else 24.dp)
                             )
                         }
@@ -136,7 +153,7 @@ fun AttractionCard(
                         style = if (compactForFavorites) MaterialTheme.typography.headlineSmall.copy(
                             fontSize = 20.sp
                         ) else MaterialTheme.typography.headlineSmall,
-                        color = Color.White,
+                        color = if (hasImage) getOverlayTextColor() else getContentTextColor(),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         fontWeight = FontWeight.Bold
@@ -147,7 +164,7 @@ fun AttractionCard(
                         Text(
                             text = attraction.description,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f),
+                            color = if (hasImage) getOverlayTextColorWithAlpha(0.9f) else getSecondaryTextColor(),
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -165,7 +182,7 @@ fun AttractionCard(
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = if (hasImage) getOverlayIconTint() else getContentIconTint(),
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -175,7 +192,7 @@ fun AttractionCard(
                                 }
                                     ?: stringResource(R.string.detail_location)),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.9f),
+                                color = if (hasImage) getOverlayTextColorWithAlpha(0.9f) else getSecondaryTextColor(),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f, fill = false)
@@ -188,7 +205,7 @@ fun AttractionCard(
                         Text(
                             text = formatDistanceForCard(distance),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = if (hasImage) getOverlayTextColorWithAlpha(0.9f) else getSecondaryTextColor()
                         )
                     }
                 }

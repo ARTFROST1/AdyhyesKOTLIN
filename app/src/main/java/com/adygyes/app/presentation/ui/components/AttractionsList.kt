@@ -361,7 +361,7 @@ fun AttractionListItem(
                             tint = if (attraction.isFavorite) 
                                 Color(0xFF4CAF50) // Зеленый цвет
                             else 
-                                Color.White,
+                                MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
                         )
                     }

@@ -48,6 +48,88 @@ This document tracks all bugs, errors, and their resolutions during the developm
 
 ## Active Bugs
 
+### BUG-025: White Text Color Issues in Light Theme
+**Date:** 2025-09-27  
+**Stage:** Stage 10 - Quality Assurance & Optimization  
+**Severity:** Medium  
+**Status:** ✅ Resolved  
+
+**Description:**
+In light theme mode, several UI components displayed white text on light backgrounds, causing poor readability. Issues were found in:
+1. RatingBar component - forced white text in compact mode
+2. AttractionsList component - white favorite icons in compact cards
+3. User reported white headers and tag text visibility issues
+
+**Steps to Reproduce:**
+1. Switch app to light theme
+2. Navigate to main screen with attraction list
+3. Observe rating text and favorite icons in compact card mode
+4. Check readability of text elements
+
+**Expected Behavior:**
+All text and icons should use appropriate theme colors for good contrast and readability in both light and dark themes.
+
+**Actual Behavior:**
+- Rating text was always white in compact mode regardless of theme
+- Favorite icons were always white in AttractionsList compact cards
+- Poor contrast in light theme
+
+**Root Cause:**
+Components had hardcoded `Color.White` values instead of using `MaterialTheme.colorScheme` colors that adapt to the current theme.
+
+**Solution:** ✅ IMPLEMENTED
+1. **Fixed RatingBar.kt:**
+   - Removed `if (compact) Color.White else MaterialTheme.colorScheme.onSurface` condition
+   - Changed to always use `MaterialTheme.colorScheme.onSurface`
+   - Removed `if (compact) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant` condition
+   - Changed to always use `MaterialTheme.colorScheme.onSurfaceVariant`
+
+2. **Fixed AttractionsList.kt:**
+   - Changed favorite icon tint from `Color.White` to `MaterialTheme.colorScheme.onSurface` for non-favorite state
+   - Kept green color for favorite state: `Color(0xFF4CAF50)`
+
+3. **Created ColorUtils.kt:**
+   - Added utility functions for adaptive colors based on theme
+   - `getOverlayTextColor()` - for text over dark overlays
+   - `getContentTextColor()` - for regular content text
+   - `getSecondaryTextColor()` - for secondary content text
+   - `getContentIconTint()` - for regular icons
+   - `getOverlayIconTint()` - for icons over dark overlays
+
+4. **Fixed AttractionCard.kt:**
+   - Made text colors adaptive to presence of image
+   - If image exists: uses overlay colors (white over dark gradient)
+   - If no image: uses theme colors (dark text in light theme, light text in dark theme)
+   - Added proper background handling for cards without images
+
+5. **Fixed TopAppBar colors in all screens:**
+   - **SettingsScreen.kt**: Added explicit colors for title, navigation icon, and container
+   - **SearchScreen.kt**: Added explicit colors for all TopAppBar elements
+   - **FavoritesScreen.kt**: Added explicit colors for title, navigation, and action icons
+   - All TopAppBars now use `MaterialTheme.colorScheme.onSurface` for text and icons
+
+6. **Verified Other Components:**
+   - CategoryChip.kt already has correct logic with `isColorDark()` function
+   - AttractionDetailScreen.kt uses default theme colors correctly
+   - SettingsComponents.kt already uses proper theme colors
+
+**Prevention:**
+- Always use `MaterialTheme.colorScheme` colors instead of hardcoded colors
+- Test UI components in both light and dark themes
+- Use conditional color logic only when necessary (e.g., over image backgrounds)
+
+**Related Files:**
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/theme/ColorUtils.kt` (created)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/RatingBar.kt` (fixed)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/AttractionsList.kt` (fixed)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/AttractionCard.kt` (fixed - adaptive colors)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/screens/settings/SettingsScreen.kt` (fixed TopAppBar)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/screens/search/SearchScreen.kt` (fixed TopAppBar)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/screens/favorites/FavoritesScreen.kt` (fixed TopAppBar)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/CategoryChip.kt` (already correct)
+
+---
+
 ### BUG-021: Post-Marker Redesign Compilation Errors
 **Date:** 2025-09-24  
 **Stage:** Stage 9 - Map Marker Redesign  

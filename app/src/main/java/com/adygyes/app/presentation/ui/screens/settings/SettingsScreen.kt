@@ -47,6 +47,7 @@ fun SettingsScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.nav_settings),
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.clickable {
                             val now = System.currentTimeMillis()
                             // Reset sequence if too slow between taps
@@ -69,10 +70,16 @@ fun SettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.search_back)
+                            contentDescription = stringResource(R.string.search_back),
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->
