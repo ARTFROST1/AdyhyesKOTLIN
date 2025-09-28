@@ -2,6 +2,7 @@ package com.adygyes.app.presentation.ui.map.markers
 
 import com.adygyes.app.data.local.cache.ImageCacheManager
 import com.yandex.mapkit.mapview.MapView
+import timber.log.Timber
 
 /**
  * Keeps VisualMarkerProvider instances and last rendered attraction ids per MapView
@@ -35,6 +36,38 @@ object VisualMarkerRegistry {
         } else {
             // Should not happen: create empty provider-less entry
             map[mapView] = Entry(provider = VisualMarkerProvider(mapView, ImageCacheManager(mapView.context)), lastIds = ids)
+        }
+    }
+    
+    /**
+     * Force reset all VisualMarkerProviders when data version changes
+     * This prevents JobCancellationException and invalid MapKit objects
+     */
+    fun forceResetAll() {
+        Timber.d("🔄 Force resetting all ${map.size} VisualMarkerProviders")
+        
+        map.values.forEach { entry ->
+            try {
+                entry.provider.forceReset()
+                entry.lastIds = emptySet() // Clear cached IDs
+            } catch (e: Exception) {
+                Timber.w(e, "Error force resetting VisualMarkerProvider")
+            }
+        }
+        
+        Timber.d("✅ Force reset completed for all VisualMarkerProviders")
+    }
+    
+    /**
+     * Clear registry entry for a specific MapView
+     */
+    fun clearMapView(mapView: MapView) {
+        map.remove(mapView)?.let { entry ->
+            try {
+                entry.provider.clearMarkers()
+            } catch (e: Exception) {
+                Timber.w(e, "Error clearing markers for MapView")
+            }
         }
     }
 }

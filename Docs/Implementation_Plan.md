@@ -1,11 +1,11 @@
 # Implementation Plan for AdygGIS (project codename: Adygyes)
 
 ## 📊 Current Status
-**Last Updated:** 2025-09-26  
+**Last Updated:** 2025-09-29  
 **Current Stage:** Stage 10 IN PROGRESS 🔄 - Quality Assurance & Optimization  
 **Progress:** 120/132 tasks completed (91%)  
 **Next Stage:** Stage 11 - Pre-Launch Preparation  
-**Latest Update:** MVP functionality complete, QA and optimization in progress  
+**Latest Update:** Fixed critical version update issues - JobCancellationException and MapKit object expiration resolved  
 
 > Note: User-facing app name is now "AdygGIS". Internal package and code identifiers remain "Adygyes" to avoid breaking changes.
 
@@ -422,6 +422,15 @@
 
 
 ## 🔄 Version Updates (Changelog)
+- **2025-09-29: CRITICAL FIX - Version Update Stability** 🛠️:
+  - **JobCancellationException Fix**: Resolved coroutine cancellation errors when updating attractions.json version
+  - **MapKit Object Validation**: Added `placemark.isValid` checks before all MapKit operations to prevent crashes
+  - **Automatic Version Monitoring**: MapPreloadManager now monitors data version changes via PreferencesManager Flow
+  - **Force Reset System**: Implemented `forceReset()` in VisualMarkerProvider and VisualMarkerRegistry for clean state transitions
+  - **Coroutine Safety**: Proper CancellationException handling with re-throwing for correct cancellation propagation
+  - **Synchronized Cleanup**: Automatic cleanup of all visual markers and coroutines when data version changes
+  - **Stability Improvement**: Version updates now work seamlessly without requiring app restart
+  - **Documentation**: Created `VERSION_UPDATE_FIX.md` with detailed technical explanation
 - **2025-09-27: Search Field Animation Enhancement** 🎬:
   - **Smooth Expansion Animation**: Replaced `Crossfade` with `AnimatedContent` + `SizeTransform` for fluid field expansion
   - **Spring-Based Animations**: Implemented natural spring animations (`DampingRatioLowBouncy`, `StiffnessVeryLow`) for organic movement

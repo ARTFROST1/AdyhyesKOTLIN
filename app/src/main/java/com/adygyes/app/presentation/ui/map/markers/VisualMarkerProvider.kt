@@ -278,36 +278,59 @@ class VisualMarkerProvider(
      */
     private fun animateMarkerAppearance(placemark: PlacemarkMapObject) {
         coroutineScope.launch {
-            val attraction = placemark.userData as? Attraction ?: return@launch
-            
-            // Use preloaded image if available for instant animation
-            val preloadedBitmap = preloadedImages[attraction.id]
-            
-            if (preloadedBitmap != null) {
-                // Animate with preloaded image - instant and smooth
-                animateWithPreloadedImage(placemark, attraction, preloadedBitmap)
-            } else {
-                // Fallback: load image and animate
-                attraction.images.firstOrNull()?.let { imageUrl ->
-                    try {
-                        val loadedBitmap = loadImageBitmap(imageUrl)
-                        if (loadedBitmap != null) {
-                            animateWithLoadedImage(placemark, attraction, loadedBitmap)
-                        } else {
-                            // Immediate show as fallback
+            try {
+                // Check if placemark is still valid before animation
+                if (!placemark.isValid) {
+                    Timber.w("Placemark is no longer valid, skipping animation")
+                    return@launch
+                }
+                
+                val attraction = placemark.userData as? Attraction ?: return@launch
+                
+                // Use preloaded image if available for instant animation
+                val preloadedBitmap = preloadedImages[attraction.id]
+                
+                if (preloadedBitmap != null) {
+                    // Animate with preloaded image - instant and smooth
+                    animateWithPreloadedImage(placemark, attraction, preloadedBitmap)
+                } else {
+                    // Fallback: load image and animate
+                    attraction.images.firstOrNull()?.let { imageUrl ->
+                        try {
+                            val loadedBitmap = loadImageBitmap(imageUrl)
+                            if (loadedBitmap != null && placemark.isValid) {
+                                animateWithLoadedImage(placemark, attraction, loadedBitmap)
+                            } else {
+                                // Immediate show as fallback if placemark is still valid
+                                if (placemark.isValid) {
+                                    placemark.isVisible = true
+                                }
+                            }
+                        } catch (e: Exception) {
+                            if (e is CancellationException) {
+                                Timber.d("Animation cancelled for ${attraction.name}")
+                                throw e // Re-throw cancellation to properly handle it
+                            }
+                            Timber.e(e, "Failed to load image for animation: ${attraction.name}")
+                            if (placemark.isValid) {
+                                placemark.isVisible = true
+                            }
+                        }
+                    } ?: run {
+                        // No image URL, show immediately if placemark is valid
+                        if (placemark.isValid) {
                             placemark.isVisible = true
                         }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to load image for animation: ${attraction.name}")
-                        placemark.isVisible = true
                     }
-                } ?: run {
-                    // No image URL, show immediately
-                    placemark.isVisible = true
                 }
+                
+                Timber.d("🎬 Completed appearance animation for ${attraction.name}")
+            } catch (e: CancellationException) {
+                Timber.d("Animation cancelled for placemark")
+                throw e // Re-throw to properly handle cancellation
+            } catch (e: Exception) {
+                Timber.e(e, "Error during marker animation")
             }
-            
-            Timber.d("🎬 Completed appearance animation for ${attraction.name}")
         }
     }
     
@@ -359,31 +382,46 @@ class VisualMarkerProvider(
         attraction: Attraction,
         preloadedBitmap: Bitmap
     ) = withContext(Dispatchers.Main) {
-        val steps = 12 // More steps for smoother animation
-        val stepDelay = animationDurationMs / steps
-        
-        // Pre-create all animation frames for ultra-smooth playback
-        val animationFrames = mutableListOf<ImageProvider>()
-        for (i in 1..steps) {
-            val scale = 0.2f + (0.8f * i / steps) // From 0.2 to 1.0
-            val frame = createSmoothAnimatedMarkerWithImage(attraction, preloadedBitmap, scale)
-            animationFrames.add(frame)
+        try {
+            val steps = 12 // More steps for smoother animation
+            val stepDelay = animationDurationMs / steps
+            
+            // Pre-create all animation frames for ultra-smooth playback
+            val animationFrames = mutableListOf<ImageProvider>()
+            for (i in 1..steps) {
+                val scale = 0.2f + (0.8f * i / steps) // From 0.2 to 1.0
+                val frame = createSmoothAnimatedMarkerWithImage(attraction, preloadedBitmap, scale)
+                animationFrames.add(frame)
+            }
+            
+            // Play animation frames with minimal delay
+            animationFrames.forEach { frame ->
+                // Check if placemark is still valid before each frame
+                if (!placemark.isValid) {
+                    Timber.w("Placemark became invalid during animation, stopping")
+                    return@withContext
+                }
+                
+                placemark.setIcon(frame)
+                placemark.isVisible = true
+                delay(stepDelay)
+            }
+            
+            // Set final high-quality icon if placemark is still valid
+            if (placemark.isValid) {
+                val finalIcon = createCircularBitmapWithImage(
+                    bitmap = preloadedBitmap,
+                    attraction = attraction,
+                    isSelected = false
+                )
+                placemark.setIcon(ImageProvider.fromBitmap(finalIcon))
+            }
+        } catch (e: CancellationException) {
+            Timber.d("Preloaded image animation cancelled for ${attraction.name}")
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Error during preloaded image animation for ${attraction.name}")
         }
-        
-        // Play animation frames with minimal delay
-        animationFrames.forEach { frame ->
-            placemark.setIcon(frame)
-            placemark.isVisible = true
-            delay(stepDelay)
-        }
-        
-        // Set final high-quality icon
-        val finalIcon = createCircularBitmapWithImage(
-            bitmap = preloadedBitmap,
-            attraction = attraction,
-            isSelected = false
-        )
-        placemark.setIcon(ImageProvider.fromBitmap(finalIcon))
     }
     
     /**
@@ -394,24 +432,39 @@ class VisualMarkerProvider(
         attraction: Attraction,
         loadedBitmap: Bitmap
     ) = withContext(Dispatchers.Main) {
-        val steps = 8
-        val stepDelay = animationDurationMs / steps
-        
-        for (i in 1..steps) {
-            val scale = 0.3f + (0.7f * i / steps) // From 0.3 to 1.0
-            val animatedIcon = createAnimatedMarkerWithImage(attraction, loadedBitmap, scale)
-            placemark.setIcon(animatedIcon)
-            placemark.isVisible = true
-            delay(stepDelay)
+        try {
+            val steps = 8
+            val stepDelay = animationDurationMs / steps
+            
+            for (i in 1..steps) {
+                // Check if placemark is still valid before each frame
+                if (!placemark.isValid) {
+                    Timber.w("Placemark became invalid during loaded image animation, stopping")
+                    return@withContext
+                }
+                
+                val scale = 0.3f + (0.7f * i / steps) // From 0.3 to 1.0
+                val animatedIcon = createAnimatedMarkerWithImage(attraction, loadedBitmap, scale)
+                placemark.setIcon(animatedIcon)
+                placemark.isVisible = true
+                delay(stepDelay)
+            }
+            
+            // Set final normal icon with full-size image if placemark is still valid
+            if (placemark.isValid) {
+                val finalIcon = createCircularBitmapWithImage(
+                    bitmap = loadedBitmap,
+                    attraction = attraction,
+                    isSelected = false
+                )
+                placemark.setIcon(ImageProvider.fromBitmap(finalIcon))
+            }
+        } catch (e: CancellationException) {
+            Timber.d("Loaded image animation cancelled for ${attraction.name}")
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Error during loaded image animation for ${attraction.name}")
         }
-        
-        // Set final normal icon with full-size image
-        val finalIcon = createCircularBitmapWithImage(
-            bitmap = loadedBitmap,
-            attraction = attraction,
-            isSelected = false
-        )
-        placemark.setIcon(ImageProvider.fromBitmap(finalIcon))
     }
     
     /**
@@ -804,13 +857,60 @@ class VisualMarkerProvider(
      * Clear all markers from the map
      */
     fun clearMarkers() {
+        Timber.d("🧹 Clearing all markers and cancelling coroutines")
+        
+        // Cancel all active coroutines first
+        coroutineScope.cancel()
+        
+        // Clear all collections
         markers.clear()
         markerImages.clear()
         preloadedImages.clear() // Clear preloaded image cache
         markersPreloaded = false
-        mapObjectCollection.clear()
-        // Cancel existing coroutines and create new scope
-        coroutineScope.cancel()
+        
+        // Clear map objects
+        try {
+            mapObjectCollection.clear()
+        } catch (e: Exception) {
+            Timber.w(e, "Error clearing map objects (may be already cleared)")
+        }
+        
+        // Create new coroutine scope for future operations
         coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+        
+        Timber.d("✅ Cleared ${markers.size} markers and reset coroutine scope")
+    }
+    
+    /**
+     * Force clear everything when data version changes
+     */
+    fun forceReset() {
+        Timber.d("🔄 Force resetting VisualMarkerProvider due to data version change")
+        
+        // Cancel all coroutines immediately
+        coroutineScope.cancel()
+        
+        // Wait a bit for cancellation to complete
+        runBlocking {
+            delay(100)
+        }
+        
+        // Clear everything
+        markers.clear()
+        markerImages.clear()
+        preloadedImages.clear()
+        markersPreloaded = false
+        
+        // Clear map objects safely
+        try {
+            mapObjectCollection.clear()
+        } catch (e: Exception) {
+            Timber.w(e, "Error clearing map objects during force reset")
+        }
+        
+        // Create fresh coroutine scope
+        coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+        
+        Timber.d("✅ Force reset completed - ready for new data")
     }
 }

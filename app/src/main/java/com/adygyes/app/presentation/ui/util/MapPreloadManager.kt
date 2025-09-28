@@ -23,7 +23,8 @@ import javax.inject.Singleton
 @Singleton
 class MapPreloadManager @Inject constructor(
     private val repository: AttractionRepository,
-    private val imageCacheManager: ImageCacheManager
+    private val imageCacheManager: ImageCacheManager,
+    private val preferencesManager: com.adygyes.app.data.local.preferences.PreferencesManager
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
@@ -35,6 +36,23 @@ class MapPreloadManager @Inject constructor(
     
     private var preloadJob: Job? = null
     private var visualMarkerProvider: VisualMarkerProvider? = null
+    private var lastKnownDataVersion: String? = null
+    
+    init {
+        // Monitor data version changes and reset when needed
+        scope.launch {
+            preferencesManager.userPreferencesFlow.collect { preferences ->
+                val currentVersion = preferences.dataVersion
+                if (lastKnownDataVersion != null && lastKnownDataVersion != currentVersion) {
+                    Timber.d("🔄 Data version changed from '$lastKnownDataVersion' to '$currentVersion', resetting preload manager")
+                    forceReset()
+                    // Force reset all visual marker providers
+                    VisualMarkerRegistry.forceResetAll()
+                }
+                lastKnownDataVersion = currentVersion
+            }
+        }
+    }
     
     data class PreloadState(
         val isLoading: Boolean = false,
@@ -150,7 +168,28 @@ class MapPreloadManager @Inject constructor(
     fun clearPreloadData() {
         preloadJob?.cancel()
         _preloadState.value = PreloadState()
+        _attractions.value = emptyList()
+        visualMarkerProvider = null
         Timber.d("Preload data cleared")
+    }
+    
+    /**
+     * Force reset when data version changes
+     */
+    fun forceReset() {
+        Timber.d("🔄 Force resetting MapPreloadManager due to data version change")
+        
+        // Cancel any active preload job
+        preloadJob?.cancel()
+        
+        // Reset all state
+        _preloadState.value = PreloadState()
+        _attractions.value = emptyList()
+        
+        // Clear visual marker provider reference
+        visualMarkerProvider = null
+        
+        Timber.d("✅ MapPreloadManager force reset completed")
     }
     
     /**

@@ -125,7 +125,7 @@ class AttractionRepositoryImpl @Inject constructor(
             
             if (needsUpdate) {
                 // Clear existing data and reload
-                Timber.d("Clearing existing data and reloading from JSON")
+                Timber.d("🔄 Clearing existing data and reloading from JSON")
                 attractionDao.deleteAll()
                 
                 // Clear image cache if version changed
@@ -133,6 +133,9 @@ class AttractionRepositoryImpl @Inject constructor(
                     Timber.d("🗑️ Clearing image cache due to version change")
                     imageCacheManager.clearAllCache()
                     imageCacheManager.updateCacheVersion(jsonVersion)
+                    
+                    // Note: MapPreloadManager will automatically detect version change
+                    // and reset all VisualMarkerProviders via preferences monitoring
                 }
                 
                 // Convert DTOs to entities and insert into database
