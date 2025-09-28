@@ -120,7 +120,7 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_map">Map Settings</string>
-    <string name="settings_show_location">Show My Location</string>
+    <string name="settings_show_location">My Location</string>
     <string name="settings_show_location_desc">Display your current location on the map</string>
     <string name="settings_cluster_markers">Cluster Markers</string>
     <string name="settings_cluster_markers_desc">Group nearby markers when zoomed out</string>

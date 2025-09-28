@@ -187,15 +187,7 @@ fun MapScreen(
     
     // MapKit lifecycle handled by MapHost now
     
-    // Location permissions handling
-    LaunchedEffect(locationPermissionsState) {
-        if (!locationPermissionsState.allPermissionsGranted) {
-            locationPermissionsState.launchMultiplePermissionRequest()
-        } else {
-            viewModel.onLocationPermissionGranted()
-        }
-    }
-    
+    // Location permissions handling - только отслеживаем состояние, не запрашиваем автоматически
     LaunchedEffect(locationPermissionsState.allPermissionsGranted) {
         if (locationPermissionsState.allPermissionsGranted) {
             viewModel.onLocationPermissionGranted()
@@ -297,7 +289,9 @@ fun MapScreen(
                                 },
                                 modifier = Modifier.fillMaxSize(),
                                 composeVisualMode = easterEggActive,
-                                enableAppearAnimation = true // Enable smooth appearance animation
+                                enableAppearAnimation = true, // Enable smooth appearance animation
+                                userLocation = uiState.userLocation, // Передаем местоположение пользователя
+                                showUserLocationMarker = uiState.showUserLocationMarker // Показывать ли маркер
                             )
                         }
                     }
@@ -644,16 +638,8 @@ fun MapScreen(
             FloatingActionButton(
                 onClick = { 
                     if (locationPermissionsState.allPermissionsGranted) {
-                        uiState.userLocation?.let { location ->
-                            mapView?.map?.move(
-                                CameraPosition(
-                                    Point(location.first, location.second),
-                                    14.0f, 0.0f, 0.0f
-                                ),
-                                Animation(Animation.Type.SMOOTH, 0.5f),
-                                null
-                            )
-                        } ?: viewModel.getCurrentLocation()
+                        // Используем новую функцию для плавного перехода
+                        viewModel.moveToUserLocation(mapView)
                     } else {
                         locationPermissionsState.launchMultiplePermissionRequest()
                     }
@@ -662,12 +648,51 @@ fun MapScreen(
                     .align(Alignment.BottomEnd)
                     .padding(Dimensions.SpacingMedium)
                     .padding(bottom = 80.dp), // Space for bottom nav
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = if (uiState.isLoadingLocation) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                } else {
+                    MaterialTheme.colorScheme.primary
+                }
             ) {
-                Icon(
-                    imageVector = Icons.Default.MyLocation,
-                    contentDescription = stringResource(R.string.my_location),
-                    tint = MaterialTheme.colorScheme.onPrimary
+                if (uiState.isLoadingLocation) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.MyLocation,
+                        contentDescription = stringResource(R.string.my_location),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
+        
+        // Snackbar для ошибок местоположения
+        uiState.locationError?.let { error ->
+            LaunchedEffect(error) {
+                // Показываем ошибку и очищаем её через 3 секунды
+                kotlinx.coroutines.delay(3000)
+                viewModel.clearLocationError()
+            }
+            
+            // Простое отображение ошибки в виде Surface внизу экрана
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.errorContainer,
+                shadowElevation = 8.dp
+            ) {
+                Text(
+                    text = error,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }

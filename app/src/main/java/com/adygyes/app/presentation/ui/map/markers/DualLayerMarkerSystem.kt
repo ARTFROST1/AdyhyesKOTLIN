@@ -1,8 +1,15 @@
 package com.adygyes.app.presentation.ui.map.markers
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.adygyes.app.domain.model.Attraction
 import com.adygyes.app.data.local.cache.ImageCacheManager
@@ -10,6 +17,7 @@ import com.yandex.mapkit.mapview.MapView
 import com.yandex.mapkit.map.PlacemarkMapObject
 import timber.log.Timber
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.awaitCancellation
 
 /**
  * Dual-layer marker system that combines:
@@ -29,7 +37,9 @@ fun DualLayerMarkerSystem(
     onMarkerClick: (Attraction) -> Unit,
     modifier: Modifier = Modifier,
     composeVisualMode: Boolean = false, // When true, render visual markers with Compose and skip native markers
-    enableAppearAnimation: Boolean = true // Enable smooth appearance animation for initial markers
+    enableAppearAnimation: Boolean = true, // Enable smooth appearance animation for initial markers
+    userLocation: Pair<Double, Double>? = null, // Местоположение пользователя
+    showUserLocationMarker: Boolean = false // Показывать ли маркер пользователя
 ) {
     // IMPORTANT: Box to ensure proper layering
     Box(modifier = modifier.fillMaxSize()) {
@@ -123,6 +133,15 @@ fun DualLayerMarkerSystem(
             )
         }
         
+        // Layer 3: User location marker management
+        if (mapView != null) {
+            UserLocationMarkerManager(
+                mapView = mapView,
+                showMarker = showUserLocationMarker,
+                userLocation = userLocation
+            )
+        }
+        
         if (!composeVisualMode) {
             // Layer 2: Transparent overlay for click detection (top layer)
             // MUST be rendered AFTER native markers to be on top
@@ -175,4 +194,158 @@ fun TransparentClickOverlay(
         animationDuration = 0, // No animations for click layer
         transparentMode = true // Enable transparent mode for click-only handling
     )
+}
+
+/**
+ * Менеджер маркера местоположения пользователя
+ * Управляет одним экземпляром провайдера для отображения и скрытия маркера
+ */
+@Composable
+fun UserLocationMarkerManager(
+    mapView: MapView,
+    showMarker: Boolean,
+    userLocation: Pair<Double, Double>?
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    // Создаем провайдер маркера только один раз для MapView
+    val markerProvider = remember(mapView) {
+        UserLocationMarkerProvider(mapView, context)
+    }
+    
+    // Управляем маркером в зависимости от состояния
+    LaunchedEffect(showMarker, userLocation) {
+        if (showMarker && userLocation != null) {
+            Timber.d("📍 Showing user location marker at: ${userLocation.first}, ${userLocation.second}")
+            markerProvider.showUserLocationMarker(userLocation)
+        } else {
+            Timber.d("🚫 Hiding user location marker (showMarker=$showMarker, location=$userLocation)")
+            markerProvider.hideUserLocationMarker()
+        }
+    }
+    
+    // Отображаем анимацию пульсации только когда маркер видим
+    if (showMarker && userLocation != null) {
+        UserLocationPulseAnimation(
+            mapView = mapView,
+            userLocation = userLocation,
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(999f) // Ниже основного маркера
+        )
+    }
+    
+    // Очистка при размонтировании
+    DisposableEffect(mapView) {
+        onDispose {
+            markerProvider.cleanup()
+        }
+    }
+}
+
+
+/**
+ * Анимация пульсации для маркера местоположения пользователя
+ * Отображается под основным нативным маркером
+ */
+@Composable
+fun UserLocationPulseAnimation(
+    mapView: MapView,
+    userLocation: Pair<Double, Double>,
+    modifier: Modifier = Modifier
+) {
+    var screenPosition by remember { mutableStateOf<Offset?>(null) }
+    
+    // Отслеживаем изменения местоположения И движения камеры для синхронизации
+    LaunchedEffect(mapView, userLocation) {
+        val point = com.yandex.mapkit.geometry.Point(userLocation.first, userLocation.second)
+        
+        fun updatePosition() {
+            try {
+                val worldToScreen = mapView.mapWindow.worldToScreen(point)
+                worldToScreen?.let { screenPoint ->
+                    screenPosition = Offset(screenPoint.x, screenPoint.y)
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to convert user location to screen coordinates for pulse animation")
+            }
+        }
+        
+        // Обновляем позицию сразу
+        updatePosition()
+        
+        // Добавляем слушатель изменений камеры для синхронизации
+        val cameraListener = object : com.yandex.mapkit.map.CameraListener {
+            override fun onCameraPositionChanged(
+                map: com.yandex.mapkit.map.Map,
+                cameraPosition: com.yandex.mapkit.map.CameraPosition,
+                cameraUpdateReason: com.yandex.mapkit.map.CameraUpdateReason,
+                finished: Boolean
+            ) {
+                updatePosition()
+            }
+        }
+        
+        mapView.map.addCameraListener(cameraListener)
+        
+        // Очистка при размонтировании
+        try {
+            awaitCancellation()
+        } finally {
+            mapView.map.removeCameraListener(cameraListener)
+        }
+    }
+    
+    // Отображаем анимацию пульсации в вычисленной позиции
+    screenPosition?.let { position ->
+        val density = LocalDensity.current
+        Box(modifier = modifier) {
+            // Анимация пульсации
+            val infiniteTransition = rememberInfiniteTransition(label = "pulse_animation")
+            val pulseScale by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.5f, // Уменьшенный радиус свечения
+                animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = 1500,
+                        easing = FastOutSlowInEasing
+                    ),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "pulse_scale"
+            )
+            
+            val pulseAlpha by infiniteTransition.animateFloat(
+                initialValue = 0.6f,
+                targetValue = 0.0f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = 1500,
+                        easing = FastOutSlowInEasing
+                    ),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "pulse_alpha"
+            )
+            
+            // Пульсирующий круг
+            Canvas(
+                modifier = Modifier
+                    .absoluteOffset(
+                        x = (position.x / density.density - 28).dp, // Обновлено для нового размера
+                        y = (position.y / density.density - 28).dp
+                    )
+                    .size(56.dp) // Увеличенный размер
+            ) {
+                val center = Offset(size.width / 2, size.height / 2)
+                val radius = (size.width / 2) * pulseScale
+                
+                drawCircle(
+                    color = Color(0xFF4CAF50).copy(alpha = pulseAlpha),
+                    radius = radius,
+                    center = center
+                )
+            }
+        }
+    }
 }

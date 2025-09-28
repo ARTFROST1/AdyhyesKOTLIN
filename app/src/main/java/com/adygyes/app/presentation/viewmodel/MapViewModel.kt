@@ -15,6 +15,7 @@ import com.adygyes.app.domain.usecase.NetworkStatus
 import com.adygyes.app.presentation.ui.map.markers.MarkerOverlayState
 import com.adygyes.app.presentation.ui.map.markers.MarkerState
 import com.adygyes.app.presentation.ui.components.ViewMode
+import com.adygyes.app.data.local.preferences.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -33,7 +34,8 @@ class MapViewModel @Inject constructor(
     private val navigationUseCase: NavigationUseCase,
     private val shareUseCase: ShareUseCase,
     private val networkUseCase: NetworkUseCase,
-    private val attractionDisplayUseCase: AttractionDisplayUseCase
+    private val attractionDisplayUseCase: AttractionDisplayUseCase,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(MapUiState())
@@ -116,6 +118,7 @@ class MapViewModel @Inject constructor(
     init {
         loadAttractions()
         checkAndLoadInitialData()
+        observeLocationSettings()
     }
     
     private fun checkAndLoadInitialData() {
@@ -126,6 +129,39 @@ class MapViewModel @Inject constructor(
                 attractionRepository.loadInitialData()
             } catch (e: Exception) {
                 Timber.e(e, "Error loading initial data")
+            }
+        }
+    }
+    
+    /**
+     * Отслеживает настройки местоположения и управляет маркером
+     */
+    private fun observeLocationSettings() {
+        viewModelScope.launch {
+            preferencesManager.userPreferencesFlow.collect { preferences ->
+                val shouldShowLocation = preferences.autoCenterLocation
+                val currentState = _uiState.value
+                
+                Timber.d("📍 Location settings changed: shouldShow=$shouldShowLocation, currentlyShowing=${currentState.showUserLocationMarker}")
+                
+                if (shouldShowLocation) {
+                    // Включаем отслеживание местоположения если было отключено
+                    if (!currentState.showUserLocationMarker && currentState.hasLocationPermission) {
+                        Timber.d("📍 Location tracking enabled via settings")
+                        startLocationTracking()
+                    }
+                } else {
+                    // НЕМЕДЛЕННО отключаем отслеживание местоположения и убираем маркер
+                    Timber.d("🚫 Location tracking disabled via settings")
+                    _uiState.update { 
+                        it.copy(
+                            showUserLocationMarker = false,
+                            userLocation = null,
+                            isLoadingLocation = false,
+                            locationError = null
+                        )
+                    }
+                }
             }
         }
     }
@@ -219,8 +255,20 @@ class MapViewModel @Inject constructor(
     }
     
     fun onLocationPermissionGranted() {
-        _uiState.update { it.copy(hasLocationPermission = true) }
-        startLocationTracking()
+        viewModelScope.launch {
+            _uiState.update { it.copy(hasLocationPermission = true) }
+            
+            // Проверяем настройки перед запуском отслеживания
+            val preferences = preferencesManager.userPreferencesFlow.first()
+            if (preferences.autoCenterLocation) {
+                Timber.d("📍 Location permission granted and tracking enabled in settings")
+                startLocationTracking()
+                // Получаем текущее местоположение сразу после получения разрешения
+                getCurrentLocation()
+            } else {
+                Timber.d("🚫 Location permission granted but tracking disabled in settings")
+            }
+        }
     }
     
     fun onLocationPermissionDenied() {
@@ -235,12 +283,24 @@ class MapViewModel @Inject constructor(
                 }
                 .collect { location ->
                     location?.let {
-                        _uiState.update { state ->
-                            state.copy(
-                                userLocation = Pair(location.latitude, location.longitude)
-                            )
+                        val newLocation = Pair(location.latitude, location.longitude)
+                        val currentLocation = _uiState.value.userLocation
+                        
+                        // Проверяем, изменилось ли местоположение значительно (более 10 метров)
+                        val shouldUpdate = currentLocation == null || 
+                            calculateDistance(currentLocation, newLocation) > 10.0
+                        
+                        if (shouldUpdate) {
+                            _uiState.update { state ->
+                                state.copy(
+                                    userLocation = newLocation,
+                                    showUserLocationMarker = true
+                                )
+                            }
+                            Timber.d("User location updated: ${location.latitude}, ${location.longitude}")
+                        } else {
+                            Timber.d("User location change too small, skipping update")
                         }
-                        Timber.d("User location updated: ${location.latitude}, ${location.longitude}")
                     }
                 }
         }
@@ -248,12 +308,76 @@ class MapViewModel @Inject constructor(
     
     fun getCurrentLocation() {
         viewModelScope.launch {
-            val location = getLocationUseCase.getCurrentLocation()
-            location?.let {
-                _uiState.update { state ->
-                    state.copy(
-                        userLocation = Pair(location.latitude, location.longitude)
+            // Проверяем настройки перед получением местоположения
+            val preferences = preferencesManager.userPreferencesFlow.first()
+            if (!preferences.autoCenterLocation) {
+                Timber.d("🚫 Location tracking disabled in settings, skipping getCurrentLocation")
+                return@launch
+            }
+            
+            try {
+                _uiState.update { it.copy(isLoadingLocation = true) }
+                val location = getLocationUseCase.getCurrentLocation()
+                location?.let {
+                    _uiState.update { state ->
+                        state.copy(
+                            userLocation = Pair(location.latitude, location.longitude),
+                            isLoadingLocation = false,
+                            locationError = null,
+                            showUserLocationMarker = true
+                        )
+                    }
+                    Timber.d("✅ Got current location: ${location.latitude}, ${location.longitude}")
+                } ?: run {
+                    _uiState.update { it.copy(
+                        isLoadingLocation = false,
+                        locationError = "Не удалось получить местоположение"
+                    ) }
+                    Timber.w("❌ Failed to get current location")
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(
+                    isLoadingLocation = false,
+                    locationError = e.message ?: "Ошибка получения местоположения"
+                ) }
+                Timber.e(e, "❌ Error getting current location")
+            }
+        }
+    }
+    
+    /**
+     * Плавно перемещает камеру к местоположению пользователя
+     */
+    fun moveToUserLocation(mapView: com.yandex.mapkit.mapview.MapView?) {
+        viewModelScope.launch {
+            val userLocation = _uiState.value.userLocation
+            if (userLocation != null && mapView != null) {
+                try {
+                    val targetPoint = com.yandex.mapkit.geometry.Point(userLocation.first, userLocation.second)
+                    val cameraPosition = com.yandex.mapkit.map.CameraPosition(
+                        targetPoint,
+                        16.0f, // Увеличенный зум для лучшего обзора
+                        0.0f,
+                        0.0f
                     )
+                    
+                    // Плавная анимация перехода к местоположению пользователя
+                    mapView.map.move(
+                        cameraPosition,
+                        com.yandex.mapkit.Animation(com.yandex.mapkit.Animation.Type.SMOOTH, 1.0f), // 1 секунда анимации
+                        null
+                    )
+                    
+                    Timber.d("🎯 Moving camera to user location: ${userLocation.first}, ${userLocation.second}")
+                } catch (e: Exception) {
+                    Timber.e(e, "❌ Error moving camera to user location")
+                }
+            } else {
+                // Если местоположение не известно, получаем его
+                if (getLocationUseCase.hasLocationPermission()) {
+                    getCurrentLocation()
+                } else {
+                    _uiState.update { it.copy(locationError = "Нет разрешения на доступ к местоположению") }
                 }
             }
         }
@@ -454,6 +578,33 @@ class MapViewModel @Inject constructor(
         }
     }
     
+    fun clearLocationError() {
+        _uiState.update { it.copy(locationError = null) }
+    }
+    
+    /**
+     * Вычисляет расстояние между двумя точками в метрах
+     */
+    private fun calculateDistance(
+        location1: Pair<Double, Double>,
+        location2: Pair<Double, Double>
+    ): Double {
+        val earthRadius = 6371000.0 // Радиус Земли в метрах
+        
+        val lat1Rad = Math.toRadians(location1.first)
+        val lat2Rad = Math.toRadians(location2.first)
+        val deltaLatRad = Math.toRadians(location2.first - location1.first)
+        val deltaLonRad = Math.toRadians(location2.second - location1.second)
+        
+        val a = kotlin.math.sin(deltaLatRad / 2) * kotlin.math.sin(deltaLatRad / 2) +
+                kotlin.math.cos(lat1Rad) * kotlin.math.cos(lat2Rad) *
+                kotlin.math.sin(deltaLonRad / 2) * kotlin.math.sin(deltaLonRad / 2)
+        
+        val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+        
+        return earthRadius * c
+    }
+    
     // Enums for new functionality
     enum class SortBy(val displayName: String) {
         NAME("По названию"),
@@ -484,6 +635,9 @@ data class MapUiState(
     val showAttractionDetail: Boolean = false,
     val hasLocationPermission: Boolean = false,
     val userLocation: Pair<Double, Double>? = null,
+    val isLoadingLocation: Boolean = false,
+    val locationError: String? = null,
+    val showUserLocationMarker: Boolean = false,
     val isOnline: Boolean = true,
     val networkStatus: NetworkStatus? = null,
     val recommendedAttractions: List<Attraction> = emptyList()

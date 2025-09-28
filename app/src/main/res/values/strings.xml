@@ -123,7 +123,7 @@
     <string name="settings_theme_dark">Тёмная</string>
     <string name="settings_theme_system">Системная</string>
     <string name="settings_map">Настройки карты</string>
-    <string name="settings_show_location">Показать моё местоположение</string>
+    <string name="settings_show_location">Мое местоположение</string>
     <string name="settings_show_location_desc">Отображать ваше текущее местоположение на карте</string>
     <string name="settings_cluster_markers">Группировать маркеры</string>
     <string name="settings_cluster_markers_desc">Группировать близкие маркеры при отдалении</string>
