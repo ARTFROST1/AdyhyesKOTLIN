@@ -48,6 +48,7 @@ import com.adygyes.app.presentation.ui.components.CategoryFilterBottomSheet
 import com.adygyes.app.presentation.ui.components.ViewMode
 import com.adygyes.app.presentation.ui.components.SearchResultsHeader
 import com.adygyes.app.presentation.ui.components.UnifiedCategoryCarousel
+import com.adygyes.app.presentation.ui.components.DataUpdateOverlay
 import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
 import com.adygyes.app.presentation.ui.map.markers.MarkerOverlay
 import com.adygyes.app.presentation.ui.map.markers.VisualMarkerRegistry
@@ -181,6 +182,22 @@ fun MapScreen(
                 // Fallback: show markers immediately if animation fails
                 preloadManager?.showPreloadedMarkers()
                 Timber.d("👁️ Showing preloaded markers immediately (fallback)")
+            }
+        }
+    }
+    
+    // Handle data update completion - force marker refresh
+    LaunchedEffect(preloadState?.value?.dataUpdating) {
+        val isDataUpdating = preloadState?.value?.dataUpdating
+        if (isDataUpdating == false && isMapReady) {
+            // Data update just completed, force refresh markers
+            Timber.d("🔄 Data update completed, forcing marker refresh")
+            delay(1000) // Wait for preload to complete
+            
+            // Force trigger marker system update
+            if (mapView != null && filteredAttractions.isNotEmpty()) {
+                Timber.d("🎯 Forcing DualLayerMarkerSystem update after data version change")
+                // The DualLayerMarkerSystem will be updated automatically due to filteredAttractions change
             }
         }
     }
@@ -725,6 +742,13 @@ fun MapScreen(
                 )
             }
         }
+        
+        // Data update overlay - показывается при обновлении версии данных
+        DataUpdateOverlay(
+            isVisible = preloadState?.value?.dataUpdating == true,
+            progress = preloadState?.value?.progress ?: 0f,
+            modifier = Modifier.fillMaxSize()
+        )
     }
     
     // Filter bottom sheet

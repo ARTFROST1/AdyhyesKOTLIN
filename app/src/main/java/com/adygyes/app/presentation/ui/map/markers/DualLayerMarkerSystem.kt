@@ -75,7 +75,7 @@ fun DualLayerMarkerSystem(
                         }
                         // Case 2: No markers exist, need to create them
                         currentIds.isEmpty() && newIds.isNotEmpty() -> {
-                            Timber.d("📍 Creating initial markers (no preload)")
+                            Timber.d("📍 Creating initial markers (no preload) - ${newIds.size} attractions")
                             visualMarkerProvider.setAppearAnimation(enableAppearAnimation)
                             visualMarkerProvider.addVisualMarkers(attractions)
                             VisualMarkerRegistry.setLastIds(mapView, newIds)
@@ -87,7 +87,14 @@ fun DualLayerMarkerSystem(
                             visualMarkerProvider.updateVisualMarkers(attractions)
                             VisualMarkerRegistry.setLastIds(mapView, newIds)
                         }
-                        // Case 4: Markers already match
+                        // Case 4: Force recreate if no preloaded markers but we have attractions (after version update)
+                        !visualMarkerProvider.hasPreloadedMarkers() && newIds.isNotEmpty() && currentIds.isEmpty() -> {
+                            Timber.d("📍 Force creating markers after version update: ${newIds.size} attractions")
+                            visualMarkerProvider.setAppearAnimation(enableAppearAnimation)
+                            visualMarkerProvider.addVisualMarkers(attractions)
+                            VisualMarkerRegistry.setLastIds(mapView, newIds)
+                        }
+                        // Case 5: Markers already match
                         else -> {
                             Timber.d("📍 Markers already exist: ${currentIds.size}")
                         }

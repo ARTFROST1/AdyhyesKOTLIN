@@ -44,10 +44,49 @@ class MapPreloadManager @Inject constructor(
             preferencesManager.userPreferencesFlow.collect { preferences ->
                 val currentVersion = preferences.dataVersion
                 if (lastKnownDataVersion != null && lastKnownDataVersion != currentVersion) {
-                    Timber.d("🔄 Data version changed from '$lastKnownDataVersion' to '$currentVersion', resetting preload manager")
+                    Timber.d("🔄 Data version changed from '$lastKnownDataVersion' to '$currentVersion', starting data update process")
+                    
+                    // Show data updating overlay
+                    _preloadState.value = _preloadState.value.copy(
+                        dataUpdating = true,
+                        progress = 0.1f
+                    )
+                    
+                    // Small delay to show the overlay
+                    delay(500)
+                    
+                    // Update progress
+                    _preloadState.value = _preloadState.value.copy(progress = 0.3f)
+                    
+                    // Force reset all components
                     forceReset()
-                    // Force reset all visual marker providers
                     VisualMarkerRegistry.forceResetAll()
+                    
+                    // Update progress
+                    _preloadState.value = _preloadState.value.copy(progress = 0.7f)
+                    
+                    // Wait a bit more for cleanup to complete
+                    delay(1000)
+                    
+                    // Complete the update process
+                    _preloadState.value = _preloadState.value.copy(
+                        dataUpdating = false,
+                        progress = 1.0f
+                    )
+                    
+                    Timber.d("✅ Data update process completed")
+                    
+                    // CRITICAL: Restart preload process with new data after version update
+                    delay(500) // Small delay to ensure UI updates
+                    
+                    // Find the current MapView and restart preload
+                    val currentMapView = VisualMarkerRegistry.getCurrentMapView()
+                    if (currentMapView != null) {
+                        Timber.d("🔄 Restarting preload process with new data after version update")
+                        startPreload(currentMapView)
+                    } else {
+                        Timber.w("⚠️ No MapView available for restarting preload after version update")
+                    }
                 }
                 lastKnownDataVersion = currentVersion
             }
@@ -60,6 +99,7 @@ class MapPreloadManager @Inject constructor(
         val markersCreated: Boolean = false,
         val imagesPreloaded: Boolean = false,
         val allMarkersReady: Boolean = false,  // New field for fully loaded markers with images
+        val dataUpdating: Boolean = false,  // New field for data version update process
         val error: String? = null,
         val progress: Float = 0f  // 0.0 to 1.0
     )
@@ -182,8 +222,12 @@ class MapPreloadManager @Inject constructor(
         // Cancel any active preload job
         preloadJob?.cancel()
         
-        // Reset all state
-        _preloadState.value = PreloadState()
+        // Reset state but preserve dataUpdating status
+        val currentState = _preloadState.value
+        _preloadState.value = PreloadState(
+            dataUpdating = currentState.dataUpdating,
+            progress = currentState.progress
+        )
         _attractions.value = emptyList()
         
         // Clear visual marker provider reference

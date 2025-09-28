@@ -70,4 +70,11 @@ object VisualMarkerRegistry {
             }
         }
     }
+    
+    /**
+     * Get the current active MapView (for restarting preload after version update)
+     */
+    fun getCurrentMapView(): MapView? {
+        return map.keys.firstOrNull()
+    }
 }

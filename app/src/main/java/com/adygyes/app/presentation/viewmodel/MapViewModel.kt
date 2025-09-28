@@ -119,6 +119,7 @@ class MapViewModel @Inject constructor(
         loadAttractions()
         checkAndLoadInitialData()
         observeLocationSettings()
+        observeDataVersionChanges()
     }
     
     private fun checkAndLoadInitialData() {
@@ -129,6 +130,31 @@ class MapViewModel @Inject constructor(
                 attractionRepository.loadInitialData()
             } catch (e: Exception) {
                 Timber.e(e, "Error loading initial data")
+            }
+        }
+    }
+    
+    /**
+     * Отслеживает изменения версии данных и принудительно перезагружает attractions
+     */
+    private fun observeDataVersionChanges() {
+        var lastKnownVersion: String? = null
+        
+        viewModelScope.launch {
+            preferencesManager.userPreferencesFlow.collect { preferences ->
+                val currentVersion = preferences.dataVersion
+                
+                if (lastKnownVersion != null && lastKnownVersion != currentVersion) {
+                    Timber.d("🔄 Data version changed in MapViewModel: '$lastKnownVersion' → '$currentVersion', reloading attractions")
+                    
+                    // Force reload attractions after version change
+                    delay(2000) // Wait for data update process to complete
+                    loadAttractions()
+                    
+                    Timber.d("✅ Attractions reloaded after version change")
+                }
+                
+                lastKnownVersion = currentVersion
             }
         }
     }
