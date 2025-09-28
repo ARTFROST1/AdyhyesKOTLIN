@@ -339,7 +339,7 @@ fun MapScreen(
                 .align(Alignment.TopCenter)
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
                 .padding(horizontal = Dimensions.PaddingMedium)
-                .padding(top = 16.dp) // Увеличили верхний отступ
+                .padding(top = 8.dp) // Уменьшили верхний отступ
         ) {
             // Top bar with animated layout for expandable search
             Row(
@@ -389,7 +389,7 @@ fun MapScreen(
                         modifier = Modifier
                             .size(48.dp),
                         shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        color = MaterialTheme.colorScheme.surface,
                         shadowElevation = 8.dp
                     ) {
                         IconButton(
@@ -446,7 +446,7 @@ fun MapScreen(
                         .weight(1f)
                         .fillMaxHeight(),
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 8.dp
                 ) {
                     AnimatedContent(
@@ -604,7 +604,7 @@ fun MapScreen(
                         modifier = Modifier
                             .size(48.dp),
                         shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        color = MaterialTheme.colorScheme.surface,
                         shadowElevation = 8.dp
                     ) {
                         IconButton(

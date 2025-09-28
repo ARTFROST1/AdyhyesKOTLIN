@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +50,7 @@ fun AttractionBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = Dimensions.PaddingLarge)
                 .padding(bottom = Dimensions.PaddingLarge)
         ) {
@@ -61,7 +63,7 @@ fun AttractionBottomSheet(
                 onImageClick = { onNavigateToDetail() }
             )
             
-            Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Title and category
             Row(
@@ -78,15 +80,9 @@ fun AttractionBottomSheet(
                         overflow = TextOverflow.Ellipsis
                     )
                     
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    CategoryChip(
-                        category = attraction.category,
-                        compact = true
-                    )
                 }
                 
-                // Favorite button
+                // Favorite button (top right)
                 IconButton(
                     onClick = onToggleFavorite
                 ) {
@@ -107,57 +103,57 @@ fun AttractionBottomSheet(
                 }
             }
             
-            // Rating, distance and details button
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Category, rating and share button row (full width)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = Dimensions.SpacingSmall),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Dimensions.SpacingMedium),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    attraction.rating?.let { rating ->
-                        RatingBar(
-                            rating = rating,
-                            size = 16.dp
-                        )
-                    }
-                    
-                    distance?.let { dist ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = formatDistance(dist),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                // Category chip on the left
+                CategoryChip(
+                    category = attraction.category,
+                    compact = true
+                )
+                
+                // Rating in the center
+                attraction.rating?.let { rating ->
+                    RatingBar(
+                        rating = rating,
+                        size = 16.dp
+                    )
                 }
                 
-                // Details button moved here
-                OutlinedButton(
-                    onClick = onNavigateToDetail,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                // Share button on the right (same size as favorite)
+                IconButton(
+                    onClick = onShare
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.detail_share),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                }
+            }
+            
+            // Distance info
+            distance?.let { dist ->
+                Row(
+                    modifier = Modifier.padding(vertical = Dimensions.SpacingSmall),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = stringResource(R.string.detail_details),
-                        style = MaterialTheme.typography.labelMedium
+                        text = formatDistance(dist),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -174,28 +170,50 @@ fun AttractionBottomSheet(
             )
             
             // Info items
-            attraction.workingHours?.let { hours ->
-                InfoRow(
-                    icon = Icons.Default.Schedule,
-                    label = stringResource(R.string.detail_working_hours),
-                    value = hours
-                )
-            }
-            
-            attraction.priceInfo?.let { price ->
-                InfoRow(
-                    icon = Icons.Default.AttachMoney,
-                    label = stringResource(R.string.detail_price),
-                    value = price
-                )
-            }
-            
-            attraction.location.address?.let { address ->
-                InfoRow(
-                    icon = Icons.Default.Place,
-                    label = stringResource(R.string.detail_address),
-                    value = address
-                )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                attraction.workingHours?.let { hours ->
+                    InfoCard(
+                        icon = Icons.Default.Schedule,
+                        title = stringResource(R.string.detail_working_hours),
+                        content = {
+                            Text(
+                                text = hours,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    )
+                }
+                
+                attraction.priceInfo?.let { price ->
+                    InfoCard(
+                        icon = Icons.Default.AttachMoney,
+                        title = stringResource(R.string.detail_price),
+                        content = {
+                            Text(
+                                text = price,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    )
+                }
+                
+                attraction.location.address?.let { address ->
+                    InfoCard(
+                        icon = Icons.Default.Place,
+                        title = stringResource(R.string.detail_address),
+                        content = {
+                            Text(
+                                text = address,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
@@ -219,18 +237,18 @@ fun AttractionBottomSheet(
                     Text(stringResource(R.string.detail_route))
                 }
                 
-                // Share button
+                // Details button
                 OutlinedButton(
-                    onClick = onShare,
+                    onClick = onNavigateToDetail,
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Share,
+                        imageVector = Icons.Default.Info,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.detail_share))
+                    Text(stringResource(R.string.detail_details))
                 }
             }
         }
@@ -238,37 +256,40 @@ fun AttractionBottomSheet(
 }
 
 @Composable
-private fun InfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String,
+private fun InfoCard(
+    icon: ImageVector,
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier
-                .size(20.dp)
-                .padding(top = 2.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimensions.PaddingMedium),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                content()
+            }
         }
     }
 }

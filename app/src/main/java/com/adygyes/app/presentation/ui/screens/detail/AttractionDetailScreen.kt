@@ -2,6 +2,7 @@ package com.adygyes.app.presentation.ui.screens.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,11 +12,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -127,7 +131,8 @@ fun AttractionDetailScreen(
                             images = attraction.images,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(300.dp),
+                                .height(300.dp)
+                                .padding(bottom = 4.dp),
                             onImageClick = { index ->
                                 selectedPhotoIndex = index
                                 showPhotoViewer = true
@@ -195,14 +200,15 @@ fun AttractionDetailScreen(
                                     content = {
                                         Text(
                                             text = address,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                         attraction.location.directions?.let { directions ->
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
                                                 text = directions,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
                                         }
                                     }
@@ -217,7 +223,8 @@ fun AttractionDetailScreen(
                                     content = {
                                         Text(
                                             text = hours,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                     }
                                 )
@@ -231,7 +238,8 @@ fun AttractionDetailScreen(
                                     content = {
                                         Text(
                                             text = price,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                     }
                                 )
@@ -251,12 +259,13 @@ fun AttractionDetailScreen(
                                                             imageVector = Icons.Default.Phone,
                                                             contentDescription = null,
                                                             modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
                                                         Spacer(modifier = Modifier.width(8.dp))
                                                         Text(
                                                             text = phone,
-                                                            style = MaterialTheme.typography.bodyMedium
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
                                                     }
                                                 }
@@ -266,12 +275,13 @@ fun AttractionDetailScreen(
                                                             imageVector = Icons.Default.Email,
                                                             contentDescription = null,
                                                             modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
                                                         Spacer(modifier = Modifier.width(8.dp))
                                                         Text(
                                                             text = email,
-                                                            style = MaterialTheme.typography.bodyMedium
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
                                                     }
                                                 }
@@ -281,13 +291,13 @@ fun AttractionDetailScreen(
                                                             imageVector = Icons.Default.Language,
                                                             contentDescription = null,
                                                             modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
                                                         Spacer(modifier = Modifier.width(8.dp))
                                                         Text(
                                                             text = website,
                                                             style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.primary
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
                                                     }
                                                 }
@@ -401,7 +411,7 @@ private fun InfoCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
         Row(
@@ -414,13 +424,14 @@ private fun InfoCard(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 content()
@@ -443,7 +454,7 @@ private fun AmenitiesGrid(
         amenities.forEach { amenity ->
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer
+                color = Color(red = 1.0f, green = 0.843f, blue = 0.0f, alpha = 1.0f)
             ) {
                 Row(
                     modifier = Modifier.padding(
@@ -457,12 +468,12 @@ private fun AmenitiesGrid(
                         imageVector = getAmenityIcon(amenity),
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = Color.Black
                     )
                     Text(
-                        text = amenity,
+                        text = amenity.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = Color.Black
                     )
                 }
             }
@@ -479,7 +490,7 @@ private fun TagsFlow(
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         tags.forEach { tag ->
             AssistChip(
