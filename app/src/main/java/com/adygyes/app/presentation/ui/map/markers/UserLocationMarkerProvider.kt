@@ -36,7 +36,13 @@ class UserLocationMarkerProvider(
             
             // Удаляем старый маркер если есть
             userLocationMarker?.let { marker ->
-                mapObjectCollection.remove(marker)
+                try {
+                    if (marker.isValid) {
+                        mapObjectCollection.remove(marker)
+                    }
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to remove old user location marker")
+                }
             }
             
             // Создаем новый маркер
@@ -62,10 +68,20 @@ class UserLocationMarkerProvider(
      */
     fun hideUserLocationMarker() {
         userLocationMarker?.let { marker ->
-            mapObjectCollection.remove(marker)
-            userLocationMarker = null
-            currentLocation = null
-            Timber.d("🚫 User location marker removed")
+            try {
+                // Проверяем, что нативный объект еще действителен
+                if (marker.isValid) {
+                    mapObjectCollection.remove(marker)
+                    Timber.d("🚫 User location marker removed")
+                } else {
+                    Timber.w("⚠️ User location marker already invalid, skipping removal")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Failed to remove user location marker")
+            } finally {
+                userLocationMarker = null
+                currentLocation = null
+            }
         }
     }
     
@@ -73,7 +89,7 @@ class UserLocationMarkerProvider(
      * Создает иконку для маркера местоположения пользователя
      */
     private fun createUserLocationIcon(): ImageProvider {
-        val size = 56 // Увеличенный размер маркера в dp
+        val size = 40 // Уменьшенный размер маркера в dp
         val density = context.resources.displayMetrics.density
         val sizePixels = (size * density).toInt()
         

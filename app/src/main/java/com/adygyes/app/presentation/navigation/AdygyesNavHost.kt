@@ -16,6 +16,9 @@ import com.adygyes.app.presentation.ui.screens.search.SearchScreen
 import com.adygyes.app.presentation.ui.screens.favorites.FavoritesScreen
 import com.adygyes.app.presentation.ui.screens.settings.SettingsScreen
 import com.adygyes.app.presentation.ui.screens.detail.AttractionDetailScreen
+import com.adygyes.app.presentation.ui.screens.about.AboutScreen
+import com.adygyes.app.presentation.ui.screens.privacy.PrivacyPolicyScreen
+import com.adygyes.app.presentation.ui.screens.terms.TermsOfUseScreen
 
 /**
  * Main navigation host for Adygyes app
@@ -139,15 +142,21 @@ fun AdygyesNavHost(
         }
         
         composable(NavDestination.AboutScreen.route) {
-            // AboutScreen will be implemented
+            AboutScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         
         composable(NavDestination.PrivacyPolicy.route) {
-            // PrivacyPolicyScreen will be implemented
+            PrivacyPolicyScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         
         composable(NavDestination.TermsOfUse.route) {
-            // TermsOfUseScreen will be implemented
+            TermsOfUseScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

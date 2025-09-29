@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adygyes.app.R
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.viewmodel.SettingsViewModel
+import com.adygyes.app.presentation.ui.components.RatingComingSoonDialog
 import android.widget.Toast
 import com.adygyes.app.presentation.ui.util.EasterEggManager
 
@@ -37,6 +38,7 @@ fun SettingsScreen(
     
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showRatingDialog by remember { mutableStateOf(false) }
     // Easter egg: 7 taps on title
     var tapCount by remember { mutableStateOf(0) }
     var lastTapTime by remember { mutableStateOf(0L) }
@@ -203,7 +205,7 @@ fun SettingsScreen(
                     icon = Icons.Default.RateReview,
                     title = stringResource(R.string.settings_rate_us),
                     subtitle = stringResource(R.string.settings_rate_us_desc),
-                    onClick = { /* Open Play Store */ }
+                    onClick = { showRatingDialog = true }
                 )
             }
             
@@ -246,6 +248,11 @@ fun SettingsScreen(
         )
     }
     
+    // Rating Coming Soon Dialog
+    RatingComingSoonDialog(
+        isVisible = showRatingDialog,
+        onDismiss = { showRatingDialog = false }
+    )
 }
 
 @Composable

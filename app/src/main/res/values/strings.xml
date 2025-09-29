@@ -143,7 +143,7 @@
     <string name="settings_clear_cache">Очистить кэш</string>
     <string name="settings_clear_cache_desc">Освободить место в хранилище</string>
     <string name="settings_about">О приложении</string>
-    <string name="settings_about_app">О приложении Адыгэес</string>
+    <string name="settings_about_app">О приложении AdygGis</string>
     <string name="settings_version">Версия</string>
     <string name="settings_privacy">Политика конфиденциальности</string>
     <string name="settings_privacy_desc">Узнайте, как мы защищаем ваши данные</string>
@@ -175,6 +175,50 @@
     <string name="results_found">найдено</string>
     <string name="clear">Очистить</string>
     
+    <!-- About Screen -->
+    <string name="about_app_slogan">«Открой Адыгею заново»</string>
+    <string name="about_app_description">Удобный путеводитель по самым красивым местам Адыгеи. Прогулки, достопримечательности, маршруты и советы для путешественников.</string>
+    <string name="about_version_title">Версия</string>
+    <string name="about_version_number">1.0.0</string>
+    <string name="about_developer_title">Разработка</string>
+    <string name="about_developer_info">Разработчик: Sokurov Salim\nРазработчик: Morozov Artem</string>
+    <string name="about_contacts_title">Контакты</string>
+    <string name="about_contacts_info">Telegram-канал: @MaykopTech</string>
+    <string name="about_privacy_title">Политика конфиденциальности</string>
+    <string name="about_privacy_subtitle">Открыть документ</string>
+    <string name="about_visit_website">Посетить сайт</string>
+    <string name="about_rate_store">Оценить нас</string>
+
+    <!-- Privacy Policy Screen -->
+    <string name="privacy_policy_title">Политика конфиденциальности</string>
+    <string name="privacy_introduction_title">Введение</string>
+    <string name="privacy_introduction_content">Мы ценим вашу конфиденциальность. Ниже описано, как мы собираем, используем и защищаем ваши данные.</string>
+    <string name="privacy_data_collection_title">Сбор данных</string>
+    <string name="privacy_data_collection_content">Приложение может собирать техническую информацию о вашем устройстве, но мы не сохраняем персональные данные без вашего согласия.</string>
+    <string name="privacy_data_usage_title">Использование данных</string>
+    <string name="privacy_data_usage_content">Собранная информация используется исключительно для улучшения работы приложения и предоставления актуального контента о Адыгее.</string>
+    <string name="privacy_data_sharing_title">Обмен данными</string>
+    <string name="privacy_data_sharing_content">Мы не передаем ваши данные третьим лицам, кроме случаев, прямо предусмотренных законодательством.</string>
+    <string name="privacy_contact_title">Контакты</string>
+    <string name="privacy_contact_content">Вопросы по конфиденциальности: Telegram @MaykopTech</string>
+
+    <!-- Terms of Use Screen -->
+    <string name="terms_of_use_title">Условия пользования</string>
+    <string name="terms_introduction_title">Введение</string>
+    <string name="terms_introduction_content">Используя приложение, вы соглашаетесь с условиями его работы и соблюдением правил поведения в приложении.</string>
+    <string name="terms_content_access_title">Доступ к контенту</string>
+    <string name="terms_content_access_content">Все материалы о достопримечательностях Адыгеи предоставляются для личного пользования. Копирование и коммерческое использование запрещены без разрешения.</string>
+    <string name="terms_responsibility_title">Ответственность</string>
+    <string name="terms_responsibility_content">Приложение не несет ответственности за ваши действия во время посещения объектов или маршрутов, приведённых в приложении.</string>
+    <string name="terms_community_title">Сообщество</string>
+    <string name="terms_community_content">Просим уважать других пользователей и соблюдать правила поведения при использовании функции комментариев и рейтингов.</string>
+    <string name="terms_contact_title">Контакты</string>
+    <string name="terms_contact_content">Вопросы по условиям пользования: Telegram @MaykopTech</string>
+
+    <!-- Rating Coming Soon Dialog -->
+    <string name="rating_coming_soon_title">Скоро в App Store!</string>
+    <string name="rating_coming_soon_description">Приложение ещё не доступно для оценки, но совсем скоро мы выпустим его в App Store. Следите за обновлениями!</string>
+
     <!-- Accessibility -->
     <string name="a11y_back_button">Кнопка назад</string>
     <string name="a11y_menu_button">Кнопка меню</string>

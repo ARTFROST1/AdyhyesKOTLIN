@@ -140,7 +140,7 @@
     <string name="settings_clear_cache">Clear Cache</string>
     <string name="settings_clear_cache_desc">Free up storage space</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_app">About AdygGIS</string>
+    <string name="settings_about_app">About AdygGis</string>
     <string name="settings_version">Version</string>
     <string name="settings_privacy">Privacy Policy</string>
     <string name="settings_privacy_desc">Learn how we protect your data</string>
@@ -172,6 +172,50 @@
     <string name="results_found">found</string>
     <string name="clear">Clear</string>
     
+    <!-- About Screen -->
+    <string name="about_app_slogan">«Discover Adygea Anew»</string>
+    <string name="about_app_description">A convenient guide to the most beautiful places in Adygea. Walks, attractions, routes and tips for travelers.</string>
+    <string name="about_version_title">Version</string>
+    <string name="about_version_number">1.0.0</string>
+    <string name="about_developer_title">Development</string>
+    <string name="about_developer_info">Developer: Sokurov Salim\nDeveloper: Morozov Artem</string>
+    <string name="about_contacts_title">Contacts</string>
+    <string name="about_contacts_info">Telegram channel: @MaykopTech</string>
+    <string name="about_privacy_title">Privacy Policy</string>
+    <string name="about_privacy_subtitle">Open document</string>
+    <string name="about_visit_website">Visit Website</string>
+    <string name="about_rate_store">Rate Us</string>
+
+    <!-- Privacy Policy Screen -->
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_introduction_title">Introduction</string>
+    <string name="privacy_introduction_content">We value your privacy. Below is described how we collect, use and protect your data.</string>
+    <string name="privacy_data_collection_title">Data Collection</string>
+    <string name="privacy_data_collection_content">The app may collect technical information about your device, but we do not store personal data without your consent.</string>
+    <string name="privacy_data_usage_title">Data Usage</string>
+    <string name="privacy_data_usage_content">Collected information is used exclusively to improve the app performance and provide up-to-date content about Adygea.</string>
+    <string name="privacy_data_sharing_title">Data Sharing</string>
+    <string name="privacy_data_sharing_content">We do not share your data with third parties, except in cases directly provided by law.</string>
+    <string name="privacy_contact_title">Contact</string>
+    <string name="privacy_contact_content">Privacy questions: Telegram @MaykopTech</string>
+
+    <!-- Terms of Use Screen -->
+    <string name="terms_of_use_title">Terms of Use</string>
+    <string name="terms_introduction_title">Introduction</string>
+    <string name="terms_introduction_content">By using the app, you agree to its terms of operation and compliance with app behavior rules.</string>
+    <string name="terms_content_access_title">Content Access</string>
+    <string name="terms_content_access_content">All materials about Adygea attractions are provided for personal use. Copying and commercial use are prohibited without permission.</string>
+    <string name="terms_responsibility_title">Responsibility</string>
+    <string name="terms_responsibility_content">The app is not responsible for your actions when visiting objects or routes listed in the app.</string>
+    <string name="terms_community_title">Community</string>
+    <string name="terms_community_content">Please respect other users and follow behavior rules when using comments and ratings features.</string>
+    <string name="terms_contact_title">Contact</string>
+    <string name="terms_contact_content">Terms of use questions: Telegram @MaykopTech</string>
+
+    <!-- Rating Coming Soon Dialog -->
+    <string name="rating_coming_soon_title">Coming Soon to App Store!</string>
+    <string name="rating_coming_soon_description">The app is not yet available for rating, but very soon we will release it in the App Store. Stay tuned for updates!</string>
+
     <!-- Accessibility -->
     <string name="a11y_back_button">Back button</string>
     <string name="a11y_menu_button">Menu button</string>

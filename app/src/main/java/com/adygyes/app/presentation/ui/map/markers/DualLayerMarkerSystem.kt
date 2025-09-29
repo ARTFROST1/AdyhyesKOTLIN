@@ -339,10 +339,10 @@ fun UserLocationPulseAnimation(
             Canvas(
                 modifier = Modifier
                     .absoluteOffset(
-                        x = (position.x / density.density - 28).dp, // Обновлено для нового размера
-                        y = (position.y / density.density - 28).dp
+                        x = (position.x / density.density - 20).dp, // Обновлено для нового размера
+                        y = (position.y / density.density - 20).dp
                     )
-                    .size(56.dp) // Увеличенный размер
+                    .size(40.dp) // Уменьшенный размер
             ) {
                 val center = Offset(size.width / 2, size.height / 2)
                 val radius = (size.width / 2) * pulseScale
