@@ -20,6 +20,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -47,6 +48,9 @@ class MapViewModel @Inject constructor(
     
     private val _attractions = MutableStateFlow<List<Attraction>>(emptyList())
     val attractions: StateFlow<List<Attraction>> = _attractions.asStateFlow()
+    
+    // Job для управления отслеживанием местоположения
+    private var locationTrackingJob: Job? = null
     
     private val _selectedAttraction = MutableStateFlow<Attraction?>(null)
     val selectedAttraction: StateFlow<Attraction?> = _selectedAttraction.asStateFlow()
@@ -179,6 +183,7 @@ class MapViewModel @Inject constructor(
                 } else {
                     // НЕМЕДЛЕННО отключаем отслеживание местоположения и убираем маркер
                     Timber.d("🚫 Location tracking disabled via settings")
+                    stopLocationTracking()
                     _uiState.update { 
                         it.copy(
                             showUserLocationMarker = false,
@@ -302,13 +307,24 @@ class MapViewModel @Inject constructor(
     }
     
     private fun startLocationTracking() {
-        viewModelScope.launch {
+        // Останавливаем предыдущее отслеживание если есть
+        stopLocationTracking()
+        
+        locationTrackingJob = viewModelScope.launch {
             getLocationUseCase.getLocationUpdates(5000L)
                 .catch { error ->
                     Timber.e(error, "Error getting location updates")
                 }
                 .collect { location ->
                     location?.let {
+                        // Проверяем настройки перед обновлением маркера
+                        val preferences = preferencesManager.userPreferencesFlow.first()
+                        if (!preferences.autoCenterLocation) {
+                            Timber.d("🚫 Location tracking disabled during update, stopping")
+                            stopLocationTracking()
+                            return@collect
+                        }
+                        
                         val newLocation = Pair(location.latitude, location.longitude)
                         val currentLocation = _uiState.value.userLocation
                         
@@ -320,7 +336,7 @@ class MapViewModel @Inject constructor(
                             _uiState.update { state ->
                                 state.copy(
                                     userLocation = newLocation,
-                                    showUserLocationMarker = true
+                                    showUserLocationMarker = preferences.autoCenterLocation // Проверяем настройки
                                 )
                             }
                             Timber.d("User location updated: ${location.latitude}, ${location.longitude}")
@@ -330,6 +346,12 @@ class MapViewModel @Inject constructor(
                     }
                 }
         }
+    }
+    
+    private fun stopLocationTracking() {
+        locationTrackingJob?.cancel()
+        locationTrackingJob = null
+        Timber.d("🛑 Location tracking stopped")
     }
     
     fun getCurrentLocation() {
@@ -350,7 +372,7 @@ class MapViewModel @Inject constructor(
                             userLocation = Pair(location.latitude, location.longitude),
                             isLoadingLocation = false,
                             locationError = null,
-                            showUserLocationMarker = true
+                            showUserLocationMarker = preferences.autoCenterLocation // Проверяем настройки
                         )
                     }
                     Timber.d("✅ Got current location: ${location.latitude}, ${location.longitude}")
@@ -648,6 +670,12 @@ class MapViewModel @Inject constructor(
         object All : CategoryFilter()
         object Favorites : CategoryFilter()
         data class Category(val category: AttractionCategory) : CategoryFilter()
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        stopLocationTracking()
+        Timber.d("🧹 MapViewModel cleared, location tracking stopped")
     }
 }
 

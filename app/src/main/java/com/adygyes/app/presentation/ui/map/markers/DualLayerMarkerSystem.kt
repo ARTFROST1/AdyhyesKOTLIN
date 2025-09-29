@@ -231,6 +231,14 @@ fun UserLocationMarkerManager(
         }
     }
     
+    // Немедленно скрываем маркер при отключении showMarker
+    LaunchedEffect(showMarker) {
+        if (!showMarker) {
+            Timber.d("🚫 Marker disabled, hiding immediately")
+            markerProvider.hideUserLocationMarker()
+        }
+    }
+    
     // Отображаем анимацию пульсации только когда маркер видим
     if (showMarker && userLocation != null) {
         UserLocationPulseAnimation(

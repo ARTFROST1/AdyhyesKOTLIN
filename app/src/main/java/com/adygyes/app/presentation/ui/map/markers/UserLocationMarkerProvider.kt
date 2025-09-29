@@ -78,11 +78,12 @@ class UserLocationMarkerProvider(
                 }
             } catch (e: Exception) {
                 Timber.e(e, "❌ Failed to remove user location marker")
-            } finally {
-                userLocationMarker = null
-                currentLocation = null
             }
         }
+        // Всегда очищаем ссылки, даже если удаление не удалось
+        userLocationMarker = null
+        currentLocation = null
+        Timber.d("🧹 User location marker references cleared")
     }
     
     /**
