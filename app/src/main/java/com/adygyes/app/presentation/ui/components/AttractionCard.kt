@@ -111,10 +111,15 @@ fun AttractionCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
-                    CategoryChip(
-                        category = attraction.category,
-                        modifier = Modifier.padding(top = Dimensions.PaddingExtraSmall)
-                    )
+                    if (!compactForFavorites) {
+                        CategoryChip(
+                            category = attraction.category,
+                            modifier = Modifier.padding(top = Dimensions.PaddingExtraSmall)
+                        )
+                    } else {
+                        // Пустое место в компактном режиме, чтобы кнопка была справа
+                        Spacer(modifier = Modifier.width(1.dp))
+                    }
 
                     IconButton(
                         onClick = onFavoriteClick,
@@ -168,10 +173,19 @@ fun AttractionCard(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    // Тег над заголовком в компактном режиме
+                    if (compactForFavorites) {
+                        CategoryChip(
+                            category = attraction.category,
+                            modifier = Modifier.padding(bottom = 3.dp)
+                        )
+                    }
+                    
                     Text(
                         text = attraction.name,
-                        style = if (compactForFavorites) MaterialTheme.typography.headlineSmall.copy(
-                            fontSize = 20.sp
+                        style = if (compactForFavorites) MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 18.sp,
+                            lineHeight = 22.sp // Уменьшенный line-height
                         ) else MaterialTheme.typography.headlineSmall,
                         color = if (hasImage) getOverlayTextColor() else getContentTextColor(),
                         maxLines = 2,

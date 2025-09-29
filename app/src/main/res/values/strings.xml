@@ -190,7 +190,8 @@
     <string name="about_rate_store">Оценить нас</string>
 
     <!-- Privacy Policy Screen -->
-    <string name="privacy_policy_title">Политика конфиденциальности</string>
+    <string name="privacy_policy_title">Конфиденциальность</string>
+    <string name="privacy_policy_full_title">Политика конфиденциальности</string>
     <string name="privacy_introduction_title">Введение</string>
     <string name="privacy_introduction_content">Мы ценим вашу конфиденциальность. Ниже описано, как мы собираем, используем и защищаем ваши данные.</string>
     <string name="privacy_data_collection_title">Сбор данных</string>

@@ -187,7 +187,8 @@
     <string name="about_rate_store">Rate Us</string>
 
     <!-- Privacy Policy Screen -->
-    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_policy_title">Privacy</string>
+    <string name="privacy_policy_full_title">Privacy Policy</string>
     <string name="privacy_introduction_title">Introduction</string>
     <string name="privacy_introduction_content">We value your privacy. Below is described how we collect, use and protect your data.</string>
     <string name="privacy_data_collection_title">Data Collection</string>

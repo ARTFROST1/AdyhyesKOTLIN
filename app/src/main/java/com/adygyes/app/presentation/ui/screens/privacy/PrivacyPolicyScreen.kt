@@ -89,7 +89,7 @@ fun PrivacyPolicyScreen(
                     
                     // Title
                     Text(
-                        text = stringResource(R.string.privacy_policy_title),
+                        text = stringResource(R.string.privacy_policy_full_title),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,

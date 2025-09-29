@@ -107,7 +107,9 @@ private fun CategoryFiltersCarousel(
                             Icon(
                                 imageVector = Icons.Default.Favorite,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .padding(end = 4.dp), // Добавляем отступ как у других кнопок
                                 tint = if (selectedFilter is MapViewModel.CategoryFilter.Favorites) {
                                     MaterialTheme.colorScheme.onPrimary
                                 } else {
