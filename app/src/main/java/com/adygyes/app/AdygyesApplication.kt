@@ -19,7 +19,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * Main Application class for Adygyes app.
+ * Main Application class for AdygGIS app.
  * Responsible for app-wide initialization.
  */
 @HiltAndroidApp
