@@ -47,6 +47,7 @@ fun SettingsScreen(
     var lastTapTime by remember { mutableStateOf(0L) }
     
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {

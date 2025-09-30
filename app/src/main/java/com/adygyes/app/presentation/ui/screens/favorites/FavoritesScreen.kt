@@ -47,6 +47,7 @@ fun FavoritesScreen(
     val scope = rememberCoroutineScope()
     
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { 

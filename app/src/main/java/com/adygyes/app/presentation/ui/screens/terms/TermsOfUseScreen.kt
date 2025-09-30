@@ -36,6 +36,7 @@ fun TermsOfUseScreen(
     val context = LocalContext.current
     
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {

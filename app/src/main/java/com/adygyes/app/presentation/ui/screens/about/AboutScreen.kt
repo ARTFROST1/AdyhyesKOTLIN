@@ -38,6 +38,7 @@ fun AboutScreen(
     var showRatingDialog by remember { mutableStateOf(false) }
     
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {

@@ -13,8 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,7 +23,6 @@ import com.adygyes.app.presentation.ui.screens.map.MapHost
 import com.adygyes.app.presentation.theme.AdygyesTheme
 import com.adygyes.app.presentation.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import android.os.Build
 import android.graphics.Color as AndroidColor
 
@@ -61,23 +58,9 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
             AdygyesTheme(darkTheme = darkTheme) {
-                val systemUiController = rememberSystemUiController()
-                SideEffect {
-                    // Make system bars fully transparent with proper icon colors
-                    systemUiController.setSystemBarsColor(
-                        color = Color.Transparent,
-                        darkIcons = !darkTheme
-                    )
-                }
                 AdygyesApp()
             }
         }
-    }
-    
-    override fun onResume() {
-        super.onResume()
-        // Re-apply edge-to-edge to ensure it's not lost after config changes
-        setupEdgeToEdge()
     }
     
     override fun attachBaseContext(newBase: Context?) {

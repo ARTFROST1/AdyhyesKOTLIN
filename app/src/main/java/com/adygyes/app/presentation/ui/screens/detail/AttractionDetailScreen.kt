@@ -76,6 +76,7 @@ fun AttractionDetailScreen(
             val attraction = state.attraction
             
             Scaffold(
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 topBar = {
                     TopAppBar(
                         title = { },
