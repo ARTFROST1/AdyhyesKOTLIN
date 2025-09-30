@@ -35,8 +35,7 @@ import android.graphics.Color as AndroidColor
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    private fun setupEdgeToEdge() {
         enableEdgeToEdge()
         // Prevent Android from adding a contrast-enforcing translucent scrim over the navigation bar
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -46,6 +45,11 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.navigationBarDividerColor = AndroidColor.TRANSPARENT
         }
+    }
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setupEdgeToEdge()
         
         setContent {
             // Observe theme mode from preferences
@@ -59,13 +63,21 @@ class MainActivity : ComponentActivity() {
             AdygyesTheme(darkTheme = darkTheme) {
                 val systemUiController = rememberSystemUiController()
                 SideEffect {
-                    // Make system bars fully transparent over the splash background
-                    systemUiController.setStatusBarColor(color = Color.Transparent, darkIcons = false)
-                    systemUiController.setNavigationBarColor(color = Color.Transparent, darkIcons = false)
+                    // Make system bars fully transparent with proper icon colors
+                    systemUiController.setSystemBarsColor(
+                        color = Color.Transparent,
+                        darkIcons = !darkTheme
+                    )
                 }
                 AdygyesApp()
             }
         }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Re-apply edge-to-edge to ensure it's not lost after config changes
+        setupEdgeToEdge()
     }
     
     override fun attachBaseContext(newBase: Context?) {
