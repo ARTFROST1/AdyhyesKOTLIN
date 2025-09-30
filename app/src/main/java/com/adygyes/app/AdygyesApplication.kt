@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.res.Configuration
 import coil.ImageLoader
 import coil.ImageLoaderFactory
-import coil.decode.SvgDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.adygyes.app.data.local.locale.LocaleManager
@@ -140,9 +139,6 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
                     .directory(cacheDir.resolve("image_cache"))
                     .maxSizePercent(0.02)
                     .build()
-            }
-            .components {
-                add(SvgDecoder.Factory())
             }
             .respectCacheHeaders(false)
             .build()

@@ -93,7 +93,28 @@ android {
             dimension = "version"
             applicationIdSuffix = ".lite"
             versionNameSuffix = "-lite"
+            // Lite flavor resource optimizations
+            resConfigs("ru", "en") // Only Russian and English languages
+            resConfigs("xxhdpi", "xxxhdpi") // Only high density screens
         }
+    }
+    
+    // APK Splits Configuration - reduces APK size by ~30-40%
+    // Note: Density splits are deprecated in AGP 9.0
+    // Use Android App Bundle (AAB) for automatic density optimization
+    splits {
+        // ABI splits - separate APKs for different CPU architectures
+        abi {
+            isEnable = true
+            reset()
+            // Include only modern architectures
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true // Create a universal APK for compatibility
+        }
+        
+        // Density splits removed - deprecated in AGP 9.0
+        // Use 'bundleFullRelease' to create AAB for Google Play
+        // AAB automatically optimizes for different screen densities
     }
     
     lint {
@@ -148,13 +169,10 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.runtime)
-    // Google Fonts for Compose (Downloadable Fonts)
-    implementation("androidx.compose.ui:ui-text-google-fonts")
     
     // Accompanist
     implementation(libs.accompanist.permissions)
     implementation(libs.accompanist.systemuicontroller)
-    implementation(libs.accompanist.pager)
     
     // Navigation
     implementation(libs.navigation.compose)
@@ -164,11 +182,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     
-    // Networking
-    implementation(libs.retrofit.core)
-    implementation(libs.retrofit.kotlinx.serialization)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
+    // Serialization
     implementation(libs.kotlinx.serialization.json)
     
     // Local Storage
@@ -179,7 +193,6 @@ dependencies {
     
     // Image Loading
     implementation(libs.coil.compose)
-    implementation(libs.coil.svg)
     implementation(libs.compose.zoomable)
     
     // Coroutines

@@ -22,7 +22,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,19 +55,8 @@ fun SplashScreen(
     
     // Check if everything is fully loaded
     val isFullyLoaded = preloadState?.value?.allMarkersReady == true
-    // Downloadable Google Font: Raleway with specific weights
-    val provider = GoogleFont.Provider(
-        providerAuthority = "com.google.android.gms.fonts",
-        providerPackage = "com.google.android.gms",
-        certificates = com.adygyes.app.R.array.com_google_android_gms_fonts_certs
-    )
-    val raleway = GoogleFont("Raleway")
-    val ralewayFontFamily = FontFamily(
-        androidx.compose.ui.text.googlefonts.Font(raleway, provider, weight = FontWeight.Normal),
-        androidx.compose.ui.text.googlefonts.Font(raleway, provider, weight = FontWeight.SemiBold),
-        androidx.compose.ui.text.googlefonts.Font(raleway, provider, weight = FontWeight.ExtraBold),
-        androidx.compose.ui.text.googlefonts.Font(raleway, provider, weight = FontWeight.Black)
-    )
+    // Use system default font family for compatibility
+    val ralewayFontFamily = FontFamily.Default
     
     Box(
         modifier = Modifier
