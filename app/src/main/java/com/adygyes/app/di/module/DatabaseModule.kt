@@ -61,9 +61,10 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun providePreferencesManager(
+        @ApplicationContext context: Context,
         dataStore: DataStore<Preferences>
     ): PreferencesManager {
-        return PreferencesManager(dataStore)
+        return PreferencesManager(context, dataStore)
     }
     
     @Provides

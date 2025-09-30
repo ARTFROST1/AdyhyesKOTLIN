@@ -54,7 +54,11 @@ class SettingsViewModel @Inject constructor(
                         "light" -> Theme.LIGHT
                         else -> Theme.SYSTEM
                     },
-                    language = if (preferences.language == "ru") Language.RUSSIAN else Language.ENGLISH,
+                    language = when (preferences.language) {
+                        LocaleManager.LANGUAGE_RUSSIAN -> Language.RUSSIAN
+                        LocaleManager.LANGUAGE_ENGLISH -> Language.ENGLISH
+                        else -> Language.RUSSIAN // Default to Russian
+                    },
                     showUserLocation = preferences.autoCenterLocation,
                     pushNotifications = preferences.notificationEnabled,
                     appVersion = "1.0.0"

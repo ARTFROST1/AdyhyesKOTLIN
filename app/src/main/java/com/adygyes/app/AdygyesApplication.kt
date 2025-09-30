@@ -38,7 +38,37 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
     }
     
     override fun attachBaseContext(base: Context?) {
-        super.attachBaseContext(base)
+        if (base == null) {
+            super.attachBaseContext(base)
+            return
+        }
+        
+        // Get saved language preference synchronously from SharedPreferences
+        val prefs = base.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val savedLanguage = prefs.getString("language", LocaleManager.DEFAULT_LANGUAGE) ?: LocaleManager.DEFAULT_LANGUAGE
+        
+        // Apply saved language preference
+        val locale = java.util.Locale(savedLanguage)
+        java.util.Locale.setDefault(locale)
+        
+        val configuration = android.content.res.Configuration(base.resources.configuration)
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            configuration.setLocales(android.os.LocaleList(locale))
+        } else {
+            @Suppress("DEPRECATION")
+            configuration.locale = locale
+        }
+        
+        val contextWithLocale = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {
+            base.createConfigurationContext(configuration)
+        } else {
+            @Suppress("DEPRECATION")
+            base.resources.updateConfiguration(configuration, base.resources.displayMetrics)
+            base
+        }
+        
+        super.attachBaseContext(contextWithLocale)
     }
     
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -104,6 +134,15 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
      * Initialize locale settings
      */
     private fun initializeLocale() {
+        // Ensure SharedPreferences has language set
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        if (!prefs.contains("language")) {
+            prefs.edit().putString("language", LocaleManager.DEFAULT_LANGUAGE).commit()
+            if (BuildConfig.DEBUG) {
+                Timber.d("Initialized default language: ${LocaleManager.DEFAULT_LANGUAGE}")
+            }
+        }
+        
         applicationScope.launch {
             try {
                 val currentLanguage = localeManager.currentLanguage.first()

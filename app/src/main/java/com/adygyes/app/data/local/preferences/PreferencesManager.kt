@@ -1,8 +1,11 @@
 package com.adygyes.app.data.local.preferences
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import com.adygyes.app.data.local.locale.LocaleManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -16,8 +19,14 @@ import javax.inject.Singleton
  */
 @Singleton
 class PreferencesManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val dataStore: DataStore<Preferences>
 ) {
+    
+    // SharedPreferences for synchronous language access in attachBaseContext
+    private val sharedPrefs: SharedPreferences by lazy {
+        context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    }
     
     // Preference Keys
     companion object {
@@ -114,6 +123,13 @@ class PreferencesManager @Inject constructor(
      * Map preferences to UserPreferences data class
      */
     private fun mapUserPreferences(preferences: Preferences): UserPreferences {
+        // Get language from DataStore or fallback to SharedPreferences
+        val language = preferences[KEY_LANGUAGE] ?: run {
+            val savedLanguage = sharedPrefs.getString("language", LocaleManager.DEFAULT_LANGUAGE) 
+                ?: LocaleManager.DEFAULT_LANGUAGE
+            savedLanguage
+        }
+        
         return UserPreferences(
             isDarkTheme = preferences[KEY_DARK_THEME] ?: false,
             themeMode = preferences[KEY_THEME_MODE] ?: run {
@@ -123,7 +139,7 @@ class PreferencesManager @Inject constructor(
                     false -> "light"
                 }
             },
-            language = preferences[KEY_LANGUAGE] ?: LocaleManager.DEFAULT_LANGUAGE,
+            language = language,
             mapType = preferences[KEY_MAP_TYPE] ?: "normal",
             showTraffic = preferences[KEY_SHOW_TRAFFIC] ?: false,
             autoCenterLocation = preferences[KEY_AUTO_CENTER_LOCATION] ?: true,
@@ -165,6 +181,10 @@ class PreferencesManager @Inject constructor(
      * Update language preference
      */
     suspend fun updateLanguage(language: String) {
+        // Save to SharedPreferences for synchronous access
+        sharedPrefs.edit().putString("language", language).apply()
+        
+        // Also save to DataStore for flow-based access
         dataStore.edit { preferences ->
             preferences[KEY_LANGUAGE] = language
         }

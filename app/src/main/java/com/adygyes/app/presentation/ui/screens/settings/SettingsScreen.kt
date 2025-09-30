@@ -20,6 +20,8 @@ import com.adygyes.app.presentation.viewmodel.SettingsViewModel
 import com.adygyes.app.presentation.ui.components.RatingComingSoonDialog
 import android.widget.Toast
 import com.adygyes.app.presentation.ui.util.EasterEggManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Settings screen for app configuration and preferences
@@ -35,6 +37,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
@@ -231,6 +234,11 @@ fun SettingsScreen(
             onLanguageSelected = { language ->
                 viewModel.setLanguage(language)
                 showLanguageDialog = false
+                // Delay to allow data to save, then recreate activity
+                coroutineScope.launch {
+                    delay(200)
+                    (context as? android.app.Activity)?.recreate()
+                }
             },
             onDismiss = { showLanguageDialog = false }
         )

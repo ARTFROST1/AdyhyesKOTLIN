@@ -1,42 +1,30 @@
 package com.adygyes.app
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.adygyes.app.data.local.locale.LocaleManager
 import com.adygyes.app.presentation.navigation.AdygyesNavHost
 import com.adygyes.app.presentation.ui.screens.map.MapHost
 import com.adygyes.app.presentation.theme.AdygyesTheme
-import com.adygyes.app.presentation.viewmodel.LocaleViewModel
 import com.adygyes.app.presentation.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import android.os.Build
 import android.graphics.Color as AndroidColor
@@ -46,11 +34,6 @@ import android.graphics.Color as AndroidColor
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    
-    @Inject
-    lateinit var localeManager: LocaleManager
-    
-    private var currentLanguage: String = LocaleManager.DEFAULT_LANGUAGE
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,11 +45,6 @@ class MainActivity : ComponentActivity() {
         // Remove navigation bar divider line on Android 9+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.navigationBarDividerColor = AndroidColor.TRANSPARENT
-        }
-        
-        // Get current language from preferences
-        lifecycleScope.launch {
-            currentLanguage = localeManager.currentLanguage.first()
         }
         
         setContent {
@@ -96,25 +74,16 @@ class MainActivity : ComponentActivity() {
             return
         }
         
+        // Get saved language preference synchronously from SharedPreferences
+        val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val savedLanguage = prefs.getString("language", LocaleManager.DEFAULT_LANGUAGE) ?: LocaleManager.DEFAULT_LANGUAGE
+        
+        android.util.Log.d("MainActivity", "attachBaseContext: applying language=$savedLanguage")
+        
         // Apply saved language preference
-        val contextWithLocale = if (::localeManager.isInitialized) {
-            localeManager.applyLocale(newBase, currentLanguage)
-        } else {
-            // Use static method for initial setup
-            applyStaticLocale(newBase, LocaleManager.DEFAULT_LANGUAGE)
-        }
+        val contextWithLocale = applyStaticLocale(newBase, savedLanguage)
         
         super.attachBaseContext(contextWithLocale)
-    }
-    
-    /**
-     * Restart activity to apply language changes
-     */
-    fun restartForLanguageChange() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
     }
     
     /**
@@ -146,21 +115,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AdygyesApp() {
     val navController = rememberNavController()
-    val localeViewModel: LocaleViewModel = hiltViewModel()
-    val currentLanguage by localeViewModel.currentLanguage.collectAsState()
-    val context = LocalContext.current
-    
-    // Track language changes and restart activity when needed
-    var initialLanguage by remember { mutableStateOf(currentLanguage) }
-    
-    LaunchedEffect(currentLanguage) {
-        if (initialLanguage != currentLanguage && initialLanguage != LocaleManager.DEFAULT_LANGUAGE) {
-            // Language has changed, restart activity
-            (context as? MainActivity)?.restartForLanguageChange()
-        } else {
-            initialLanguage = currentLanguage
-        }
-    }
     
     Scaffold(
         modifier = Modifier.fillMaxSize(),
