@@ -392,7 +392,6 @@
 - [ ] Conduct comprehensive UI/UX review
 - [ ] Optimize map performance and memory usage
 - [ ] Implement image caching and optimization (ImageCacheManager done)
-- [ ] Add crash reporting with Firebase Crashlytics
 - [ ] Implement analytics tracking
 - [ ] Optimize database queries
 - [ ] Reduce APK size with resource optimization
