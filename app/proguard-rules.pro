@@ -88,6 +88,65 @@
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
 
-# Yandex MapKit (will be uncommented in Stage 2)
-#-keep class com.yandex.mapkit.** { *; }
-#-keep class com.yandex.runtime.** { *; }
+# Yandex MapKit - CRITICAL for app to work!
+-keep class com.yandex.mapkit.** { *; }
+-keep class com.yandex.runtime.** { *; }
+-keep interface com.yandex.mapkit.** { *; }
+-keep interface com.yandex.runtime.** { *; }
+-dontwarn com.yandex.mapkit.**
+-dontwarn com.yandex.runtime.**
+
+# Data Models - Keep all data classes
+-keep class com.adygyes.app.data.model.** { *; }
+-keep class com.adygyes.app.domain.model.** { *; }
+
+# Room Database entities and DAOs
+-keep class com.adygyes.app.data.local.entity.** { *; }
+-keep interface com.adygyes.app.data.local.dao.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+
+# Repository and UseCase classes
+-keep class com.adygyes.app.data.repository.** { *; }
+-keep class com.adygyes.app.domain.usecase.** { *; }
+
+# ViewModels - ensure all are kept
+-keep class com.adygyes.app.presentation.viewmodel.** { *; }
+
+# Navigation Compose
+-keep class androidx.navigation.** { *; }
+-keepclassmembers class androidx.navigation.** { *; }
+
+# Kotlin Coroutines
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+
+# DataStore
+-keep class androidx.datastore.*.** { *; }
+
+# Keep BuildConfig
+-keep class com.adygyes.app.BuildConfig { *; }
+
+# Gson (if used)
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn sun.misc.**
+-keep class com.google.gson.** { *; }
+-keep class * implements com.google.gson.TypeAdapter
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Prevent obfuscation of Parcelable
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
+
+# Keep generic signatures for reflection
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses

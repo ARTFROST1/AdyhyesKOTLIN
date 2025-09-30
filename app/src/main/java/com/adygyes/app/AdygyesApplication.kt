@@ -55,15 +55,27 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
             val apiKey = BuildConfig.YANDEX_MAPKIT_API_KEY
             if (apiKey.isNotEmpty() && apiKey != "YOUR_API_KEY_HERE") {
                 MapKitFactory.setApiKey(apiKey)
-                Timber.d("MapKit initialized successfully with API key")
+                if (BuildConfig.DEBUG) {
+                    Timber.d("MapKit initialized successfully with API key")
+                } else {
+                    android.util.Log.d("AdygyesApp", "MapKit initialized")
+                }
             } else {
-                // Use a development/demo API key or handle gracefully
-                Timber.w("Yandex MapKit API key not configured. Please add YANDEX_MAPKIT_API_KEY to local.properties")
-                // For development, you can use a demo key or handle this case
-                // MapKitFactory.setApiKey("your-demo-key-here")
+                val errorMsg = "Yandex MapKit API key not configured. Please add YANDEX_MAPKIT_API_KEY to local.properties"
+                if (BuildConfig.DEBUG) {
+                    Timber.w(errorMsg)
+                } else {
+                    android.util.Log.w("AdygyesApp", errorMsg)
+                }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Failed to initialize MapKit")
+            val errorMsg = "Failed to initialize MapKit: ${e.message}"
+            if (BuildConfig.DEBUG) {
+                Timber.e(e, errorMsg)
+            } else {
+                android.util.Log.e("AdygyesApp", errorMsg, e)
+            }
+            // Don't crash the app, continue without MapKit
         }
     }
 
@@ -71,9 +83,21 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
      * Initialize Timber for logging in debug builds
      */
     private fun initializeTimber() {
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-            Timber.d("Adygyes Application Started")
+        try {
+            if (BuildConfig.DEBUG) {
+                Timber.plant(Timber.DebugTree())
+                Timber.d("Adygyes Application Started")
+            } else {
+                // For release, plant a simple tree or no-op tree
+                Timber.plant(object : Timber.Tree() {
+                    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+                        // No-op for release
+                    }
+                })
+            }
+        } catch (e: Exception) {
+            // Silently fail if Timber initialization fails
+            android.util.Log.e("AdygyesApp", "Failed to initialize Timber", e)
         }
     }
     
@@ -84,9 +108,19 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
         applicationScope.launch {
             try {
                 val currentLanguage = localeManager.currentLanguage.first()
-                Timber.d("Application initialized with language: $currentLanguage")
+                if (BuildConfig.DEBUG) {
+                    Timber.d("Application initialized with language: $currentLanguage")
+                } else {
+                    android.util.Log.d("AdygyesApp", "Language: $currentLanguage")
+                }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to initialize locale")
+                val errorMsg = "Failed to initialize locale: ${e.message}"
+                if (BuildConfig.DEBUG) {
+                    Timber.e(e, errorMsg)
+                } else {
+                    android.util.Log.e("AdygyesApp", errorMsg, e)
+                }
+                // Don't crash, use default locale
             }
         }
     }
