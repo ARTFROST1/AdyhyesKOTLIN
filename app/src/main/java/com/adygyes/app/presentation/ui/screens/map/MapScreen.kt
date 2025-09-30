@@ -400,8 +400,7 @@ fun MapScreen(
                         modifier = Modifier
                             .size(48.dp),
                         shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        shadowElevation = 8.dp
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                     ) {
                         IconButton(
                             onClick = { viewModel.toggleViewMode() },
@@ -457,8 +456,7 @@ fun MapScreen(
                         .weight(1f)
                         .fillMaxHeight(),
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 8.dp
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                 ) {
                     AnimatedContent(
                         targetState = isSearchFieldFocused,
@@ -615,8 +613,7 @@ fun MapScreen(
                         modifier = Modifier
                             .size(48.dp),
                         shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        shadowElevation = 8.dp
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                     ) {
                         IconButton(
                             onClick = onNavigateToSettings,
