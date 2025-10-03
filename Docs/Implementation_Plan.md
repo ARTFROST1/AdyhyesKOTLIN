@@ -41,8 +41,14 @@
 5. **Dynamic Clustering** - Automatic marker grouping based on zoom level with visual cluster indicators
 6. **Circular Image Markers** - 52dp markers with attraction photos and category fallbacks
 7. **Map Search** - Real-time search with debouncing and instant filtering
-8. **Map Controls** - Zoom, pan, user location centering with GPS integration
-9. **Edge-to-Edge Design** - Modern Android UI with proper WindowInsets handling
+8. **🆕 Interactive Search Results Panel** - Two-state panel (Expanded/Half) with drag gestures:
+   - **CompactAttractionCard** - 80dp compact cards with circular photos
+   - **Smart positioning** - Adapts to keyboard and BottomSheet states
+   - **Drag gestures** - Smooth switching between Expanded ↔ Half states
+   - **Map centering** - Automatic positioning of search results in upper screen area
+   - **BottomSheet integration** - Seamless interaction with attraction details
+9. **Map Controls** - Zoom, pan, user location centering with GPS integration
+10. **Edge-to-Edge Design** - Modern Android UI with proper WindowInsets handling
 
 #### POI Management:
 8. **Attraction Cards** - Detailed information display for each POI
