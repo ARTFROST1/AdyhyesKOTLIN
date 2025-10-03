@@ -26,7 +26,7 @@ fun MarkerOverlay(
     mapView: MapView?,
     attractions: List<Attraction>,
     selectedAttraction: Attraction?,
-    onMarkerClick: (Attraction, com.yandex.mapkit.mapview.MapView?) -> Unit,
+    onMarkerClick: (Attraction) -> Unit,
     modifier: Modifier = Modifier,
     enableClustering: Boolean = false,
     clusteringThreshold: Int = 5,
@@ -154,7 +154,7 @@ fun MarkerOverlay(
                                 screenPosition = screenPosition,
                                 onClick = {
                                     Timber.d("✅ Transparent marker clicked: ${attraction.name}")
-                                    onMarkerClick(attraction, mapView)
+                                    onMarkerClick(attraction)
                                 },
                                 isSelected = attraction.id == selectedAttraction?.id,
                                 animateAppearance = false,
@@ -177,7 +177,7 @@ fun MarkerOverlay(
                                     screenPosition = screenPosition,
                                     onClick = {
                                         Timber.d("✅ Visual marker clicked: ${attraction.name}")
-                                        onMarkerClick(attraction, mapView)
+                                        onMarkerClick(attraction)
                                     },
                                     isSelected = attraction.id == selectedAttraction?.id,
                                     animateAppearance = true,

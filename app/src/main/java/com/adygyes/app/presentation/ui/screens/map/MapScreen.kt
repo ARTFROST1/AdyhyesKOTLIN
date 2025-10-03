@@ -317,9 +317,9 @@ fun MapScreen(
                                 imageCacheManager = remember { 
                                     com.adygyes.app.data.local.cache.ImageCacheManager(context) 
                                 },
-                                onMarkerClick = { attraction, mapViewParam ->
+                                onMarkerClick = { attraction ->
                                     Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
-                                    viewModel.onMarkerClick(attraction, mapViewParam ?: mapView)
+                                    viewModel.onMarkerClick(attraction)
                                 },
                                 modifier = Modifier.fillMaxSize(),
                                 composeVisualMode = easterEggActive,
@@ -794,6 +794,7 @@ fun MapScreen(
                 attractions = filteredAttractions,
                 isVisible = showSearchPanel,
                 hasKeyboard = isKeyboardVisible,
+                isBottomSheetOpen = uiState.showAttractionDetail,
                 onAttractionClick = { attraction ->
                     viewModel.selectAttractionFromPanel(attraction, mapView)
                 },

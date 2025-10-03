@@ -33,6 +33,7 @@ fun SearchResultsPanel(
     attractions: List<Attraction>,
     isVisible: Boolean,
     hasKeyboard: Boolean,
+    isBottomSheetOpen: Boolean = false,
     onAttractionClick: (Attraction) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
@@ -56,12 +57,13 @@ fun SearchResultsPanel(
     val halfOffset = screenHeight * 0.6f // 60% down from top
     val hiddenOffset = screenHeight
     
-    // Update panel state based on props
-    LaunchedEffect(isVisible, hasKeyboard) {
+    // Update panel state based on props - only Expanded and Half states
+    LaunchedEffect(isVisible, hasKeyboard, isBottomSheetOpen) {
         panelState = when {
-            !isVisible -> SearchPanelState.Hidden
-            hasKeyboard -> SearchPanelState.Expanded
-            else -> SearchPanelState.Half
+            !isVisible -> SearchPanelState.Hidden // Only hide when search is completely dismissed
+            isBottomSheetOpen -> SearchPanelState.Half // Always Half when BottomSheet is open
+            hasKeyboard -> SearchPanelState.Expanded // Full expansion with keyboard
+            else -> SearchPanelState.Half // Default to half state (no hidden state during interaction)
         }
     }
     
@@ -104,22 +106,16 @@ fun SearchResultsPanel(
                     .pointerInput(Unit) {
                         detectDragGestures(
                             onDragEnd = {
-                                // Determine final state based on position relative to top area (search + filters)
-                                val relativePosition = (offsetY - totalTopHeightPx) / (screenHeight - totalTopHeightPx)
+                                // Only two states: Expanded and Half (no Hidden state during interaction)
+                                val relativePosition = (offsetY - totalTopHeightPx) / (halfOffset - totalTopHeightPx)
                                 panelState = when {
-                                    relativePosition < 0.1f -> SearchPanelState.Expanded  // Close to top area
-                                    relativePosition < 0.6f -> SearchPanelState.Half     // Middle area
-                                    else -> SearchPanelState.Hidden                      // Bottom area
-                                }
-                                
-                                // Call onDismiss when hiding
-                                if (panelState == SearchPanelState.Hidden) {
-                                    onDismiss()
+                                    relativePosition < 0.5f -> SearchPanelState.Expanded  // Upper half -> Expanded
+                                    else -> SearchPanelState.Half                         // Lower half -> Half
                                 }
                             }
                         ) { _, dragAmount ->
-                            // Update offset during drag - constrain to area below search + filters
-                            val newOffset = (offsetY + dragAmount.y).coerceIn(totalTopHeightPx, screenHeight)
+                            // Update offset during drag - constrain between Expanded and Half positions
+                            val newOffset = (offsetY + dragAmount.y).coerceIn(totalTopHeightPx, halfOffset)
                             offsetY = newOffset
                         }
                     },

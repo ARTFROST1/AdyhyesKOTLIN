@@ -246,8 +246,8 @@ class MapViewModel @Inject constructor(
     fun selectAttractionFromPanel(attraction: Attraction, mapView: com.yandex.mapkit.mapview.MapView?) {
         Timber.d("Selecting attraction from panel: ${attraction.name}")
         _selectedFromPanel.value = true
-        _showSearchPanel.value = false // Hide panel when selecting
-        _searchPanelHasKeyboard.value = false
+        // Keep panel visible in half state instead of hiding completely
+        _searchPanelHasKeyboard.value = false // Ensure it's in half state, not expanded
         
         // Center map on selected attraction
         centerMapOnAttraction(attraction, mapView)
@@ -388,6 +388,12 @@ class MapViewModel @Inject constructor(
     
     fun dismissAttractionDetail() {
         _uiState.update { it.copy(showAttractionDetail = false) }
+        
+        // Reset the flag when closing bottom sheet
+        if (_selectedFromPanel.value) {
+            _selectedFromPanel.value = false
+            // Panel is already visible in half state, no need to restore
+        }
     }
     
     fun filterByCategory(category: AttractionCategory?) {
@@ -805,13 +811,8 @@ class MapViewModel @Inject constructor(
      * Handle marker click from the new overlay system
      * This provides 100% reliable click detection
      */
-    fun onMarkerClick(attraction: Attraction, mapView: com.yandex.mapkit.mapview.MapView?) {
+    fun onMarkerClick(attraction: Attraction) {
         Timber.d("✅ Marker clicked via overlay: ${attraction.name}")
-        
-        // Center map on clicked attraction with same offset as selection from panel
-        centerMapOnAttraction(attraction, mapView)
-        
-        // Then show bottom sheet
         selectAttraction(attraction)
     }
     
