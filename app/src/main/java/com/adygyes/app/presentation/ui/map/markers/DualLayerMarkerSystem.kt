@@ -34,7 +34,7 @@ fun DualLayerMarkerSystem(
     attractions: List<Attraction>,
     selectedAttraction: Attraction?,
     imageCacheManager: ImageCacheManager,
-    onMarkerClick: (Attraction) -> Unit,
+    onMarkerClick: (Attraction, com.yandex.mapkit.mapview.MapView?) -> Unit,
     modifier: Modifier = Modifier,
     composeVisualMode: Boolean = false, // When true, render visual markers with Compose and skip native markers
     enableAppearAnimation: Boolean = true, // Enable smooth appearance animation for initial markers
@@ -187,7 +187,7 @@ fun TransparentClickOverlay(
     mapView: MapView?,
     attractions: List<Attraction>,
     selectedAttraction: Attraction?,
-    onMarkerClick: (Attraction) -> Unit,
+    onMarkerClick: (Attraction, com.yandex.mapkit.mapview.MapView?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Use existing MarkerOverlay with transparent markers

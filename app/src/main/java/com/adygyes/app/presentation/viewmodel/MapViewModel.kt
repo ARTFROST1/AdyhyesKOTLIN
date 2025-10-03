@@ -77,6 +77,16 @@ class MapViewModel @Inject constructor(
     private val _viewMode = MutableStateFlow(ViewMode.MAP)
     val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
     
+    // Search panel state
+    private val _showSearchPanel = MutableStateFlow(false)
+    val showSearchPanel: StateFlow<Boolean> = _showSearchPanel.asStateFlow()
+    
+    private val _searchPanelHasKeyboard = MutableStateFlow(false)
+    val searchPanelHasKeyboard: StateFlow<Boolean> = _searchPanelHasKeyboard.asStateFlow()
+    
+    private val _selectedFromPanel = MutableStateFlow(false)
+    val selectedFromPanel: StateFlow<Boolean> = _selectedFromPanel.asStateFlow()
+    
     val filteredAttractions: StateFlow<List<Attraction>> = combine(
         _attractions,
         _searchQuery,
@@ -228,6 +238,152 @@ class MapViewModel @Inject constructor(
         Timber.d("Selecting attraction: ${attraction.name}")
         _selectedAttraction.value = attraction
         _uiState.update { it.copy(showAttractionDetail = true) }
+    }
+    
+    /**
+     * Handle attraction selection from search panel
+     */
+    fun selectAttractionFromPanel(attraction: Attraction, mapView: com.yandex.mapkit.mapview.MapView?) {
+        Timber.d("Selecting attraction from panel: ${attraction.name}")
+        _selectedFromPanel.value = true
+        _showSearchPanel.value = false // Hide panel when selecting
+        _searchPanelHasKeyboard.value = false
+        
+        // Center map on selected attraction
+        centerMapOnAttraction(attraction, mapView)
+        
+        // Then show bottom sheet
+        selectAttraction(attraction)
+    }
+    
+    /**
+     * Center map on specific attraction with animation
+     */
+    fun centerMapOnAttraction(attraction: Attraction, mapView: com.yandex.mapkit.mapview.MapView?) {
+        mapView?.let { map ->
+            viewModelScope.launch {
+                try {
+                    // Slight offset to show marker above center (shift center down a bit)
+                    val latOffset = 0.001 // Move center down by ~100m to show marker above center
+                    val targetPoint = com.yandex.mapkit.geometry.Point(
+                        attraction.location.latitude - latOffset, // Center slightly below marker
+                        attraction.location.longitude
+                    )
+                    val cameraPosition = com.yandex.mapkit.map.CameraPosition(
+                        targetPoint,
+                        17.0f, // Zoom level for good detail
+                        0.0f,
+                        0.0f
+                    )
+                    
+                    // Smooth animation to the attraction
+                    map.map.move(
+                        cameraPosition,
+                        com.yandex.mapkit.Animation(com.yandex.mapkit.Animation.Type.SMOOTH, 1.0f),
+                        null
+                    )
+                    
+                    Timber.d("🎯 Centering map on: ${attraction.name} at ${attraction.location.latitude}, ${attraction.location.longitude}")
+                } catch (e: Exception) {
+                    Timber.e(e, "❌ Error centering map on attraction")
+                }
+            }
+        }
+    }
+    
+    /**
+     * Center map on search results with proper bounds for upper half visibility
+     */
+    fun centerMapOnSearchResults(mapView: com.yandex.mapkit.mapview.MapView?) {
+        mapView?.let { map ->
+            viewModelScope.launch {
+                try {
+                    val currentAttractions = filteredAttractions.value
+                    if (currentAttractions.isEmpty()) return@launch
+                    
+                    if (currentAttractions.size == 1) {
+                        // Single result - center on it with offset for upper half
+                        val attraction = currentAttractions.first()
+                        
+                        // Offset the center down so the attraction appears in upper part of screen
+                        val latOffset = 0.005 // Move center down by ~500m to show attraction in upper area
+                        val targetPoint = com.yandex.mapkit.geometry.Point(
+                            attraction.location.latitude - latOffset, // Move center DOWN
+                            attraction.location.longitude
+                        )
+                        
+                        // Position in upper third of visible area (accounting for bottom panel)
+                        val cameraPosition = com.yandex.mapkit.map.CameraPosition(
+                            targetPoint,
+                            15.0f, // Slightly zoomed out for context
+                            0.0f,
+                            0.0f
+                        )
+                        
+                        map.map.move(
+                            cameraPosition,
+                            com.yandex.mapkit.Animation(com.yandex.mapkit.Animation.Type.SMOOTH, 1.0f),
+                            null
+                        )
+                    } else {
+                        // Multiple results - fit all in upper half of screen
+                        val points = currentAttractions.map { attraction ->
+                            com.yandex.mapkit.geometry.Point(
+                                attraction.location.latitude,
+                                attraction.location.longitude
+                            )
+                        }
+                        
+                        // Calculate bounds
+                        val minLat = points.minOf { it.latitude }
+                        val maxLat = points.maxOf { it.latitude }
+                        val minLon = points.minOf { it.longitude }
+                        val maxLon = points.maxOf { it.longitude }
+                        
+                        // Add padding and offset for upper positioning
+                        val latPadding = (maxLat - minLat) * 0.3 // 30% padding
+                        val lonPadding = (maxLon - minLon) * 0.2 // 20% padding
+                        
+                        // Calculate center point and shift DOWN to show all points in upper area
+                        val centerLat = (minLat + maxLat) / 2.0
+                        val centerLon = (minLon + maxLon) / 2.0
+                        
+                        // Shift center DOWN so all attractions appear in upper half of screen
+                        val latSpanWithPadding = (maxLat - minLat) + latPadding * 2
+                        val downwardShift = latSpanWithPadding * 0.25 // Shift center down by 25% of total span
+                        val adjustedCenterLat = centerLat - downwardShift
+                        
+                        // Calculate appropriate zoom level
+                        val latSpan = maxLat - minLat + latPadding * 2
+                        val lonSpan = maxLon - minLon + lonPadding * 2
+                        val maxSpan = maxOf(latSpan, lonSpan)
+                        val zoom = when {
+                            maxSpan > 0.1 -> 10.0f
+                            maxSpan > 0.05 -> 12.0f
+                            maxSpan > 0.01 -> 14.0f
+                            else -> 15.0f
+                        }
+                        
+                        val cameraPosition = com.yandex.mapkit.map.CameraPosition(
+                            com.yandex.mapkit.geometry.Point(adjustedCenterLat, centerLon),
+                            zoom,
+                            0.0f,
+                            0.0f
+                        )
+                        
+                        map.map.move(
+                            cameraPosition,
+                            com.yandex.mapkit.Animation(com.yandex.mapkit.Animation.Type.SMOOTH, 1.5f),
+                            null
+                        )
+                    }
+                    
+                    Timber.d("🎯 Centered map on ${currentAttractions.size} search results")
+                } catch (e: Exception) {
+                    Timber.e(e, "❌ Error centering map on search results")
+                }
+            }
+        }
     }
     
     fun dismissAttractionDetail() {
@@ -520,6 +676,14 @@ class MapViewModel @Inject constructor(
     
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
+        
+        // Show panel when typing in map mode
+        if (query.isNotEmpty() && viewMode.value == ViewMode.MAP) {
+            _showSearchPanel.value = true
+        } else if (query.isEmpty()) {
+            _showSearchPanel.value = false
+            _searchPanelHasKeyboard.value = false
+        }
     }
     
     fun search() {
@@ -544,7 +708,58 @@ class MapViewModel @Inject constructor(
     fun clearSelection() {
         Timber.d("Clearing attraction selection")
         _selectedAttraction.value = null
+        _selectedFromPanel.value = false
         _uiState.update { it.copy(showAttractionDetail = false) }
+        
+        // If we selected from panel, show panel again when bottom sheet closes
+        if (_selectedFromPanel.value && _searchQuery.value.isNotEmpty()) {
+            _showSearchPanel.value = true
+        }
+    }
+    
+    /**
+     * Update search panel visibility
+     */
+    fun setSearchPanelVisibility(visible: Boolean) {
+        _showSearchPanel.value = visible
+        if (!visible) {
+            _searchPanelHasKeyboard.value = false
+        }
+    }
+    
+    /**
+     * Update keyboard state for search panel
+     */
+    fun setSearchPanelKeyboardState(hasKeyboard: Boolean) {
+        _searchPanelHasKeyboard.value = hasKeyboard
+    }
+    
+    /**
+     * Handle search field focus change
+     */
+    fun onSearchFieldFocusChanged(isFocused: Boolean) {
+        if (isFocused && viewMode.value == ViewMode.MAP) {
+            _showSearchPanel.value = true
+            _searchPanelHasKeyboard.value = true
+        } else if (!isFocused) {
+            _searchPanelHasKeyboard.value = false
+            // When focus is lost (keyboard hidden), collapse to half and center map
+            if (_searchQuery.value.isNotEmpty()) {
+                // Keep panel visible in half state - map centering will be handled from UI
+                _showSearchPanel.value = true
+            } else {
+                _showSearchPanel.value = false
+            }
+        }
+    }
+    
+    /**
+     * Handle search query clear - hide panel completely
+     */
+    fun clearSearchQuery() {
+        _searchQuery.value = ""
+        _showSearchPanel.value = false
+        _searchPanelHasKeyboard.value = false
     }
     
     fun navigateToAttractionById(attractionId: String) {
@@ -590,8 +805,13 @@ class MapViewModel @Inject constructor(
      * Handle marker click from the new overlay system
      * This provides 100% reliable click detection
      */
-    fun onMarkerClick(attraction: Attraction) {
+    fun onMarkerClick(attraction: Attraction, mapView: com.yandex.mapkit.mapview.MapView?) {
         Timber.d("✅ Marker clicked via overlay: ${attraction.name}")
+        
+        // Center map on clicked attraction with same offset as selection from panel
+        centerMapOnAttraction(attraction, mapView)
+        
+        // Then show bottom sheet
         selectAttraction(attraction)
     }
     

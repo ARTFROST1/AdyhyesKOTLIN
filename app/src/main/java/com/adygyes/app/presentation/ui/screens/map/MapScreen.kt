@@ -5,11 +5,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -33,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalFocusManager
 // import removed: AndroidView no longer needed in overlay mode
@@ -49,6 +47,9 @@ import com.adygyes.app.presentation.ui.components.ViewMode
 import com.adygyes.app.presentation.ui.components.SearchResultsHeader
 import com.adygyes.app.presentation.ui.components.UnifiedCategoryCarousel
 import com.adygyes.app.presentation.ui.components.DataUpdateOverlay
+import com.adygyes.app.presentation.ui.components.SearchResultsPanel
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.adygyes.app.presentation.ui.map.markers.DualLayerMarkerSystem
 import com.adygyes.app.presentation.ui.map.markers.MarkerOverlay
 import com.adygyes.app.presentation.ui.map.markers.VisualMarkerRegistry
@@ -111,6 +112,11 @@ fun MapScreen(
     val listViewMode by viewModel.listViewMode.collectAsStateWithLifecycle()
     val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
     
+    // Search panel states
+    val showSearchPanel by viewModel.showSearchPanel.collectAsStateWithLifecycle()
+    val searchPanelHasKeyboard by viewModel.searchPanelHasKeyboard.collectAsStateWithLifecycle()
+    val selectedFromPanel by viewModel.selectedFromPanel.collectAsStateWithLifecycle()
+    
     // UI State
     var showFilterSheet by remember { mutableStateOf(false) }
     
@@ -119,6 +125,17 @@ fun MapScreen(
     
     // Search field focus state for expandable search
     var isSearchFieldFocused by remember { mutableStateOf(false) }
+    
+    // Keyboard controller for managing keyboard state
+    val keyboardController = LocalSoftwareKeyboardController.current
+    
+    // Track keyboard visibility - simplified approach
+    var isKeyboardVisible by remember { mutableStateOf(false) }
+    
+    // Update ViewModel when keyboard state changes
+    LaunchedEffect(isKeyboardVisible) {
+        viewModel.setSearchPanelKeyboardState(isKeyboardVisible)
+    }
     
     // Auto-show carousel in LIST mode
     LaunchedEffect(viewMode) {
@@ -300,9 +317,9 @@ fun MapScreen(
                                 imageCacheManager = remember { 
                                     com.adygyes.app.data.local.cache.ImageCacheManager(context) 
                                 },
-                                onMarkerClick = { attraction ->
+                                onMarkerClick = { attraction, mapViewParam ->
                                     Timber.d("🎯 DUAL-LAYER SYSTEM: Clicked ${attraction.name}")
-                                    viewModel.onMarkerClick(attraction)
+                                    viewModel.onMarkerClick(attraction, mapViewParam ?: mapView)
                                 },
                                 modifier = Modifier.fillMaxSize(),
                                 composeVisualMode = easterEggActive,
@@ -518,8 +535,31 @@ fun MapScreen(
                                         }
                                     },
                                     placeholder = stringResource(R.string.search_attractions),
-                                    onCloseClick = { isSearchFieldFocused = false },
-                                    onFocusChange = { focused -> isSearchFieldFocused = focused },
+                                    onCloseClick = { 
+                                        isSearchFieldFocused = false
+                                        keyboardController?.hide()
+                                        isKeyboardVisible = false
+                                        viewModel.clearSearchQuery() // Use new method to clear and hide
+                                    },
+                                    onSearchComplete = {
+                                        // Handle Enter key press - center map on results
+                                        if (searchQuery.isNotEmpty()) {
+                                            viewModel.centerMapOnSearchResults(mapView)
+                                        }
+                                    },
+                                    onFocusChange = { focused -> 
+                                        isSearchFieldFocused = focused
+                                        viewModel.onSearchFieldFocusChanged(focused)
+                                        if (focused && viewMode == ViewMode.MAP) {
+                                            isKeyboardVisible = true
+                                        } else if (!focused) {
+                                            isKeyboardVisible = false
+                                            // When focus is lost and we have search results, center map
+                                            if (searchQuery.isNotEmpty()) {
+                                                viewModel.centerMapOnSearchResults(mapView)
+                                            }
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .fillMaxHeight()
@@ -569,7 +609,15 @@ fun MapScreen(
                                     },
                                     hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
                                     isCarouselVisible = showCategoryCarousel,
-                                    onFocusChange = { focused -> isSearchFieldFocused = focused },
+                                    onFocusChange = { focused -> 
+                                        isSearchFieldFocused = focused
+                                        viewModel.onSearchFieldFocusChanged(focused)
+                                        if (focused && viewMode == ViewMode.MAP) {
+                                            isKeyboardVisible = true
+                                        } else if (!focused) {
+                                            isKeyboardVisible = false
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .fillMaxHeight()
@@ -740,6 +788,22 @@ fun MapScreen(
             }
         }
         
+        // Search Results Panel for MAP mode
+        if (viewMode == ViewMode.MAP) {
+            SearchResultsPanel(
+                attractions = filteredAttractions,
+                isVisible = showSearchPanel,
+                hasKeyboard = isKeyboardVisible,
+                onAttractionClick = { attraction ->
+                    viewModel.selectAttractionFromPanel(attraction, mapView)
+                },
+                onDismiss = {
+                    viewModel.setSearchPanelVisibility(false)
+                    keyboardController?.hide()
+                }
+            )
+        }
+        
         // Data update overlay - показывается при обновлении версии данных
         DataUpdateOverlay(
             isVisible = preloadState?.value?.dataUpdating == true,
@@ -852,6 +916,7 @@ private fun ExpandedSearchTextField(
     placeholder: String,
     onCloseClick: () -> Unit,
     onFocusChange: (Boolean) -> Unit = {},
+    onSearchComplete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -870,6 +935,15 @@ private fun ExpandedSearchTextField(
             .onFocusChanged { focusState ->
                 onFocusChange(focusState.isFocused)
             },
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Search
+        ),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                focusManager.clearFocus()
+                onSearchComplete()
+            }
+        ),
         textStyle = MaterialTheme.typography.bodyMedium.copy(
             textAlign = TextAlign.Start
         ),
@@ -887,17 +961,20 @@ private fun ExpandedSearchTextField(
             )
         },
         trailingIcon = {
-            // Close button with dual function: clear text and remove focus
+            // Single close button with smart behavior
             IconButton(
                 onClick = {
-                    onValueChange("") // Clear text
-                    focusManager.clearFocus() // Remove focus from input field
-                    onCloseClick() // Close expanded mode
+                    if (value.isNotEmpty()) {
+                        onValueChange("") // Clear text if there's text
+                    } else {
+                        focusManager.clearFocus() // Remove focus if no text
+                        onCloseClick() // Close expanded mode
+                    }
                 }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.common_close),
+                    imageVector = if (value.isNotEmpty()) Icons.Default.Clear else Icons.Default.Close,
+                    contentDescription = if (value.isNotEmpty()) "Очистить" else stringResource(R.string.common_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
