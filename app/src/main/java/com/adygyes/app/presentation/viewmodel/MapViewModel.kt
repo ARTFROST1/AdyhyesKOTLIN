@@ -87,6 +87,19 @@ class MapViewModel @Inject constructor(
     private val _selectedFromPanel = MutableStateFlow(false)
     val selectedFromPanel: StateFlow<Boolean> = _selectedFromPanel.asStateFlow()
     
+    // Navigation source tracking for DetailScreen -> Map navigation
+    private val _selectedFromDetailScreen = MutableStateFlow(false)
+    val selectedFromDetailScreen: StateFlow<Boolean> = _selectedFromDetailScreen.asStateFlow()
+    
+    private val _returnToDetailAttractionId = MutableStateFlow<String?>(null)
+    val returnToDetailAttractionId: StateFlow<String?> = _returnToDetailAttractionId.asStateFlow()
+    
+    private val _shouldReturnToDetail = MutableStateFlow(false)
+    val shouldReturnToDetail: StateFlow<Boolean> = _shouldReturnToDetail.asStateFlow()
+    
+    private val _attractionIdToShowOnMap = MutableStateFlow<String?>(null)
+    val attractionIdToShowOnMap: StateFlow<String?> = _attractionIdToShowOnMap.asStateFlow()
+    
     val filteredAttractions: StateFlow<List<Attraction>> = combine(
         _attractions,
         _searchQuery,
@@ -257,6 +270,26 @@ class MapViewModel @Inject constructor(
     }
     
     /**
+     * Handle attraction selection from DetailScreen "Show on Map" button
+     * This will open map, center on attraction, and should return to DetailScreen on close
+     */
+    fun selectAttractionFromDetailScreen(attraction: Attraction, mapView: com.yandex.mapkit.mapview.MapView?) {
+        Timber.d("Selecting attraction from DetailScreen: ${attraction.name}")
+        _selectedFromDetailScreen.value = true
+        _returnToDetailAttractionId.value = attraction.id
+        _shouldReturnToDetail.value = false // Reset flag, will be set on dismiss
+        
+        // Switch to map view
+        _viewMode.value = ViewMode.MAP
+        
+        // Center map on selected attraction
+        centerMapOnAttraction(attraction, mapView)
+        
+        // Then show bottom sheet
+        selectAttraction(attraction)
+    }
+    
+    /**
      * Center map on specific attraction with animation
      */
     fun centerMapOnAttraction(attraction: Attraction, mapView: com.yandex.mapkit.mapview.MapView?) {
@@ -271,7 +304,7 @@ class MapViewModel @Inject constructor(
                     )
                     val cameraPosition = com.yandex.mapkit.map.CameraPosition(
                         targetPoint,
-                        17.0f, // Zoom level for good detail
+                        15.0f, // Zoom level - more distant view with good context
                         0.0f,
                         0.0f
                     )
@@ -394,6 +427,37 @@ class MapViewModel @Inject constructor(
             _selectedFromPanel.value = false
             // Panel is already visible in half state, no need to restore
         }
+        
+        // Check if we need to return to DetailScreen
+        if (_selectedFromDetailScreen.value) {
+            _selectedFromDetailScreen.value = false
+            // Trigger return to DetailScreen
+            _shouldReturnToDetail.value = true
+            Timber.d("📍 Bottom sheet closed, triggering return to DetailScreen")
+        }
+    }
+    
+    /**
+     * Clear the return to detail screen flag after navigation completed
+     */
+    fun clearReturnToDetail() {
+        _returnToDetailAttractionId.value = null
+        _shouldReturnToDetail.value = false
+    }
+    
+    /**
+     * Set attraction ID to show on map when navigating from DetailScreen
+     */
+    fun setAttractionToShowOnMap(attractionId: String) {
+        _attractionIdToShowOnMap.value = attractionId
+        Timber.d("📍 Set attraction to show on map: $attractionId")
+    }
+    
+    /**
+     * Clear attraction to show on map after displaying
+     */
+    fun clearAttractionToShowOnMap() {
+        _attractionIdToShowOnMap.value = null
     }
     
     fun filterByCategory(category: AttractionCategory?) {

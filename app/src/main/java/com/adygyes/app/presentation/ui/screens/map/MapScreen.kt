@@ -99,27 +99,24 @@ fun MapScreen(
     val mapHostController = LocalMapHostController.current
     val mapView: MapView? = mapHostController?.mapView
     val preloadManager = mapHostController?.preloadManager
-    
-    // State collection
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val attractions by viewModel.attractions.collectAsStateWithLifecycle()
     val filteredAttractions by viewModel.filteredAttractions.collectAsStateWithLifecycle()
     val selectedAttraction by viewModel.selectedAttraction.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
+    val returnToDetailAttractionId by viewModel.returnToDetailAttractionId.collectAsStateWithLifecycle()
+    val shouldReturnToDetail by viewModel.shouldReturnToDetail.collectAsStateWithLifecycle()
+    val attractionIdToShowOnMap by viewModel.attractionIdToShowOnMap.collectAsStateWithLifecycle()
     val selectedCategoryFilter by viewModel.selectedCategoryFilter.collectAsStateWithLifecycle()
     val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()
     val listViewMode by viewModel.listViewMode.collectAsStateWithLifecycle()
     val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
-    
     // Search panel states
     val showSearchPanel by viewModel.showSearchPanel.collectAsStateWithLifecycle()
     val searchPanelHasKeyboard by viewModel.searchPanelHasKeyboard.collectAsStateWithLifecycle()
     val selectedFromPanel by viewModel.selectedFromPanel.collectAsStateWithLifecycle()
     
     // UI State
-    var showFilterSheet by remember { mutableStateOf(false) }
-    
     // Unified state for category carousel - always visible in LIST mode, toggleable in MAP mode
     var showCategoryCarousel by remember { mutableStateOf(false) }
     
@@ -165,6 +162,30 @@ fun MapScreen(
             Timber.d("🎯 Selected attraction: ${selectedAttraction?.name} (ID: ${selectedAttraction?.id})")
         } else {
             Timber.d("🎯 Selected attraction cleared")
+        }
+    }
+    
+    // Handle return to DetailScreen when bottom sheet is closed
+    LaunchedEffect(shouldReturnToDetail, returnToDetailAttractionId) {
+        val attractionId = returnToDetailAttractionId // Save to local variable for smart cast
+        if (shouldReturnToDetail && attractionId != null) {
+            Timber.d("📍 Returning to DetailScreen for attraction: $attractionId")
+            onAttractionClick(attractionId)
+            viewModel.clearReturnToDetail()
+        }
+    }
+    
+    // Handle showing attraction when navigated from DetailScreen
+    LaunchedEffect(attractionIdToShowOnMap, mapView, filteredAttractions.isNotEmpty(), viewMode) {
+        if (attractionIdToShowOnMap != null && mapView != null && filteredAttractions.isNotEmpty()) {
+            val attraction = filteredAttractions.find { it.id == attractionIdToShowOnMap }
+            if (attraction != null) {
+                Timber.d("🗺️ Showing attraction from DetailScreen: ${attraction.name}, current viewMode: $viewMode")
+                // selectAttractionFromDetailScreen will handle switching to MAP mode
+                viewModel.selectAttractionFromDetailScreen(attraction, mapView)
+                delay(50) // Small delay to ensure state updates
+                viewModel.clearAttractionToShowOnMap() // Clear after showing
+            }
         }
     }
     
@@ -347,7 +368,10 @@ fun MapScreen(
                             modifier = Modifier.fillMaxSize(),
                             isLoading = uiState.isLoading,
                             searchQuery = searchQuery,
-                            selectedCategories = selectedCategories.map { it.displayName }.toSet(),
+                            selectedCategories = when (val filter = selectedCategoryFilter) {
+                                is MapViewModel.CategoryFilter.Category -> setOf(filter.category.displayName)
+                                else -> emptySet()
+                            },
                             showResultCount = false, // Count is shown in unified carousel
                             viewMode = if (listViewMode == MapViewModel.ListViewMode.LIST) {
                                 com.adygyes.app.presentation.ui.components.ListViewMode.LIST
@@ -607,7 +631,7 @@ fun MapScreen(
                                     onFilterClick = { 
                                         showCategoryCarousel = !showCategoryCarousel
                                     },
-                                    hasActiveFilters = selectedCategories.isNotEmpty() || selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
+                                    hasActiveFilters = selectedCategoryFilter !is MapViewModel.CategoryFilter.All,
                                     isCarouselVisible = showCategoryCarousel,
                                     onFocusChange = { focused -> 
                                         isSearchFieldFocused = focused
@@ -684,7 +708,10 @@ fun MapScreen(
             UnifiedCategoryCarousel(
                 attractionsCount = filteredAttractions.size,
                 searchQuery = searchQuery,
-                selectedCategories = selectedCategories.map { it.displayName }.toSet(),
+                selectedCategories = when (val filter = selectedCategoryFilter) {
+                    is MapViewModel.CategoryFilter.Category -> setOf(filter.category.displayName)
+                    else -> emptySet()
+                },
                 selectedFilter = selectedCategoryFilter,
                 onFilterSelected = { filter ->
                     viewModel.selectCategoryFilter(filter)
@@ -813,19 +840,6 @@ fun MapScreen(
         )
     }
     
-    // Filter bottom sheet
-    if (showFilterSheet) {
-        CategoryFilterBottomSheet(
-            selectedCategories = selectedCategories,
-            onCategoryToggle = { viewModel.toggleCategory(it) },
-            onApply = {
-                showFilterSheet = false
-                viewModel.search()
-            },
-            onDismiss = { showFilterSheet = false },
-            onClearAll = { viewModel.clearFilters() }
-        )
-    }
 }
 
 /**

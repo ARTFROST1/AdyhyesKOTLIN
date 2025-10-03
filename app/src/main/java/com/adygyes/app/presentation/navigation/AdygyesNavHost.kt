@@ -4,12 +4,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.adygyes.app.presentation.ui.screens.splash.SplashScreen
 import com.adygyes.app.presentation.ui.screens.map.MapScreen
 import com.adygyes.app.presentation.ui.screens.search.SearchScreen
@@ -19,6 +22,7 @@ import com.adygyes.app.presentation.ui.screens.detail.AttractionDetailScreen
 import com.adygyes.app.presentation.ui.screens.about.AboutScreen
 import com.adygyes.app.presentation.ui.screens.privacy.PrivacyPolicyScreen
 import com.adygyes.app.presentation.ui.screens.terms.TermsOfUseScreen
+import com.adygyes.app.presentation.viewmodel.MapViewModel
 
 /**
  * Main navigation host for Adygyes app
@@ -46,7 +50,7 @@ fun AdygyesNavHost(
         }
         
         // Main Map Screen
-        composable(NavDestination.Map.route) {
+        composable(NavDestination.Map.route) { backStackEntry ->
             MapScreen(
                 onAttractionClick = { attractionId ->
                     navController.navigate(NavDestination.AttractionDetail.createRoute(attractionId))
@@ -107,6 +111,13 @@ fun AdygyesNavHost(
             )
         ) { backStackEntry ->
             val attractionId = backStackEntry.arguments?.getString("attractionId") ?: ""
+            
+            // Get MapViewModel from MapScreen's navigation entry
+            val mapBackStackEntry = remember(navController) {
+                navController.getBackStackEntry(NavDestination.Map.route)
+            }
+            val mapViewModel: MapViewModel = hiltViewModel(mapBackStackEntry)
+            
             AttractionDetailScreen(
                 attractionId = attractionId,
                 onBackClick = { navController.popBackStack() },
@@ -115,6 +126,20 @@ fun AdygyesNavHost(
                 },
                 onShareClick = {
                     // Will be implemented with share functionality
+                },
+                // Always show "Show on Map" button
+                onShowOnMap = {
+                    // Set attraction ID in MapViewModel
+                    mapViewModel.setAttractionToShowOnMap(attractionId)
+                    
+                    // Navigate to map and show this attraction
+                    navController.navigate(NavDestination.Map.route) {
+                        // Pop back to map (remove DetailScreen from backstack)
+                        popUpTo(NavDestination.Map.route) {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }

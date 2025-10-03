@@ -50,6 +50,7 @@ fun AttractionDetailScreen(
     onBackClick: () -> Unit,
     onBuildRoute: () -> Unit,
     onShareClick: () -> Unit,
+    onShowOnMap: (() -> Unit)? = null,
     viewModel: AttractionDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -369,6 +370,23 @@ fun AttractionDetailScreen(
                                 .padding(Dimensions.PaddingLarge),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            // Show on Map button (only in list mode)
+                            if (onShowOnMap != null) {
+                                OutlinedButton(
+                                    onClick = onShowOnMap,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Map,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.detail_show_on_map))
+                                }
+                            }
+                            
+                            // Get Directions button
                             Button(
                                 onClick = onBuildRoute,
                                 modifier = Modifier.weight(1f)

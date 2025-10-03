@@ -55,6 +55,7 @@
     <string name="detail_amenities">Удобства</string>
     <string name="detail_tags">Теги</string>
     <string name="detail_get_directions">Построить маршрут</string>
+    <string name="detail_show_on_map">Показать на карте</string>
     <string name="detail_how_to_get">Как добраться</string>
     <string name="detail_contacts">Контакты</string>
     <string name="detail_rating">Рейтинг</string>
