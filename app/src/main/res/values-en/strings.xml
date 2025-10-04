@@ -51,19 +51,17 @@
     <string name="detail_price">Price</string>
     <string name="detail_contact_info">Contact Information</string>
     <string name="detail_amenities">Amenities</string>
-    <string name="detail_tags">Tags</string>
-    <string name="detail_get_directions">Get Directions</string>
+    <string name="detail_get_directions">Route</string>
     <string name="detail_how_to_get">How to get there</string>
     <string name="detail_contacts">Contacts</string>
     <string name="detail_rating">Rating</string>
     <string name="detail_reviews">Reviews</string>
-    <string name="detail_photos">Photos</string>
+    <string name="detail_show_on_map">Map</string>
     <string name="detail_build_route">Build route</string>
     <string name="detail_share">Share</string>
     <string name="detail_add_to_favorites">Add to favorites</string>
     <string name="detail_remove_from_favorites">Remove from favorites</string>
     <string name="detail_route">Route</string>
-    <string name="detail_details">Details</string>
     <string name="detail_address">Address</string>
     
     <!-- Content Descriptions -->

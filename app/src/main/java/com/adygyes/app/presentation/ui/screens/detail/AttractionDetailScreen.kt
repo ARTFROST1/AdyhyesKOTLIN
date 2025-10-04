@@ -1,6 +1,7 @@
 package com.adygyes.app.presentation.ui.screens.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
@@ -125,7 +126,7 @@ fun AttractionDetailScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(bottom = 80.dp)
+                    contentPadding = PaddingValues(bottom = 40.dp)
                 ) {
                     // Photo Gallery
                     item {
@@ -203,14 +204,14 @@ fun AttractionDetailScreen(
                                         Text(
                                             text = address,
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         attraction.location.directions?.let { directions ->
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
                                                 text = directions,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                color = MaterialTheme.colorScheme.onSurface
                                             )
                                         }
                                     }
@@ -226,7 +227,7 @@ fun AttractionDetailScreen(
                                         Text(
                                             text = hours,
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 )
@@ -241,7 +242,7 @@ fun AttractionDetailScreen(
                                         Text(
                                             text = price,
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 )
@@ -261,13 +262,13 @@ fun AttractionDetailScreen(
                                                             imageVector = Icons.Default.Phone,
                                                             contentDescription = null,
                                                             modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                                            tint = MaterialTheme.colorScheme.onSurface
                                                         )
                                                         Spacer(modifier = Modifier.width(8.dp))
                                                         Text(
                                                             text = phone,
                                                             style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                            color = MaterialTheme.colorScheme.onSurface
                                                         )
                                                     }
                                                 }
@@ -277,13 +278,13 @@ fun AttractionDetailScreen(
                                                             imageVector = Icons.Default.Email,
                                                             contentDescription = null,
                                                             modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                                            tint = MaterialTheme.colorScheme.onSurface
                                                         )
                                                         Spacer(modifier = Modifier.width(8.dp))
                                                         Text(
                                                             text = email,
                                                             style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                            color = MaterialTheme.colorScheme.onSurface
                                                         )
                                                     }
                                                 }
@@ -293,13 +294,13 @@ fun AttractionDetailScreen(
                                                             imageVector = Icons.Default.Language,
                                                             contentDescription = null,
                                                             modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                                            tint = MaterialTheme.colorScheme.onSurface
                                                         )
                                                         Spacer(modifier = Modifier.width(8.dp))
                                                         Text(
                                                             text = website,
                                                             style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                            color = MaterialTheme.colorScheme.onSurface
                                                         )
                                                     }
                                                 }
@@ -430,7 +431,11 @@ private fun InfoCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
         )
     ) {
         Row(
@@ -443,14 +448,14 @@ private fun InfoCard(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                tint = MaterialTheme.colorScheme.onSurface
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 content()

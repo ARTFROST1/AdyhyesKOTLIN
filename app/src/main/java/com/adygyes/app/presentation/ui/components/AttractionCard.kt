@@ -125,6 +125,7 @@ fun AttractionCard(
                         onClick = onFavoriteClick,
                         modifier = Modifier
                             .size(if (compactForFavorites) 44.dp else 40.dp)
+                            .offset(x = 8.dp, y = (-8).dp)
                     ) {
                         AnimatedContent(
                             targetState = attraction.isFavorite,
@@ -177,7 +178,7 @@ fun AttractionCard(
                     if (compactForFavorites) {
                         CategoryChip(
                             category = attraction.category,
-                            modifier = Modifier.padding(bottom = 3.dp)
+                            modifier = Modifier.padding(bottom = 2.dp)
                         )
                     }
                     
