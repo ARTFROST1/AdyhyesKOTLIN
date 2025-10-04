@@ -139,6 +139,10 @@ fun AttractionDetailScreen(
                             onImageClick = { index ->
                                 selectedPhotoIndex = index
                                 showPhotoViewer = true
+                            },
+                            onFullscreenClick = {
+                                selectedPhotoIndex = 0
+                                showPhotoViewer = true
                             }
                         )
                     }

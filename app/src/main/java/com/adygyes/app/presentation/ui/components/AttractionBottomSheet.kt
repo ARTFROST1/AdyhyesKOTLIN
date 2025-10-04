@@ -61,7 +61,20 @@ fun AttractionBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp),
-                onImageClick = { onNavigateToDetail() }
+                onImageClick = { 
+                    // Close bottom sheet immediately and navigate
+                    scope.launch {
+                        sheetState.hide()
+                        onNavigateToDetail()
+                    }
+                },
+                onFullscreenClick = {
+                    // Close bottom sheet immediately and navigate
+                    scope.launch {
+                        sheetState.hide()
+                        onNavigateToDetail()
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
