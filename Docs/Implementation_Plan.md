@@ -8,8 +8,12 @@
 **Latest Update:** 🚀 ВСЕ ЭТАПЫ ЗАВЕРШЕНЫ! Приложение полностью готово к публикации в Google Play Store!
 
 **🆕 Последние улучшения (05.10.2025):**
+- 🎨📦 **Settings Overlay Architecture** - Полный архитектурный рефакторинг Settings навигации
+  - MapScreenContainer управляет Map/Settings/About/Privacy/Terms как overlay слоями
+  - Settings работает ТОЧНО как List mode - выезжает поверх карты через AnimatedContent
+  - Убраны Navigation routes - теперь внутренняя логика контейнера
+  - Идентичные анимации с Map/List toggle (300ms defaults, не tween)
 - 🔒 **Navigation Double-Click Protection** - Защита от двойного клика на кнопках "Назад" во всех настроечных экранах
-- 🎨 **Smooth Navigation Animations** - 250мс slide transitions с FastOutSlowInEasing для Settings/About/Privacy/Terms
 - 🐛 **Critical Bug Fix** - Исправлен баг исчезновения UI при быстром двойном клике (изначально подозревали Map/List toggle)  
 
 > Note: User-facing app name is now "AdygGIS". Internal package and code identifiers remain "Adygyes" to avoid breaking changes.
@@ -71,14 +75,17 @@
 18. **Theme System** - Light/Dark/System theme support with Material Design 3
 19. **View Modes** - Map/List toggle with smooth animations and state persistence
 20. **Advanced Search** - Real-time search with category filters and result highlighting
-21. **🔒 Navigation Protection** - Double-click prevention on all back buttons (500ms lock during transitions)
-22. **🎨 Smooth Navigation** - Professional 250ms slide animations for Settings and related screens
-23. **Settings Screens Suite:**
-    - **SettingsScreen** - Main app configuration hub
-    - **AboutScreen** - App information and version details
-    - **PrivacyPolicyScreen** - Privacy policy and data handling
-    - **TermsOfUseScreen** - Terms and conditions
-    - All with identical protection and animation patterns
+21. **🔒 Navigation Protection** - Double-click prevention with isNavigating flag (500ms protection window)
+22. **🎨📦 Settings Overlay System** - Revolutionary architecture matching Map/List toggle pattern:
+    - **MapScreenContainer** - Wrapper orchestrating Map/Settings/About/Privacy/Terms as overlays
+    - **Settings slides over Map** - Exactly like List mode slides over Map (AnimatedContent)
+    - **SettingsScreen** - Main configuration hub (overlay mode)
+    - **AboutScreen** - App information (overlay mode)
+    - **PrivacyPolicyScreen** - Privacy policy (overlay mode)
+    - **TermsOfUseScreen** - Terms and conditions (overlay mode)
+    - **Identical animations** - `slideInHorizontally { width -> width } + fadeIn()` matching Map/List
+    - **No Navigation routes** - Managed internally by container state (screenMode)
+    - **Memory efficient** - Map stays in background when Settings shown
 
 #### Data Management:
 19. **JSON Data System** - attractions.json with 10 real Adygea attractions and versioning
