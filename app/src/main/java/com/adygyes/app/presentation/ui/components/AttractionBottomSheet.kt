@@ -228,6 +228,20 @@ fun AttractionBottomSheet(
                         }
                     )
                 }
+                
+                // Контактная информация
+                attraction.contactInfo?.let { contactInfo ->
+                    InfoCard(
+                        icon = Icons.Default.ContactPhone,
+                        title = stringResource(R.string.detail_contact_info),
+                        content = {
+                            ClickableContactInfo(
+                                contactInfo = contactInfo,
+                                compact = true
+                            )
+                        }
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))

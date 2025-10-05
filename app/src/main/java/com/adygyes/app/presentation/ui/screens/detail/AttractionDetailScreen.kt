@@ -130,6 +130,49 @@ fun AttractionDetailScreen(
                             containerColor = Color.Transparent
                         )
                     )
+                },
+                bottomBar = {
+                    // Bottom action bar
+                    Surface(
+                        shadowElevation = 8.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Dimensions.PaddingLarge),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Show on Map button (only in list mode)
+                            if (onShowOnMap != null) {
+                                OutlinedButton(
+                                    onClick = onShowOnMap,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Map,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.detail_show_on_map))
+                                }
+                            }
+                            
+                            // Get Directions button
+                            Button(
+                                onClick = onBuildRoute,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Directions,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.detail_get_directions))
+                            }
+                        }
+                    }
                 }
             ) { paddingValues ->
                 LazyColumn(
@@ -269,56 +312,10 @@ fun AttractionDetailScreen(
                                         icon = Icons.Default.ContactPhone,
                                         title = stringResource(R.string.detail_contact_info),
                                         content = {
-                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                contact.phone?.let { phone ->
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Phone,
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = phone,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                    }
-                                                }
-                                                contact.email?.let { email ->
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Email,
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = email,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                    }
-                                                }
-                                                contact.website?.let { website ->
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Language,
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = website,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                            ClickableContactInfo(
+                                                contactInfo = contact,
+                                                compact = false
+                                            )
                                         }
                                     )
                                 }
@@ -362,57 +359,6 @@ fun AttractionDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 TagsFlow(tags = attraction.tags)
-                            }
-                        }
-                    }
-                }
-                
-                // Bottom action bar
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth(),
-                        shadowElevation = 8.dp
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Dimensions.PaddingLarge),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            // Show on Map button (only in list mode)
-                            if (onShowOnMap != null) {
-                                OutlinedButton(
-                                    onClick = onShowOnMap,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Map,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(stringResource(R.string.detail_show_on_map))
-                                }
-                            }
-                            
-                            // Get Directions button
-                            Button(
-                                onClick = onBuildRoute,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Directions,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.detail_get_directions))
                             }
                         }
                     }
