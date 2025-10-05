@@ -1,5 +1,6 @@
 package com.adygyes.app.presentation.ui.screens.search
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -75,6 +76,15 @@ fun SearchScreen(
     val scope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    
+    // Handle back gesture - close filter sheet if open, otherwise navigate back
+    BackHandler(enabled = true) {
+        if (showFilterSheet) {
+            showFilterSheet = false
+        } else {
+            onBackClick()
+        }
+    }
     
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

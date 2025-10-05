@@ -1,5 +1,6 @@
 package com.adygyes.app.presentation.ui.screens.map
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.animation.animateContentSize
@@ -157,6 +158,49 @@ fun MapScreen(
             android.Manifest.permission.ACCESS_COARSE_LOCATION
         )
     )
+    
+    val focusManager = LocalFocusManager.current
+    
+    // Determine if we should intercept back press
+    val shouldInterceptBack = selectedAttraction != null || 
+                              showSearchPanel || 
+                              isSearchFieldFocused || 
+                              (showCategoryCarousel && viewMode == ViewMode.MAP) || 
+                              viewMode == ViewMode.LIST
+    
+    // Handle back gesture with proper hierarchy
+    BackHandler(enabled = shouldInterceptBack) {
+        when {
+            // Priority 1: Close bottom sheet if open
+            selectedAttraction != null -> {
+                Timber.d("🔙 Back pressed: closing bottom sheet")
+                viewModel.clearSelection()
+            }
+            // Priority 2: Hide search panel if visible
+            showSearchPanel -> {
+                Timber.d("🔙 Back pressed: hiding search panel")
+                viewModel.setSearchPanelVisibility(false)
+                keyboardController?.hide()
+            }
+            // Priority 3: Clear search focus and hide keyboard if search field is focused
+            isSearchFieldFocused -> {
+                Timber.d("🔙 Back pressed: clearing search focus")
+                focusManager.clearFocus()
+                keyboardController?.hide()
+                isSearchFieldFocused = false
+            }
+            // Priority 4: Hide category carousel in MAP mode if visible
+            showCategoryCarousel && viewMode == ViewMode.MAP -> {
+                Timber.d("🔙 Back pressed: hiding category carousel")
+                showCategoryCarousel = false
+            }
+            // Priority 5: Switch from LIST to MAP mode
+            viewMode == ViewMode.LIST -> {
+                Timber.d("🔙 Back pressed: switching from LIST to MAP")
+                viewModel.toggleViewMode()
+            }
+        }
+    }
     
     // Debug logging for selectedAttraction changes
     LaunchedEffect(selectedAttraction) {

@@ -1,5 +1,6 @@
 package com.adygyes.app.presentation.ui.screens.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -60,6 +61,15 @@ fun AttractionDetailScreen(
     
     LaunchedEffect(attractionId) {
         viewModel.loadAttraction(attractionId)
+    }
+    
+    // Handle back gesture - close photo viewer if open, otherwise navigate back
+    BackHandler(enabled = true) {
+        if (showPhotoViewer) {
+            showPhotoViewer = false
+        } else {
+            onBackClick()
+        }
     }
     
     when (val state = uiState) {

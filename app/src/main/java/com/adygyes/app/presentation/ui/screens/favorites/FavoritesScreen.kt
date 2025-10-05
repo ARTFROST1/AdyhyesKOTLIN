@@ -1,5 +1,6 @@
 package com.adygyes.app.presentation.ui.screens.favorites
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -45,6 +46,11 @@ fun FavoritesScreen(
     val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
+    
+    // Handle back gesture
+    BackHandler(enabled = onNavigateBack != null) {
+        onNavigateBack?.invoke()
+    }
     
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

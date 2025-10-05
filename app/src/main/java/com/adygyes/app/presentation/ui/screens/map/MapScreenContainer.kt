@@ -1,5 +1,6 @@
 package com.adygyes.app.presentation.ui.screens.map
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,23 @@ fun MapScreenContainer(
     modifier: Modifier = Modifier
 ) {
     var screenMode by remember { mutableStateOf(ScreenMode.MAP) }
+    
+    // Handle back gesture based on current screen
+    BackHandler(enabled = screenMode != ScreenMode.MAP) {
+        when (screenMode) {
+            ScreenMode.ABOUT, ScreenMode.PRIVACY, ScreenMode.TERMS -> {
+                // Return to Settings from sub-screens
+                screenMode = ScreenMode.SETTINGS
+            }
+            ScreenMode.SETTINGS -> {
+                // Return to Map from Settings
+                screenMode = ScreenMode.MAP
+            }
+            ScreenMode.MAP -> {
+                // Do nothing, let system handle (will exit app if at root)
+            }
+        }
+    }
     
     Box(modifier = modifier.fillMaxSize()) {
         // Animated content - exactly like Map/List toggle!

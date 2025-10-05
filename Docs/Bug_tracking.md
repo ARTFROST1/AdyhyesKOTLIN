@@ -48,6 +48,94 @@ This document tracks all bugs, errors, and their resolutions during the developm
 
 ## Active Bugs
 
+### BUG-021: Жест "назад" выкидывает из приложения вместо навигации по иерархии
+**Date:** 2025-10-05  
+**Stage:** Stage 9 (UI/UX Polish)  
+**Severity:** Critical  
+**Status:** ✅ Resolved
+
+**Description:**
+При использовании системного жеста "назад" (или кнопки назад) приложение сразу выходило на главный экран системы вместо возврата на предыдущий экран или закрытия открытых элементов UI.
+
+**Steps to Reproduce:**
+1. Открыть приложение
+2. Перейти в Settings
+3. Сделать жест "назад"
+4. Приложение выходит вместо возврата на карту
+
+Или:
+1. Открыть MapScreen
+2. Открыть bottom sheet с деталями места
+3. Сделать жест "назад"
+4. Приложение выходит вместо закрытия bottom sheet
+
+**Expected Behavior:**
+Жест "назад" должен работать по иерархии:
+- Закрывать открытые элементы UI (bottom sheets, dialogs, panels)
+- Возвращаться на предыдущий экран
+- Выходить из приложения только на корневом экране
+
+**Actual Behavior:**
+Жест "назад" всегда выкидывал из приложения, игнорируя иерархию навигации и открытые элементы UI.
+
+**Root Cause:**
+В приложении полностью отсутствовала обработка системного жеста через `BackHandler`. Android Compose требует явной обработки через компонент `BackHandler`, иначе система выполняет действие по умолчанию - выход из Activity.
+
+**Solution:**
+
+### 1. MapScreenContainer.kt
+Добавлена обработка навигации между Settings и подэкранами:
+```kotlin
+BackHandler(enabled = screenMode != ScreenMode.MAP) {
+    when (screenMode) {
+        ScreenMode.ABOUT, ScreenMode.PRIVACY, ScreenMode.TERMS -> {
+            screenMode = ScreenMode.SETTINGS
+        }
+        ScreenMode.SETTINGS -> {
+            screenMode = ScreenMode.MAP
+        }
+        ScreenMode.MAP -> { /* Система обработает */ }
+    }
+}
+```
+
+### 2. MapScreen.kt
+Добавлена многоуровневая обработка с приоритетами:
+```kotlin
+BackHandler(enabled = shouldInterceptBack) {
+    when {
+        selectedAttraction != null -> viewModel.clearSelection()
+        showSearchPanel -> viewModel.setSearchPanelVisibility(false)
+        isSearchFieldFocused -> focusManager.clearFocus()
+        showCategoryCarousel && viewMode == ViewMode.MAP -> showCategoryCarousel = false
+        viewMode == ViewMode.LIST -> viewModel.toggleViewMode()
+    }
+}
+```
+
+### 3. Остальные экраны
+- **FavoritesScreen**: Простой возврат через `onNavigateBack()`
+- **SearchScreen**: Закрытие filter sheet или возврат
+- **DetailScreen**: Закрытие photo viewer или возврат
+
+**Prevention:**
+- Всегда добавлять `BackHandler` в новые Composable экраны
+- Учитывать иерархию UI элементов (modals → panels → screens)
+- Тестировать жест "назад" на каждом экране
+- Использовать `enabled` параметр для условной активации
+
+**Related Files:**
+- `MapScreenContainer.kt` - обработка Settings navigation
+- `MapScreen.kt` - многоуровневая обработка
+- `FavoritesScreen.kt` - простой возврат
+- `SearchScreen.kt` - обработка filter sheet
+- `AttractionDetailScreen.kt` - обработка photo viewer
+
+**Documentation:**
+- `Docs/fixes/BACK_GESTURE_FIX.md` - Полная документация с примерами
+
+---
+
 ### BUG-007: Release APK крашится на загрузочном экране
 **Date:** 2025-09-30  
 **Stage:** Stage 11 (Pre-Launch Preparation)  
