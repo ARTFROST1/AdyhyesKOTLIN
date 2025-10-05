@@ -6,11 +6,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adygyes.app.R
 import com.adygyes.app.presentation.ui.screens.map.LocalMapHostController
@@ -231,5 +234,24 @@ fun SplashScreen(
                 )
             }
         }
+        
+        // Блокировщик кликов на логотип Яндекс Карт (правый нижний угол)
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .width(110.dp) // Ширина для покрытия логотипа "Яндекс"
+                .height(30.dp) // Уменьшенная высота
+                .background(
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    // Поглощаем клик, ничего не делаем
+                }
+                .zIndex(2000f) // Поверх всех элементов
+        )
     }
 }

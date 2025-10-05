@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -838,6 +840,24 @@ fun MapScreen(
             progress = preloadState?.value?.progress ?: 0f,
             modifier = Modifier.fillMaxSize()
         )
+        
+        // Блокировщик кликов на логотип Яндекс Карт (правый нижний угол)
+        if (viewMode == ViewMode.MAP) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .width(110.dp) // Ширина для покрытия логотипа "Яндекс"
+                    .height(30.dp) // Уменьшенная высота
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        // Поглощаем клик, ничего не делаем
+                        Timber.d("🚫 Yandex logo click blocked")
+                    }
+                    .zIndex(2000f) // Поверх всех элементов
+            )
+        }
     }
     
 }
