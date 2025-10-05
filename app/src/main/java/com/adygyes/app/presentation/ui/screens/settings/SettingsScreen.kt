@@ -46,6 +46,9 @@ fun SettingsScreen(
     var tapCount by remember { mutableStateOf(0) }
     var lastTapTime by remember { mutableStateOf(0L) }
     
+    // Protection against double-click on back button - prevents multiple popBackStack calls
+    var isNavigating by remember { mutableStateOf(false) }
+    
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -73,11 +76,26 @@ fun SettingsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = { 
+                            if (!isNavigating) {
+                                isNavigating = true
+                                onNavigateBack()
+                                // Reset flag after navigation completes (longer than animation)
+                                coroutineScope.launch {
+                                    delay(500)
+                                    isNavigating = false
+                                }
+                            }
+                        },
+                        enabled = !isNavigating
+                    ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = stringResource(R.string.search_back),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = if (!isNavigating) 1f else 0.5f
+                            )
                         )
                     }
                 },

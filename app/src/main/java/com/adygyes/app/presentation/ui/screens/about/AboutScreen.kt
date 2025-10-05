@@ -25,6 +25,8 @@ import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.ui.components.RatingComingSoonDialog
 import android.content.Intent
 import android.net.Uri
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * About screen showing app information, version, developers and contact details
@@ -35,7 +37,11 @@ fun AboutScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var showRatingDialog by remember { mutableStateOf(false) }
+    
+    // Protection against double-click on back button - prevents multiple popBackStack calls
+    var isNavigating by remember { mutableStateOf(false) }
     
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -48,11 +54,26 @@ fun AboutScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = { 
+                            if (!isNavigating) {
+                                isNavigating = true
+                                onNavigateBack()
+                                // Reset flag after navigation completes (longer than animation)
+                                coroutineScope.launch {
+                                    delay(500)
+                                    isNavigating = false
+                                }
+                            }
+                        },
+                        enabled = !isNavigating
+                    ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = if (!isNavigating) 1f else 0.5f
+                            )
                         )
                     }
                 },

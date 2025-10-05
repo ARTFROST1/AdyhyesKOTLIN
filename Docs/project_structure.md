@@ -1,6 +1,6 @@
 # Project Structure Guide
 
-**Last Updated:** 2025-10-03  
+**Last Updated:** 2025-10-05  
 **Current Version:** ПРОЕКТ ЗАВЕРШЕН! All Stages Complete (100%) 🎉
 
 > Branding: User-facing app name is "AdygGIS". Internal code/package retains "Adygyes" to avoid breaking changes.
@@ -9,6 +9,8 @@
 - **✅ 🎬 Премиум система анимации маркеров:** Ультра-плавная 12-кадровая анимация с предзагруженными изображениями для кинематографического UX
 - **✅ Dual-Layer Marker System:** Революционная архитектура - нативные визуальные маркеры + Compose интерактивный слой для 100% надежности кликов
 - **✅ 🆕 SearchResultsPanel:** Интерактивная панель результатов поиска с двухстадийной архитектурой (Expanded/Half), drag-жестами и умным позиционированием
+- **✅ 🔒 Защита от двойного клика:** Надежная блокировка навигации во время переходов для всех экранов (Settings/About/Privacy/Terms)
+- **✅ 🎨 Плавные анимации навигации:** 250мс slide transitions для Settings и связанных экранов с FastOutSlowInEasing
 - **✅ Предзагрузка карты:** Фоновая подготовка во время splash screen для мгновенной анимации маркеров
 - **✅ Динамическая кластеризация:** Умная группировка маркеров на основе уровня масштабирования с визуальными индикаторами
 - **✅ Единый интерфейс:** Интегрированная навигация с переключением Карта/Список
@@ -111,8 +113,14 @@ AdyhyesKOTLIN/
 │   │   │   │   │   │   │   ├── search/   # Search functionality
 │   │   │   │   │   │   │   │   └── SearchScreen.kt
 │   │   │   │   │   │   │   ├── settings/ # App settings
-│   │   │   │   │   │   │   │   ├── SettingsScreen.kt
-│   │   │   │   │   │   │   │   └── SettingsComponents.kt    # Settings UI components
+│   │   │   │   │   │   │   │   ├── SettingsScreen.kt         # 🔒 Protected from double-click
+│   │   │   │   │   │   │   │   └── SettingsComponents.kt     # Settings UI components
+│   │   │   │   │   │   │   ├── about/    # About screen
+│   │   │   │   │   │   │   │   └── AboutScreen.kt            # 🔒 Protected from double-click
+│   │   │   │   │   │   │   ├── privacy/  # Privacy policy
+│   │   │   │   │   │   │   │   └── PrivacyPolicyScreen.kt    # 🔒 Protected from double-click
+│   │   │   │   │   │   │   ├── terms/    # Terms of use
+│   │   │   │   │   │   │   │   └── TermsOfUseScreen.kt       # 🔒 Protected from double-click
 │   │   │   │   │   │   │   ├── onboarding/ # First launch
 │   │   │   │   │   │   │   │   └── OnboardingScreen.kt
 │   │   │   │   │   │   │   └── developer/ # Developer mode (stubs)
@@ -438,6 +446,18 @@ The app now features a sophisticated image caching system that optimizes perform
 - **Repository**: AttractionRepositoryImpl integrates with cache versioning
 
 ## Changelog
+- 2025-10-05: **Navigation Double-Click Protection** 🔒 — Fixed critical navigation bug affecting Settings and related screens:
+  - Implemented `isNavigating` state flag to prevent multiple `popBackStack()` calls during navigation transitions
+  - Added 500ms protection window with coroutine-based auto-reset after navigation completes
+  - Applied to all Settings-related screens: SettingsScreen.kt, AboutScreen.kt, PrivacyPolicyScreen.kt, TermsOfUseScreen.kt
+  - Fixed UI disappearing bug that was initially suspected in Map/List toggle button
+  - Added visual feedback (50% alpha during navigation) and dual protection (enabled + if-check)
+  - Created comprehensive documentation in `Docs/fixes/DOUBLE_CLICK_NAVIGATION_FIX.md`
+- 2025-10-05: **Navigation Animations Enhancement** 🎨 — Added smooth slide animations for Settings navigation:
+  - Implemented 250ms slideInHorizontally/slideOutHorizontally transitions with FastOutSlowInEasing
+  - Settings, About, Privacy, Terms screens now slide in from right (like List mode toggle)
+  - Replaced default cross-fade with professional slide animations matching app's visual language
+  - Updated AdygyesNavHost.kt with enterTransition, exitTransition, popEnterTransition, popExitTransition
 - 2025-09-27: **Search Field Animation Enhancement** 🎬 — Implemented cinema-quality search field animations in MapScreen.kt:
   - Replaced `Crossfade` with `AnimatedContent` + `SizeTransform` for smooth expansion
   - Added spring-based animations (`DampingRatioLowBouncy`, `StiffnessVeryLow`) for organic movement
