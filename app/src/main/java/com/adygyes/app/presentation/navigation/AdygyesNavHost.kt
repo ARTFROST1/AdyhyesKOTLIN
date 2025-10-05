@@ -1,7 +1,7 @@
 package com.adygyes.app.presentation.navigation
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,14 +16,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.adygyes.app.presentation.ui.screens.splash.SplashScreen
-import com.adygyes.app.presentation.ui.screens.map.MapScreen
+import com.adygyes.app.presentation.ui.screens.map.MapScreenContainer
 import com.adygyes.app.presentation.ui.screens.search.SearchScreen
 import com.adygyes.app.presentation.ui.screens.favorites.FavoritesScreen
-import com.adygyes.app.presentation.ui.screens.settings.SettingsScreen
 import com.adygyes.app.presentation.ui.screens.detail.AttractionDetailScreen
-import com.adygyes.app.presentation.ui.screens.about.AboutScreen
-import com.adygyes.app.presentation.ui.screens.privacy.PrivacyPolicyScreen
-import com.adygyes.app.presentation.ui.screens.terms.TermsOfUseScreen
 import com.adygyes.app.presentation.viewmodel.MapViewModel
 
 /**
@@ -38,10 +34,23 @@ fun AdygyesNavHost(
     NavHost(
         navController = navController,
         startDestination = NavDestination.Splash.route,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
+        // Disable default transitions - use per-screen transitions instead
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         // Splash Screen
-        composable(NavDestination.Splash.route) {
+        composable(
+            route = NavDestination.Splash.route,
+            enterTransition = {
+                fadeIn(animationSpec = tween(300))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(300))
+            }
+        ) {
             SplashScreen(
                 onNavigateToMain = {
                     navController.navigate(NavDestination.Map.route) {
@@ -51,17 +60,30 @@ fun AdygyesNavHost(
             )
         }
         
-        // Main Map Screen
-        composable(NavDestination.Map.route) { backStackEntry ->
-            MapScreen(
+        // Main Map Screen Container - handles Map/Settings overlay like Map/List toggle
+        composable(
+            route = NavDestination.Map.route,
+            enterTransition = {
+                fadeIn()
+            },
+            exitTransition = {
+                fadeOut()
+            },
+            popEnterTransition = {
+                fadeIn()
+            },
+            popExitTransition = {
+                fadeOut()
+            }
+        ) { backStackEntry ->
+            // MapScreenContainer handles Map ↔ Settings animation internally
+            // (exactly like Map ↔ List toggle)
+            MapScreenContainer(
                 onAttractionClick = { attractionId ->
                     navController.navigate(NavDestination.AttractionDetail.createRoute(attractionId))
                 },
                 onNavigateToFavorites = {
                     navController.navigate(NavDestination.Favorites.route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(NavDestination.Settings.route)
                 }
             )
         }
@@ -89,71 +111,8 @@ fun AdygyesNavHost(
             )
         }
         
-        // Settings Screen - with smooth slide animation from right
-        composable(
-            route = NavDestination.Settings.route,
-            enterTransition = {
-                // Slide in from right with fade (like List mode)
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            },
-            exitTransition = {
-                // Stay in place with slight fade when opening sub-screens
-                fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 150,
-                        easing = LinearEasing
-                    )
-                )
-            },
-            popEnterTransition = {
-                // Fade back in when returning from sub-screens
-                fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 150,
-                        easing = LinearEasing
-                    )
-                )
-            },
-            popExitTransition = {
-                // Slide out to right with fade when going back
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            }
-        ) {
-            SettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToAbout = {
-                    navController.navigate(NavDestination.AboutScreen.route)
-                },
-                onNavigateToPrivacy = {
-                    navController.navigate(NavDestination.PrivacyPolicy.route)
-                },
-                onNavigateToTerms = {
-                    navController.navigate(NavDestination.TermsOfUse.route)
-                }
-            )
-        }
+        // Note: Settings, About, Privacy, Terms are now handled inside MapScreenContainer
+        // They animate as overlays like List mode, not as navigation routes
         
         // Attraction Detail Screen
         composable(
@@ -218,115 +177,7 @@ fun AdygyesNavHost(
             // ThemeSettingsScreen will be implemented
         }
         
-        // About Screen - with smooth slide animation from right
-        composable(
-            route = NavDestination.AboutScreen.route,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            }
-        ) {
-            AboutScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-        
-        // Privacy Policy Screen - with smooth slide animation from right
-        composable(
-            route = NavDestination.PrivacyPolicy.route,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            }
-        ) {
-            PrivacyPolicyScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-        
-        // Terms of Use Screen - with smooth slide animation from right
-        composable(
-            route = NavDestination.TermsOfUse.route,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            }
-        ) {
-            TermsOfUseScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        // Note: About, Privacy, Terms screens removed from navigation
+        // They are now part of MapScreenContainer and animate like List mode overlay
     }
 }
