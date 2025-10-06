@@ -160,7 +160,7 @@ fun AttractionCard(
                                     contentDescription = if (isFavorite) stringResource(R.string.cd_remove_from_favorites) else stringResource(
                                         R.string.cd_add_to_favorites
                                     ),
-                                    tint = if (isFavorite) Color(0xFF4CAF50) else if (hasImage) getOverlayIconTint() else getContentIconTint(), // Зеленый цвет для избранного
+                                    tint = if (isFavorite) Color(0xFF0C5329) else if (hasImage) getOverlayIconTint() else getContentIconTint(), // Зеленый цвет для избранного
                                     modifier = Modifier.size(if (compactForFavorites) 26.dp else 24.dp)
                                 )
                             }

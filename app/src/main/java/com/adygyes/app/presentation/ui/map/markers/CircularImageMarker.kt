@@ -229,7 +229,7 @@ object MarkerDimensions {
 object MarkerColors {
     fun getColorForCategory(category: AttractionCategory, isDark: Boolean): Color {
         return when (category) {
-            AttractionCategory.NATURE -> if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
+            AttractionCategory.NATURE -> if (isDark) Color(0xFF2E7D32) else Color(0xFF0C5329)
             AttractionCategory.CULTURE -> if (isDark) Color(0xFFAB47BC) else Color(0xFF9C27B0)
             AttractionCategory.HISTORY -> if (isDark) Color(0xFF8D6E63) else Color(0xFF795548)
             AttractionCategory.ADVENTURE -> if (isDark) Color(0xFFFF7043) else Color(0xFFFF5722)

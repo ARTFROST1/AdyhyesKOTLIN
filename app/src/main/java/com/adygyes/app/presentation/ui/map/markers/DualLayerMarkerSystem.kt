@@ -356,7 +356,7 @@ fun UserLocationPulseAnimation(
                 val radius = (size.width / 2) * pulseScale
                 
                 drawCircle(
-                    color = Color(0xFF4CAF50).copy(alpha = pulseAlpha),
+                    color = Color(0xFF0C5329).copy(alpha = pulseAlpha),
                     radius = radius,
                     center = center
                 )
