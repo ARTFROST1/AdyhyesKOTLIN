@@ -19,6 +19,8 @@ import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.viewmodel.SettingsViewModel
 import com.adygyes.app.presentation.ui.components.RatingComingSoonDialog
 import android.widget.Toast
+import android.content.Intent
+import android.net.Uri
 import com.adygyes.app.presentation.ui.util.EasterEggManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -236,7 +238,20 @@ fun SettingsScreen(
                     icon = Icons.Default.Share,
                     title = stringResource(R.string.settings_share_app),
                     subtitle = stringResource(R.string.settings_share_app_desc),
-                    onClick = { /* Share app link */ }
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/MaykopTech"))
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            // Handle error - fallback to sharing text
+                            val shareIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, "Попробуйте AdygGis - приложение для изучения достопримечательностей Адыгеи!")
+                                type = "text/plain"
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Поделиться приложением"))
+                        }
+                    }
                 )
             }
             

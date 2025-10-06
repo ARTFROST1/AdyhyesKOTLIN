@@ -303,8 +303,7 @@ private fun InfoCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimensions.PaddingMedium),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(Dimensions.PaddingMedium)
         ) {
             Icon(
                 imageVector = icon,
@@ -312,6 +311,7 @@ private fun InfoCard(
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
