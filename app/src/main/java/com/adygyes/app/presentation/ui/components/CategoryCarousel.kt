@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.viewinterop.AndroidView
+import com.vanniktech.emoji.EmojiTextView
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -69,15 +71,15 @@ fun CategoryCarousel(
                 isSelected = selectedFilter is MapViewModel.CategoryFilter.Favorites,
                 onClick = { onFilterSelected(MapViewModel.CategoryFilter.Favorites) },
                 leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = if (selectedFilter is MapViewModel.CategoryFilter.Favorites) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        }
+                    AndroidView(
+                        factory = { context ->
+                            EmojiTextView(context).apply {
+                                text = "❤️" // Apple-style heart emoji
+                                textSize = 14f
+                                setPadding(0, 0, 12, 0) // 4.dp end padding
+                            }
+                        },
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             )
@@ -93,10 +95,15 @@ fun CategoryCarousel(
                     onFilterSelected(MapViewModel.CategoryFilter.Category(category))
                 },
                 leadingIcon = {
-                    Text(
-                        text = category.emoji,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(end = 4.dp)
+                    AndroidView(
+                        factory = { context ->
+                            EmojiTextView(context).apply {
+                                text = category.emoji
+                                textSize = 14f // bodyMedium size
+                                setPadding(0, 0, 12, 0) // 4.dp end padding
+                            }
+                        },
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             )

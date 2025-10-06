@@ -8,6 +8,8 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.adygyes.app.data.local.locale.LocaleManager
+import com.vanniktech.emoji.EmojiManager
+import com.vanniktech.emoji.ios.IosEmojiProvider
 import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +35,7 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         initializeTimber()
+        initializeEmoji()
         initializeMapKit()
         initializeLocale()
     }
@@ -74,6 +77,28 @@ class AdygyesApplication : Application(), ImageLoaderFactory {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         // Handle configuration changes if needed
+    }
+
+    /**
+     * Initialize Apple-style emoji provider
+     */
+    private fun initializeEmoji() {
+        try {
+            EmojiManager.install(IosEmojiProvider())
+            if (BuildConfig.DEBUG) {
+                Timber.d("iOS Emoji provider initialized successfully")
+            } else {
+                android.util.Log.d("AdygyesApp", "iOS Emoji provider initialized")
+            }
+        } catch (e: Exception) {
+            val errorMsg = "Failed to initialize iOS Emoji provider: ${e.message}"
+            if (BuildConfig.DEBUG) {
+                Timber.e(e, errorMsg)
+            } else {
+                android.util.Log.e("AdygyesApp", errorMsg, e)
+            }
+            // Don't crash the app, continue with system emojis
+        }
     }
 
     /**
