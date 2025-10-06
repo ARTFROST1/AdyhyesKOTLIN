@@ -768,39 +768,45 @@ fun MapScreen(
         }
         
         
-        // Location FAB (only in MAP mode)
+        // Location button (only in MAP mode) - круглая кнопка как в верхней панели
         if (viewMode == ViewMode.MAP) {
-            FloatingActionButton(
-                onClick = { 
-                    if (locationPermissionsState.allPermissionsGranted) {
-                        // Используем новую функцию для плавного перехода
-                        viewModel.moveToUserLocation(mapView)
-                    } else {
-                        locationPermissionsState.launchMultiplePermissionRequest()
-                    }
-                },
+            Surface(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(Dimensions.SpacingMedium)
-                    .padding(bottom = 80.dp), // Space for bottom nav
-                containerColor = if (uiState.isLoadingLocation) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    .padding(bottom = 80.dp) // Space for bottom nav
+                    .size(48.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = if (uiState.isLoadingLocation) {
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
                 } else {
-                    MaterialTheme.colorScheme.primary
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                 }
             ) {
-                if (uiState.isLoadingLocation) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.MyLocation,
-                        contentDescription = stringResource(R.string.my_location),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+                IconButton(
+                    onClick = { 
+                        if (locationPermissionsState.allPermissionsGranted) {
+                            // Используем новую функцию для плавного перехода
+                            viewModel.moveToUserLocation(mapView)
+                        } else {
+                            locationPermissionsState.launchMultiplePermissionRequest()
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (uiState.isLoadingLocation) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = stringResource(R.string.my_location),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
