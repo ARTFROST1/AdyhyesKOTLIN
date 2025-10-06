@@ -25,6 +25,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -487,7 +488,10 @@ fun MapScreen(
                         modifier = Modifier
                             .size(48.dp),
                         shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        border = if (MaterialTheme.colorScheme.surface.luminance() > 0.5f) {
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                        } else null
                     ) {
                         IconButton(
                             onClick = { viewModel.toggleViewMode() },
@@ -543,7 +547,10 @@ fun MapScreen(
                         .weight(1f)
                         .fillMaxHeight(),
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    border = if (MaterialTheme.colorScheme.surface.luminance() > 0.5f) {
+                        BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                    } else null
                 ) {
                     AnimatedContent(
                         targetState = isSearchFieldFocused,
@@ -731,7 +738,10 @@ fun MapScreen(
                         modifier = Modifier
                             .size(48.dp),
                         shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        border = if (MaterialTheme.colorScheme.surface.luminance() > 0.5f) {
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                        } else null
                     ) {
                         IconButton(
                             onClick = onNavigateToSettings,
@@ -781,7 +791,10 @@ fun MapScreen(
                     MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
                 } else {
                     MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-                }
+                },
+                border = if (MaterialTheme.colorScheme.surface.luminance() > 0.5f) {
+                    BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                } else null
             ) {
                 IconButton(
                     onClick = { 

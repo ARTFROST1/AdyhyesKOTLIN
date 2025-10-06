@@ -46,7 +46,7 @@ fun ClickableContactInfo(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)
+        verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)
     ) {
         // Телефон
         contactInfo.phone?.let { phone ->
