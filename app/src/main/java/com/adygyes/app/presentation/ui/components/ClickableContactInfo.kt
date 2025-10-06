@@ -45,7 +45,7 @@ fun ClickableContactInfo(
     viewModel: ContactActionViewModel = hiltViewModel()
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)
     ) {
         // Телефон
@@ -158,29 +158,20 @@ private fun ClickableContactItem(
                 }
             )
             .padding(
-                horizontal = if (compact) 8.dp else 12.dp,
                 vertical = if (compact) 6.dp else 8.dp
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)
+        horizontalArrangement = Arrangement.Start
     ) {
-        // Иконка с цветным фоном
-        Box(
-            modifier = Modifier
-                .size(if (compact) 32.dp else 40.dp)
-                .background(
-                    color = color.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(if (compact) 8.dp else 10.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(if (compact) 18.dp else 20.dp),
-                tint = color
-            )
-        }
+        // Иконка (такая же как в InfoCard для точного выравнивания)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = color
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
 
         // Текстовая информация
         Column(
@@ -212,6 +203,8 @@ private fun ClickableContactItem(
                 overflow = TextOverflow.Ellipsis
             )
         }
+
+        Spacer(modifier = Modifier.width(if (compact) 4.dp else 8.dp))
 
         // Стрелка для указания кликабельности
         Icon(

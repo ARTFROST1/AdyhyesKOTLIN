@@ -153,7 +153,7 @@
     <string name="settings_rate_us">Оценить нас</string>
     <string name="settings_rate_us_desc">Поделитесь отзывом в Google Play</string>
     <string name="settings_share_app">Поделиться приложением</string>
-    <string name="settings_share_app_desc">Рекомендовать Адыгэес друзьям</string>
+    <string name="settings_share_app_desc">Рекомендовать AdygGis друзьям</string>
     <string name="settings_select_language">Выберите язык</string>
     <string name="settings_select_theme">Выберите тему</string>
     <string name="settings_theme_light_desc">Всегда использовать светлую тему</string>
@@ -218,8 +218,8 @@
     <string name="terms_contact_content">Вопросы по условиям пользования: Telegram @MaykopTech</string>
 
     <!-- Rating Coming Soon Dialog -->
-    <string name="rating_coming_soon_title">Скоро в App Store!</string>
-    <string name="rating_coming_soon_description">Приложение ещё не доступно для оценки, но совсем скоро мы выпустим его в App Store. Следите за обновлениями!</string>
+    <string name="rating_coming_soon_title">Скоро в Google Play!</string>
+    <string name="rating_coming_soon_description">Приложение ещё не доступно для оценки, но совсем скоро мы выпустим его в Google Play. Следите за обновлениями!</string>
 
     <!-- Accessibility -->
     <string name="a11y_back_button">Кнопка назад</string>

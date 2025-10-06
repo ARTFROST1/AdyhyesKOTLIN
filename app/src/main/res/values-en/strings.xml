@@ -147,7 +147,7 @@
     <string name="settings_rate_us">Rate Us</string>
     <string name="settings_rate_us_desc">Share your feedback on Google Play</string>
     <string name="settings_share_app">Share App</string>
-    <string name="settings_share_app_desc">Recommend AdygGIS to friends</string>
+    <string name="settings_share_app_desc">Recommend AdygGis to friends</string>
     <string name="settings_select_language">Select Language</string>
     <string name="settings_select_theme">Select Theme</string>
     <string name="settings_theme_light_desc">Always use light theme</string>
@@ -212,8 +212,8 @@
     <string name="terms_contact_content">Terms of use questions: Telegram @MaykopTech</string>
 
     <!-- Rating Coming Soon Dialog -->
-    <string name="rating_coming_soon_title">Coming Soon to App Store!</string>
-    <string name="rating_coming_soon_description">The app is not yet available for rating, but very soon we will release it in the App Store. Stay tuned for updates!</string>
+    <string name="rating_coming_soon_title">Coming Soon to Google Play!</string>
+    <string name="rating_coming_soon_description">The app is not yet available for rating, but very soon we will release it in Google Play. Stay tuned for updates!</string>
 
     <!-- Accessibility -->
     <string name="a11y_back_button">Back button</string>
