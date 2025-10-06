@@ -121,7 +121,7 @@ fun CompactAttractionCard(
 }
 
 private fun getCategoryColor(category: AttractionCategory): Color = when (category) {
-    AttractionCategory.NATURE -> Color(0xFF4CAF50)
+    AttractionCategory.NATURE -> Color(0xFF0C5329)
     AttractionCategory.HISTORY -> Color(0xFF795548)
     AttractionCategory.CULTURE -> Color(0xFF9C27B0)
     AttractionCategory.ENTERTAINMENT -> Color(0xFFFF9800)

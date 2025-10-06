@@ -8,9 +8,9 @@ import androidx.compose.ui.graphics.Color
  */
 
 // Primary Colors - Forest Green (from Adygea flag)
-val PrimaryGreen = Color(0xFF2E7D32)
-val PrimaryGreenDark = Color(0xFF1B5E20)
-val PrimaryGreenLight = Color(0xFF4CAF50)
+val PrimaryGreen = Color(0xFF0C5329)
+val PrimaryGreenDark = Color(0xFF083A1F)
+val PrimaryGreenLight = Color(0xFF2E7D32)
 val PrimaryContainer = Color(0xFFA5D6A7)
 val OnPrimary = Color(0xFFFFFFFF)
 val OnPrimaryContainer = Color(0xFF002106)
@@ -50,7 +50,7 @@ val OnError = Color(0xFFFFFFFF)
 val OnErrorContainer = Color(0xFF410E0B)
 
 // Success Colors
-val Success = Color(0xFF388E3C)
+val Success = Color(0xFF0C5329)
 val SuccessContainer = Color(0xFFC8E6C9)
 
 // Warning Colors
@@ -79,5 +79,5 @@ val OverlayColor = Color(0x1F000000)
 // Map-specific colors
 val MapMarkerDefault = PrimaryGreen
 val MapMarkerSelected = SecondaryGold
-val MapPolylinePath = Color(0xFF4CAF50)
-val MapPolygonFill = Color(0x334CAF50)
+val MapPolylinePath = Color(0xFF0C5329)
+val MapPolygonFill = Color(0x330C5329)

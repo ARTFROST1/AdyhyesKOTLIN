@@ -185,7 +185,6 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
     
-    // Local Storage
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
@@ -195,11 +194,12 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.compose.zoomable)
     
+    // Emoji
+    implementation(libs.vanniktech.emoji.ios)
+    
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
-    
-    // Location Services
     implementation(libs.play.services.location)
     
     // Maps

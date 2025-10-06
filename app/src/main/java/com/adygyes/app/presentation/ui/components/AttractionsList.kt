@@ -362,7 +362,7 @@ fun AttractionListItem(
                                 else 
                                     stringResource(R.string.add_to_favorites),
                                 tint = if (isFavorite) 
-                                    Color(0xFF4CAF50) // Зеленый цвет
+                                    Color(0xFF0C5329) // Зеленый цвет
                                 else 
                                     MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
