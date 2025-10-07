@@ -438,7 +438,7 @@ private fun AmenitiesGrid(
         amenities.forEach { amenity ->
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color(red = 1.0f, green = 0.843f, blue = 0.0f, alpha = 1.0f)
+                color = Color(0xFFFFB300)
             ) {
                 Row(
                     modifier = Modifier.padding(
@@ -456,8 +456,9 @@ private fun AmenitiesGrid(
                     )
                     Text(
                         text = amenity.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.Black
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = Color.Black
+                        )
                     )
                 }
             }
@@ -474,7 +475,7 @@ private fun TagsFlow(
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         tags.forEach { tag ->
             AssistChip(
