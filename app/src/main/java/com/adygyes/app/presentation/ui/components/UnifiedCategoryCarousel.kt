@@ -111,10 +111,14 @@ private fun CategoryFiltersCarousel(
                                     EmojiTextView(context).apply {
                                         text = "❤️" // Apple-style heart emoji
                                         textSize = 14f
-                                        setPadding(0, 0, 12, 0) // 4.dp end padding
+                                        gravity = android.view.Gravity.CENTER_VERTICAL or android.view.Gravity.START
+                                        includeFontPadding = false
+                                        setPadding(0, 0, 8, 0) // Reduced padding for better alignment
                                     }
                                 },
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .wrapContentHeight(Alignment.CenterVertically)
                             )
                         }
                     }
@@ -125,10 +129,14 @@ private fun CategoryFiltersCarousel(
                                     EmojiTextView(context).apply {
                                         text = filter.category.emoji
                                         textSize = 14f // bodyMedium size
-                                        setPadding(0, 0, 12, 0) // 4.dp end padding
+                                        gravity = android.view.Gravity.CENTER_VERTICAL or android.view.Gravity.START
+                                        includeFontPadding = false
+                                        setPadding(0, 0, 8, 0) // Reduced padding for better alignment
                                     }
                                 },
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .wrapContentHeight(Alignment.CenterVertically)
                             )
                         }
                     }
