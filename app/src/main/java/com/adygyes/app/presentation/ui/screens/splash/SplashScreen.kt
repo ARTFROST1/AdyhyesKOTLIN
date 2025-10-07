@@ -242,7 +242,7 @@ fun SplashScreen(
                 .width(110.dp) // Ширина для покрытия логотипа "Яндекс"
                 .height(30.dp) // Уменьшенная высота
                 .background(
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                    color = Color.Transparent, // Полностью прозрачный
                     shape = RoundedCornerShape(8.dp)
                 )
                 .clickable(
