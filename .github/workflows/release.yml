@@ -1,15 +1,17 @@
 name: 🚀 Release Build
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:  # Manual trigger only
     inputs:
       version:
-        description: 'Release version (e.g., 1.0.0)'
+        description: 'Release version (e.g., 1.0.1)'
         required: true
-        default: '1.0.0'
+        default: '1.0.1'
+      create_tag:
+        description: 'Create git tag for this release'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build-release:
@@ -93,13 +95,18 @@ jobs:
     - name: 📊 Get version info
       id: version
       run: |
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/v}
-        else
-          VERSION=${{ github.event.inputs.version }}
-        fi
+        VERSION=${{ github.event.inputs.version }}
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
+        
+    - name: 🏷️ Create git tag (optional)
+      if: ${{ github.event.inputs.create_tag == 'true' }}
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git tag "v${{ steps.version.outputs.version }}"
+        git push origin "v${{ steps.version.outputs.version }}"
+        echo "✅ Created tag: v${{ steps.version.outputs.version }}"
         
     - name: 📝 Generate release notes
       id: release_notes
