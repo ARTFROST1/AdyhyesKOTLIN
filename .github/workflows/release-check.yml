@@ -1,12 +1,12 @@
 name: 🔍 Release Check
 
 on:
-  push:
-    branches: 
-      - release
-      - 'release/**'  # Include release branches like release/v1.0.0
-  pull_request:
-    branches: [ release ]
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      branch:
+        description: 'Branch to test (default: current branch)'
+        required: false
+        default: 'release'
 
 jobs:
   build-check:
