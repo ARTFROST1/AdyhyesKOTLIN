@@ -36,7 +36,18 @@ jobs:
         ENCODED_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 }}
       run: |
         mkdir -p keystore
-        echo $ENCODED_KEYSTORE | base64 -d > keystore/adygyes-release.keystore
+        if [ -z "$ENCODED_KEYSTORE" ]; then
+          echo "❌ KEYSTORE_BASE64 secret is empty or not set"
+          exit 1
+        fi
+        echo "🔍 Keystore length: ${#ENCODED_KEYSTORE}"
+        echo "$ENCODED_KEYSTORE" | base64 -d > keystore/adygyes-release.keystore
+        if [ ! -f keystore/adygyes-release.keystore ]; then
+          echo "❌ Failed to create keystore file"
+          exit 1
+        fi
+        echo "✅ Keystore decoded successfully"
+        ls -la keystore/
         
     - name: 🔑 Create keystore.properties
       env:
