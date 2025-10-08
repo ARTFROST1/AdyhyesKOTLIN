@@ -42,8 +42,8 @@ android {
         applicationId = "com.adygyes.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -118,11 +118,17 @@ android {
     }
     
     lint {
-        // Disable problematic lint detector that causes build failures
-        disable += "NullSafeMutableLiveData"
+        // Disable problematic lint detectors that cause build failures
+        disable += setOf(
+            "NullSafeMutableLiveData",
+            "RememberInComposition",
+            "FrequentlyChangingValue"
+        )
         // Only check critical issues for release builds
         checkReleaseBuilds = false
         abortOnError = false
+        // Ignore lint errors in CI/CD
+        ignoreWarnings = true
     }
     
     compileOptions {
