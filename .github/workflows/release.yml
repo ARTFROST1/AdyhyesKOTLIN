@@ -15,6 +15,9 @@ jobs:
   build-release:
     name: 📱 Build Release APK & AAB
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for creating releases
+      actions: read
     
     steps:
     - name: 📥 Checkout code
@@ -78,6 +81,15 @@ jobs:
     - name: 📱 Build Release AAB
       run: ./gradlew bundleFullRelease
       
+    - name: 🔍 List build outputs (debug)
+      run: |
+        echo "=== APK outputs ==="
+        find app/build/outputs/apk -name "*.apk" -type f || echo "No APK files found"
+        echo "=== AAB outputs ==="
+        find app/build/outputs/bundle -name "*.aab" -type f || echo "No AAB files found"
+        echo "=== All outputs ==="
+        ls -la app/build/outputs/ || echo "No outputs directory"
+      
     - name: 📊 Get version info
       id: version
       run: |
@@ -123,6 +135,30 @@ jobs:
         **⭐ Понравилось?** Оставьте отзыв в Google Play!
         EOF
         
+    - name: 🔍 Find build files
+      id: find_files
+      run: |
+        APK_FILE=$(find app/build/outputs/apk -name "*.apk" -type f | head -1)
+        AAB_FILE=$(find app/build/outputs/bundle -name "*.aab" -type f | head -1)
+        
+        echo "Found APK: $APK_FILE"
+        echo "Found AAB: $AAB_FILE"
+        
+        echo "apk_file=$APK_FILE" >> $GITHUB_OUTPUT
+        echo "aab_file=$AAB_FILE" >> $GITHUB_OUTPUT
+        
+        # Verify files exist
+        if [ ! -f "$APK_FILE" ]; then
+          echo "❌ APK file not found!"
+          exit 1
+        fi
+        if [ ! -f "$AAB_FILE" ]; then
+          echo "❌ AAB file not found!"
+          exit 1
+        fi
+        
+        echo "✅ Both files found successfully"
+        
     - name: 🚀 Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
@@ -132,8 +168,8 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          app/build/outputs/apk/full/release/app-full-release.apk
-          app/build/outputs/bundle/fullRelease/app-full-release.aab
+          ${{ steps.find_files.outputs.apk_file }}
+          ${{ steps.find_files.outputs.aab_file }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
@@ -141,10 +177,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: AdygGIS-v${{ steps.version.outputs.version }}-APK
-        path: app/build/outputs/apk/full/release/app-full-release.apk
+        path: ${{ steps.find_files.outputs.apk_file }}
         
     - name: 📱 Upload AAB artifact
       uses: actions/upload-artifact@v4
       with:
         name: AdygGIS-v${{ steps.version.outputs.version }}-AAB
-        path: app/build/outputs/bundle/fullRelease/app-full-release.aab
+        path: ${{ steps.find_files.outputs.aab_file }}
