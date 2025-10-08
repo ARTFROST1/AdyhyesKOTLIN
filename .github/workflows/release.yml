@@ -1,0 +1,136 @@
+name: 🚀 Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3
+  workflow_dispatch:  # Manual trigger
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build-release:
+    name: 📱 Build Release APK & AAB
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: ☕ Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 🐘 Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-version: wrapper
+        
+    - name: 🔐 Decode Keystore
+      env:
+        ENCODED_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 }}
+      run: |
+        mkdir -p keystore
+        echo $ENCODED_KEYSTORE | base64 -d > keystore/adygyes-release.keystore
+        
+    - name: 🔑 Create keystore.properties
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      run: |
+        echo "storePassword=$KEYSTORE_PASSWORD" > keystore.properties
+        echo "keyPassword=$KEY_PASSWORD" >> keystore.properties
+        echo "keyAlias=$KEY_ALIAS" >> keystore.properties
+        echo "storeFile=keystore/adygyes-release.keystore" >> keystore.properties
+        
+    - name: 🗝️ Create local.properties
+      env:
+        YANDEX_API_KEY: ${{ secrets.YANDEX_MAPKIT_API_KEY }}
+      run: |
+        echo "YANDEX_MAPKIT_API_KEY=$YANDEX_API_KEY" > local.properties
+        
+    - name: 🧹 Clean build
+      run: ./gradlew clean
+      
+    - name: 📦 Build Release APK
+      run: ./gradlew assembleFullRelease
+      
+    - name: 📱 Build Release AAB
+      run: ./gradlew bundleFullRelease
+      
+    - name: 📊 Get version info
+      id: version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION=${{ github.event.inputs.version }}
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        
+    - name: 📝 Generate release notes
+      id: release_notes
+      run: |
+        cat > release_notes.md << 'EOF'
+        ## 🎉 AdygGIS v${{ steps.version.outputs.version }}
+        
+        ### ✨ Основные возможности:
+        - 🗺️ **Интерактивная карта Адыгеи** с достопримечательностями
+        - 🔍 **Умный поиск** и фильтрация по категориям  
+        - ⭐ **Система избранного** для сохранения мест
+        - 📍 **Навигация** до любой точки через Яндекс.Карты
+        - 📸 **Галереи фотографий** и подробные описания
+        - 🌓 **Темная и светлая темы**
+        - 💾 **Работает без интернета** для сохраненных мест
+        
+        ### 🔧 Технические улучшения:
+        - Премиальная система анимации маркеров
+        - Двухслойная архитектура маркеров (100% надежность кликов)
+        - Система кэширования изображений
+        - Автоматическая кластеризация маркеров
+        - Полная локализация на русский язык
+        
+        ### 📱 Совместимость:
+        - Android 10+ (API 29+)
+        - Размер: ~15-20 МБ
+        - Поддержка arm64-v8a, armeabi-v7a, x86_64
+        
+        ---
+        
+        **📧 Поддержка:** [ВАШ_EMAIL]  
+        **🐛 Баги:** [GitHub Issues](https://github.com/ВАШЕ_ИМЯ/AdyhyesKOTLIN/issues)  
+        **⭐ Понравилось?** Оставьте отзыв в Google Play!
+        EOF
+        
+    - name: 🚀 Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: AdygGIS v${{ steps.version.outputs.version }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        files: |
+          app/build/outputs/apk/full/release/app-full-release.apk
+          app/build/outputs/bundle/fullRelease/app-full-release.aab
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📊 Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AdygGIS-v${{ steps.version.outputs.version }}-APK
+        path: app/build/outputs/apk/full/release/app-full-release.apk
+        
+    - name: 📱 Upload AAB artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AdygGIS-v${{ steps.version.outputs.version }}-AAB
+        path: app/build/outputs/bundle/fullRelease/app-full-release.aab
