@@ -55,6 +55,9 @@ jobs:
       run: |
         echo "YANDEX_MAPKIT_API_KEY=$YANDEX_API_KEY" > local.properties
         
+    - name: 🔧 Make gradlew executable
+      run: chmod +x gradlew
+      
     - name: 🧹 Clean build
       run: ./gradlew clean
       
