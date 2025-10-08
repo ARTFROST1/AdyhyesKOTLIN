@@ -1,8 +1,10 @@
-name: 🔍 Build Check
+name: 🔍 Release Check
 
 on:
   push:
-    branches: [ release ]
+    branches: 
+      - release
+      - 'release/**'  # Include release branches like release/v1.0.0
   pull_request:
     branches: [ release ]
 
