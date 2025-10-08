@@ -1,7 +1,10 @@
 package com.adygyes.app.presentation.ui.screens.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,11 +14,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adygyes.app.R
@@ -45,6 +52,7 @@ fun AttractionDetailScreen(
     onBackClick: () -> Unit,
     onBuildRoute: () -> Unit,
     onShareClick: () -> Unit,
+    onShowOnMap: (() -> Unit)? = null,
     viewModel: AttractionDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -53,6 +61,15 @@ fun AttractionDetailScreen(
     
     LaunchedEffect(attractionId) {
         viewModel.loadAttraction(attractionId)
+    }
+    
+    // Handle back gesture - close photo viewer if open, otherwise navigate back
+    BackHandler(enabled = true) {
+        if (showPhotoViewer) {
+            showPhotoViewer = false
+        } else {
+            onBackClick()
+        }
     }
     
     when (val state = uiState) {
@@ -71,6 +88,7 @@ fun AttractionDetailScreen(
             val attraction = state.attraction
             
             Scaffold(
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 topBar = {
                     TopAppBar(
                         title = { },
@@ -112,13 +130,56 @@ fun AttractionDetailScreen(
                             containerColor = Color.Transparent
                         )
                     )
+                },
+                bottomBar = {
+                    // Bottom action bar
+                    Surface(
+                        shadowElevation = 8.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Dimensions.PaddingLarge),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Show on Map button (only in list mode)
+                            if (onShowOnMap != null) {
+                                OutlinedButton(
+                                    onClick = onShowOnMap,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Map,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.detail_show_on_map))
+                                }
+                            }
+                            
+                            // Get Directions button
+                            Button(
+                                onClick = onBuildRoute,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Directions,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.detail_get_directions))
+                            }
+                        }
+                    }
                 }
             ) { paddingValues ->
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(bottom = 80.dp)
+                    contentPadding = PaddingValues(bottom = 40.dp)
                 ) {
                     // Photo Gallery
                     item {
@@ -126,9 +187,14 @@ fun AttractionDetailScreen(
                             images = attraction.images,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(300.dp),
+                                .height(300.dp)
+                                .padding(bottom = 4.dp),
                             onImageClick = { index ->
                                 selectedPhotoIndex = index
+                                showPhotoViewer = true
+                            },
+                            onFullscreenClick = {
+                                selectedPhotoIndex = 0
                                 showPhotoViewer = true
                             }
                         )
@@ -144,18 +210,18 @@ fun AttractionDetailScreen(
                             // Title and category
                             Text(
                                 text = attraction.name,
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             
                             Spacer(modifier = Modifier.height(8.dp))
                             
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 CategoryChip(category = attraction.category)
-                                
                                 attraction.rating?.let { rating ->
                                     RatingBar(
                                         rating = rating,
@@ -194,14 +260,15 @@ fun AttractionDetailScreen(
                                     content = {
                                         Text(
                                             text = address,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         attraction.location.directions?.let { directions ->
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
                                                 text = directions,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onSurface
                                             )
                                         }
                                     }
@@ -216,7 +283,8 @@ fun AttractionDetailScreen(
                                     content = {
                                         Text(
                                             text = hours,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 )
@@ -230,7 +298,8 @@ fun AttractionDetailScreen(
                                     content = {
                                         Text(
                                             text = price,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 )
@@ -243,54 +312,10 @@ fun AttractionDetailScreen(
                                         icon = Icons.Default.ContactPhone,
                                         title = stringResource(R.string.detail_contact_info),
                                         content = {
-                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                contact.phone?.let { phone ->
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Phone,
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = phone,
-                                                            style = MaterialTheme.typography.bodyMedium
-                                                        )
-                                                    }
-                                                }
-                                                contact.email?.let { email ->
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Email,
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = email,
-                                                            style = MaterialTheme.typography.bodyMedium
-                                                        )
-                                                    }
-                                                }
-                                                contact.website?.let { website ->
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Language,
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(16.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = website,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = MaterialTheme.colorScheme.primary
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                            ClickableContactInfo(
+                                                contactInfo = contact,
+                                                compact = false
+                                            )
                                         }
                                     )
                                 }
@@ -338,40 +363,6 @@ fun AttractionDetailScreen(
                         }
                     }
                 }
-                
-                // Bottom action bar
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth(),
-                        shadowElevation = 8.dp
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Dimensions.PaddingLarge),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Button(
-                                onClick = onBuildRoute,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Directions,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.detail_get_directions))
-                            }
-                        }
-                    }
-                }
             }
             
             // Photo viewer dialog
@@ -400,26 +391,31 @@ private fun InfoCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimensions.PaddingMedium),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(Dimensions.PaddingMedium)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 content()
@@ -442,7 +438,7 @@ private fun AmenitiesGrid(
         amenities.forEach { amenity ->
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer
+                color = Color(0xFFFFB300)
             ) {
                 Row(
                     modifier = Modifier.padding(
@@ -456,12 +452,13 @@ private fun AmenitiesGrid(
                         imageVector = getAmenityIcon(amenity),
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = Color.Black
                     )
                     Text(
-                        text = amenity,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        text = amenity.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = Color.Black
+                        )
                     )
                 }
             }
@@ -478,7 +475,7 @@ private fun TagsFlow(
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         tags.forEach { tag ->
             AssistChip(

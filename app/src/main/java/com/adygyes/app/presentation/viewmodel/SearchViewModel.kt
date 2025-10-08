@@ -158,34 +158,21 @@ class SearchViewModel @Inject constructor(
     
     fun toggleFavorite(attractionId: String) {
         viewModelScope.launch {
-            val currentState = _uiState.value
-            if (currentState is UiState.Success) {
-                val updatedAttractions = currentState.attractions.map { attraction ->
-                    if (attraction.id == attractionId) {
-                        attraction.copy(isFavorite = !attraction.isFavorite)
-                    } else {
-                        attraction
-                    }
-                }
-                
-                // Update in repository
-                val attraction = updatedAttractions.find { it.id == attractionId }
-                attraction?.let {
-                    repository.updateFavoriteStatus(attractionId, it.isFavorite)
-                }
-                
-                // Update UI state
-                _uiState.value = currentState.copy(attractions = updatedAttractions)
-                
-                // Update all attractions cache
-                allAttractions = allAttractions.map { attr ->
-                    if (attr.id == attractionId) {
-                        attr.copy(isFavorite = attraction?.isFavorite ?: attr.isFavorite)
-                    } else {
-                        attr
-                    }
+            // Получаем текущий статус из кэша
+            val targetAttraction = allAttractions.find { it.id == attractionId } ?: return@launch
+            val newFavoriteStatus = !targetAttraction.isFavorite
+            
+            // Обновляем кэш всех достопримечательностей
+            allAttractions = allAttractions.map { attraction ->
+                if (attraction.id == attractionId) {
+                    attraction.copy(isFavorite = newFavoriteStatus)
+                } else {
+                    attraction
                 }
             }
+            
+            // ТОЛЬКО обновляем в репозитории - НЕ трогаем НИКАКИЕ StateFlow
+            repository.updateFavoriteStatus(attractionId, newFavoriteStatus)
         }
     }
     

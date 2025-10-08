@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Adygyes</string>
+    <string name="app_name">AdygGIS</string>
     
     <!-- Navigation -->
     <string name="nav_map">Map</string>
@@ -18,7 +18,7 @@
     <string name="map_retry">Retry</string>
     <string name="switch_to_list_view">Switch to list</string>
     <string name="switch_to_map_view">Switch to map</string>
-    <string name="search_attractions">Search attractions</string>
+    <string name="search_attractions">Search</string>
     <string name="my_location">My location</string>
     <string name="filters">Filters</string>
     <string name="clear_search">Clear search</string>
@@ -51,19 +51,17 @@
     <string name="detail_price">Price</string>
     <string name="detail_contact_info">Contact Information</string>
     <string name="detail_amenities">Amenities</string>
-    <string name="detail_tags">Tags</string>
-    <string name="detail_get_directions">Get Directions</string>
+    <string name="detail_get_directions">Route</string>
     <string name="detail_how_to_get">How to get there</string>
     <string name="detail_contacts">Contacts</string>
     <string name="detail_rating">Rating</string>
     <string name="detail_reviews">Reviews</string>
-    <string name="detail_photos">Photos</string>
+    <string name="detail_show_on_map">Map</string>
     <string name="detail_build_route">Build route</string>
     <string name="detail_share">Share</string>
     <string name="detail_add_to_favorites">Add to favorites</string>
     <string name="detail_remove_from_favorites">Remove from favorites</string>
     <string name="detail_route">Route</string>
-    <string name="detail_details">Details</string>
     <string name="detail_address">Address</string>
     
     <!-- Content Descriptions -->
@@ -120,7 +118,7 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_map">Map Settings</string>
-    <string name="settings_show_location">Show My Location</string>
+    <string name="settings_show_location">My Location</string>
     <string name="settings_show_location_desc">Display your current location on the map</string>
     <string name="settings_cluster_markers">Cluster Markers</string>
     <string name="settings_cluster_markers_desc">Group nearby markers when zoomed out</string>
@@ -140,7 +138,7 @@
     <string name="settings_clear_cache">Clear Cache</string>
     <string name="settings_clear_cache_desc">Free up storage space</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_app">About Adygyes</string>
+    <string name="settings_about_app">About AdygGis</string>
     <string name="settings_version">Version</string>
     <string name="settings_privacy">Privacy Policy</string>
     <string name="settings_privacy_desc">Learn how we protect your data</string>
@@ -149,7 +147,7 @@
     <string name="settings_rate_us">Rate Us</string>
     <string name="settings_rate_us_desc">Share your feedback on Google Play</string>
     <string name="settings_share_app">Share App</string>
-    <string name="settings_share_app_desc">Recommend Adygyes to friends</string>
+    <string name="settings_share_app_desc">Recommend AdygGis to friends</string>
     <string name="settings_select_language">Select Language</string>
     <string name="settings_select_theme">Select Theme</string>
     <string name="settings_theme_light_desc">Always use light theme</string>
@@ -172,6 +170,51 @@
     <string name="results_found">found</string>
     <string name="clear">Clear</string>
     
+    <!-- About Screen -->
+    <string name="about_app_slogan">«Discover Adygea Anew»</string>
+    <string name="about_app_description">A convenient guide to the most beautiful places in Adygea. Walks, attractions, routes and tips for travelers.</string>
+    <string name="about_version_title">Version</string>
+    <string name="about_version_number">1.0.0</string>
+    <string name="about_developer_title">Development</string>
+    <string name="about_developer_info">Developer: Sokurov Salim\nDeveloper: Morozov Artem</string>
+    <string name="about_contacts_title">Contacts</string>
+    <string name="about_contacts_info">Telegram channel: @MaykopTech</string>
+    <string name="about_privacy_title">Privacy Policy</string>
+    <string name="about_privacy_subtitle">Open document</string>
+    <string name="about_visit_website">Visit Website</string>
+    <string name="about_rate_store">Rate Us</string>
+
+    <!-- Privacy Policy Screen -->
+    <string name="privacy_policy_title">Privacy</string>
+    <string name="privacy_policy_full_title">Privacy Policy</string>
+    <string name="privacy_introduction_title">Introduction</string>
+    <string name="privacy_introduction_content">We value your privacy. Below is described how we collect, use and protect your data.</string>
+    <string name="privacy_data_collection_title">Data Collection</string>
+    <string name="privacy_data_collection_content">The app may collect technical information about your device, but we do not store personal data without your consent.</string>
+    <string name="privacy_data_usage_title">Data Usage</string>
+    <string name="privacy_data_usage_content">Collected information is used exclusively to improve the app performance and provide up-to-date content about Adygea.</string>
+    <string name="privacy_data_sharing_title">Data Sharing</string>
+    <string name="privacy_data_sharing_content">We do not share your data with third parties, except in cases directly provided by law.</string>
+    <string name="privacy_contact_title">Contact</string>
+    <string name="privacy_contact_content">Privacy questions: Telegram @MaykopTech</string>
+
+    <!-- Terms of Use Screen -->
+    <string name="terms_of_use_title">Terms of Use</string>
+    <string name="terms_introduction_title">Introduction</string>
+    <string name="terms_introduction_content">By using the app, you agree to its terms of operation and compliance with app behavior rules.</string>
+    <string name="terms_content_access_title">Content Access</string>
+    <string name="terms_content_access_content">All materials about Adygea attractions are provided for personal use. Copying and commercial use are prohibited without permission.</string>
+    <string name="terms_responsibility_title">Responsibility</string>
+    <string name="terms_responsibility_content">The app is not responsible for your actions when visiting objects or routes listed in the app.</string>
+    <string name="terms_community_title">Community</string>
+    <string name="terms_community_content">Please respect other users and follow behavior rules when using comments and ratings features.</string>
+    <string name="terms_contact_title">Contact</string>
+    <string name="terms_contact_content">Terms of use questions: Telegram @MaykopTech</string>
+
+    <!-- Rating Coming Soon Dialog -->
+    <string name="rating_coming_soon_title">Coming Soon to Google Play!</string>
+    <string name="rating_coming_soon_description">The app is not yet available for rating, but very soon we will release it in Google Play. Stay tuned for updates!</string>
+
     <!-- Accessibility -->
     <string name="a11y_back_button">Back button</string>
     <string name="a11y_menu_button">Menu button</string>

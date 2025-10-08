@@ -132,7 +132,7 @@ class ShareUseCase @Inject constructor(
             append("https://yandex.ru/maps/?ll=${attraction.location.longitude},${attraction.location.latitude}&z=16&text=${attraction.name}")
             appendLine()
             appendLine()
-            appendLine("Найдено в приложении Adygyes - Путеводитель по Адыгее")
+            appendLine("Найдено в приложении AdygGIS - Путеводитель по Адыгее")
         }
     }
     
@@ -174,7 +174,7 @@ class ShareUseCase @Inject constructor(
                 appendLine()
             }
             
-            appendLine("Найдено в приложении Adygyes - Путеводитель по Адыгее")
+            appendLine("Найдено в приложении AdygGIS - Путеводитель по Адыгее")
         }
     }
 }

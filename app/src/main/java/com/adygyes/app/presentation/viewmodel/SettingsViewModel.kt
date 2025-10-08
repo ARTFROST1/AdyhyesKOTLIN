@@ -49,15 +49,18 @@ class SettingsViewModel @Inject constructor(
             // Load preferences using the actual PreferencesManager API
             preferencesManager.userPreferencesFlow.collect { preferences ->
                 _uiState.value = SettingsUiState(
-                    theme = if (preferences.isDarkTheme) Theme.DARK else Theme.LIGHT,
-                    language = if (preferences.language == "ru") Language.RUSSIAN else Language.ENGLISH,
+                    theme = when (preferences.themeMode.lowercase()) {
+                        "dark" -> Theme.DARK
+                        "light" -> Theme.LIGHT
+                        else -> Theme.SYSTEM
+                    },
+                    language = when (preferences.language) {
+                        LocaleManager.LANGUAGE_RUSSIAN -> Language.RUSSIAN
+                        LocaleManager.LANGUAGE_ENGLISH -> Language.ENGLISH
+                        else -> Language.RUSSIAN // Default to Russian
+                    },
                     showUserLocation = preferences.autoCenterLocation,
-                    clusterMarkers = true, // Default value since not in preferences
-                    showTraffic = preferences.showTraffic,
-                    offlineMode = preferences.offlineMode,
-                    autoDownloadImages = true, // Default value
                     pushNotifications = preferences.notificationEnabled,
-                    locationAlerts = preferences.notificationEnabled && preferences.autoCenterLocation,
                     appVersion = "1.0.0"
                 )
             }
@@ -66,7 +69,11 @@ class SettingsViewModel @Inject constructor(
     
     fun setTheme(theme: Theme) {
         viewModelScope.launch {
-            preferencesManager.updateDarkTheme(theme == Theme.DARK)
+            when (theme) {
+                Theme.LIGHT -> preferencesManager.updateThemeMode("light")
+                Theme.DARK -> preferencesManager.updateThemeMode("dark")
+                Theme.SYSTEM -> preferencesManager.updateThemeMode("system")
+            }
         }
     }
     
@@ -86,27 +93,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
     
-    fun setClusterMarkers(cluster: Boolean) {
-        // This setting is not in PreferencesManager, so just update UI state
-        _uiState.update { it.copy(clusterMarkers = cluster) }
-    }
-    
-    fun setShowTraffic(show: Boolean) {
-        viewModelScope.launch {
-            preferencesManager.updateShowTraffic(show)
-        }
-    }
-    
-    fun setOfflineMode(offline: Boolean) {
-        viewModelScope.launch {
-            preferencesManager.updateOfflineMode(offline)
-        }
-    }
-    
-    fun setAutoDownloadImages(autoDownload: Boolean) {
-        // This setting is not in PreferencesManager, so just update UI state
-        _uiState.update { it.copy(autoDownloadImages = autoDownload) }
-    }
     
     fun setPushNotifications(enabled: Boolean) {
         viewModelScope.launch {
@@ -114,15 +100,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
     
-    fun setLocationAlerts(enabled: Boolean) {
-        _uiState.update { it.copy(locationAlerts = enabled) }
-    }
-    
-    fun clearCache() {
-        viewModelScope.launch {
-            cacheManager.clearAllCache()
-        }
-    }
     
     private fun loadSyncInfo() {
         viewModelScope.launch {
@@ -205,12 +182,7 @@ class SettingsViewModel @Inject constructor(
         val theme: Theme = Theme.SYSTEM,
         val language: Language = Language.RUSSIAN,
         val showUserLocation: Boolean = true,
-        val clusterMarkers: Boolean = true,
-        val showTraffic: Boolean = false,
-        val offlineMode: Boolean = false,
-        val autoDownloadImages: Boolean = true,
         val pushNotifications: Boolean = true,
-        val locationAlerts: Boolean = false,
         val appVersion: String = "1.0.0",
         val isOnline: Boolean = true,
         val hasUpdatesAvailable: Boolean = false

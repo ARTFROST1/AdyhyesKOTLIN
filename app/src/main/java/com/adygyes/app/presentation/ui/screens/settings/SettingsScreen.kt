@@ -17,6 +17,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adygyes.app.R
 import com.adygyes.app.presentation.theme.Dimensions
 import com.adygyes.app.presentation.viewmodel.SettingsViewModel
+import com.adygyes.app.presentation.ui.components.RatingComingSoonDialog
+import android.widget.Toast
+import android.content.Intent
+import android.net.Uri
+import com.adygyes.app.presentation.ui.util.EasterEggManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Settings screen for app configuration and preferences
@@ -32,23 +39,73 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
-    var showCacheDialog by remember { mutableStateOf(false) }
+    var showRatingDialog by remember { mutableStateOf(false) }
+    // Easter egg: 7 taps on title
+    var tapCount by remember { mutableStateOf(0) }
+    var lastTapTime by remember { mutableStateOf(0L) }
+    
+    // Protection against double-click on back button - prevents multiple popBackStack calls
+    var isNavigating by remember { mutableStateOf(false) }
     
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.nav_settings)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.nav_settings),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.clickable {
+                            val now = System.currentTimeMillis()
+                            // Reset sequence if too slow between taps
+                            if (now - lastTapTime > 1500) tapCount = 0
+                            lastTapTime = now
+                            tapCount += 1
+                            if (tapCount >= 7) {
+                                tapCount = 0
+                                EasterEggManager.activate()
+                                Toast.makeText(
+                                    context,
+                                    "Пасхалка активирована: фон карты заменён на фото до перезапуска",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = { 
+                            if (!isNavigating) {
+                                isNavigating = true
+                                onNavigateBack()
+                                // Reset flag after navigation completes (longer than animation)
+                                coroutineScope.launch {
+                                    delay(500)
+                                    isNavigating = false
+                                }
+                            }
+                        },
+                        enabled = !isNavigating
+                    ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.search_back)
+                            contentDescription = stringResource(R.string.search_back),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = if (!isNavigating) 1f else 0.5f
+                            )
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -107,64 +164,6 @@ fun SettingsScreen(
                 )
             }
             
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.GroupWork,
-                    title = stringResource(R.string.settings_cluster_markers),
-                    subtitle = stringResource(R.string.settings_cluster_markers_desc),
-                    checked = uiState.clusterMarkers,
-                    onCheckedChange = { enabled -> viewModel.setClusterMarkers(enabled) }
-                )
-            }
-            
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.Traffic,
-                    title = stringResource(R.string.settings_show_traffic),
-                    subtitle = stringResource(R.string.settings_show_traffic_desc),
-                    checked = uiState.showTraffic,
-                    onCheckedChange = { enabled -> viewModel.setShowTraffic(enabled) }
-                )
-            }
-            
-            item {
-                Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
-            }
-            
-            // Data & Storage Section
-            item {
-                SettingsSectionHeader(title = stringResource(R.string.settings_data_storage))
-            }
-            
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.CloudOff,
-                    title = stringResource(R.string.settings_offline_mode),
-                    subtitle = stringResource(R.string.settings_offline_mode_desc),
-                    checked = uiState.offlineMode,
-                    onCheckedChange = { enabled -> viewModel.setOfflineMode(enabled) }
-                )
-            }
-            
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.PhotoLibrary,
-                    title = stringResource(R.string.settings_auto_download),
-                    subtitle = stringResource(R.string.settings_auto_download_desc),
-                    checked = uiState.autoDownloadImages,
-                    onCheckedChange = { enabled -> viewModel.setAutoDownloadImages(enabled) },
-                    enabled = !uiState.offlineMode
-                )
-            }
-            
-            item {
-                SettingsItem(
-                    icon = Icons.Default.Storage,
-                    title = stringResource(R.string.settings_clear_cache),
-                    subtitle = stringResource(R.string.settings_clear_cache_desc),
-                    onClick = { showCacheDialog = true }
-                )
-            }
             
             item {
                 Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
@@ -185,16 +184,6 @@ fun SettingsScreen(
                 )
             }
             
-            item {
-                SettingsItemSwitch(
-                    icon = Icons.Default.LocationOn,
-                    title = stringResource(R.string.settings_location_alerts),
-                    subtitle = stringResource(R.string.settings_location_alerts_desc),
-                    checked = uiState.locationAlerts,
-                    onCheckedChange = { enabled -> viewModel.setLocationAlerts(enabled) },
-                    enabled = uiState.pushNotifications
-                )
-            }
             
             item {
                 Spacer(modifier = Modifier.height(Dimensions.SpacingMedium))
@@ -240,7 +229,7 @@ fun SettingsScreen(
                     icon = Icons.Default.RateReview,
                     title = stringResource(R.string.settings_rate_us),
                     subtitle = stringResource(R.string.settings_rate_us_desc),
-                    onClick = { /* Open Play Store */ }
+                    onClick = { showRatingDialog = true }
                 )
             }
             
@@ -249,7 +238,20 @@ fun SettingsScreen(
                     icon = Icons.Default.Share,
                     title = stringResource(R.string.settings_share_app),
                     subtitle = stringResource(R.string.settings_share_app_desc),
-                    onClick = { /* Share app link */ }
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/MaykopTech"))
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            // Handle error - fallback to sharing text
+                            val shareIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, "Попробуйте AdygGis - приложение для изучения достопримечательностей Адыгеи!")
+                                type = "text/plain"
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Поделиться приложением"))
+                        }
+                    }
                 )
             }
             
@@ -266,6 +268,11 @@ fun SettingsScreen(
             onLanguageSelected = { language ->
                 viewModel.setLanguage(language)
                 showLanguageDialog = false
+                // Delay to allow data to save, then recreate activity
+                coroutineScope.launch {
+                    delay(200)
+                    (context as? android.app.Activity)?.recreate()
+                }
             },
             onDismiss = { showLanguageDialog = false }
         )
@@ -283,37 +290,11 @@ fun SettingsScreen(
         )
     }
     
-    // Clear Cache Confirmation Dialog
-    if (showCacheDialog) {
-        AlertDialog(
-            onDismissRequest = { showCacheDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Storage,
-                    contentDescription = null
-                )
-            },
-            title = { Text(stringResource(R.string.settings_clear_cache_title)) },
-            text = {
-                Text(stringResource(R.string.settings_clear_cache_message))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearCache()
-                        showCacheDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.clear))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCacheDialog = false }) {
-                    Text(stringResource(R.string.common_cancel))
-                }
-            }
-        )
-    }
+    // Rating Coming Soon Dialog
+    RatingComingSoonDialog(
+        isVisible = showRatingDialog,
+        onDismiss = { showRatingDialog = false }
+    )
 }
 
 @Composable

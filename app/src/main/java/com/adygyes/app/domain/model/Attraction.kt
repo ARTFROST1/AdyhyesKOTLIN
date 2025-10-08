@@ -44,15 +44,15 @@ data class ContactInfo(
 /**
  * Categories of attractions
  */
-enum class AttractionCategory(val displayName: String, val colorHex: String) {
-    NATURE("Природа", "#4CAF50"),
-    CULTURE("Культура", "#9C27B0"),
-    HISTORY("История", "#795548"),
-    ADVENTURE("Приключения", "#FF5722"),
-    RECREATION("Отдых", "#03A9F4"),
-    GASTRONOMY("Гастрономия", "#FF9800"),
-    RELIGIOUS("Религиозные места", "#607D8B"),
-    ENTERTAINMENT("Развлечения", "#E91E63")
+enum class AttractionCategory(val displayName: String, val colorHex: String, val emoji: String) {
+    NATURE("Природа", "#4CAF50", "🌲"),
+    CULTURE("Культура", "#9C27B0", "🎭"),
+    HISTORY("История", "#795548", "🏛️"),
+    ADVENTURE("Приключения", "#FF5722", "🏔️"),
+    RECREATION("Отдых", "#03A9F4", "🏖️"),
+    GASTRONOMY("Гастрономия", "#FF9800", "🍽️"),
+    RELIGIOUS("Религиозные места", "#607D8B", "⛪"),
+    ENTERTAINMENT("Развлечения", "#E91E63", "🎪")
 }
 
 /**

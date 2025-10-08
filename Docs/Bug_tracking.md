@@ -48,6 +48,342 @@ This document tracks all bugs, errors, and their resolutions during the developm
 
 ## Active Bugs
 
+### BUG-021: Жест "назад" выкидывает из приложения вместо навигации по иерархии
+**Date:** 2025-10-05  
+**Stage:** Stage 9 (UI/UX Polish)  
+**Severity:** Critical  
+**Status:** ✅ Resolved
+
+**Description:**
+При использовании системного жеста "назад" (или кнопки назад) приложение сразу выходило на главный экран системы вместо возврата на предыдущий экран или закрытия открытых элементов UI.
+
+**Steps to Reproduce:**
+1. Открыть приложение
+2. Перейти в Settings
+3. Сделать жест "назад"
+4. Приложение выходит вместо возврата на карту
+
+Или:
+1. Открыть MapScreen
+2. Открыть bottom sheet с деталями места
+3. Сделать жест "назад"
+4. Приложение выходит вместо закрытия bottom sheet
+
+**Expected Behavior:**
+Жест "назад" должен работать по иерархии:
+- Закрывать открытые элементы UI (bottom sheets, dialogs, panels)
+- Возвращаться на предыдущий экран
+- Выходить из приложения только на корневом экране
+
+**Actual Behavior:**
+Жест "назад" всегда выкидывал из приложения, игнорируя иерархию навигации и открытые элементы UI.
+
+**Root Cause:**
+В приложении полностью отсутствовала обработка системного жеста через `BackHandler`. Android Compose требует явной обработки через компонент `BackHandler`, иначе система выполняет действие по умолчанию - выход из Activity.
+
+**Solution:**
+
+### 1. MapScreenContainer.kt
+Добавлена обработка навигации между Settings и подэкранами:
+```kotlin
+BackHandler(enabled = screenMode != ScreenMode.MAP) {
+    when (screenMode) {
+        ScreenMode.ABOUT, ScreenMode.PRIVACY, ScreenMode.TERMS -> {
+            screenMode = ScreenMode.SETTINGS
+        }
+        ScreenMode.SETTINGS -> {
+            screenMode = ScreenMode.MAP
+        }
+        ScreenMode.MAP -> { /* Система обработает */ }
+    }
+}
+```
+
+### 2. MapScreen.kt
+Добавлена многоуровневая обработка с приоритетами:
+```kotlin
+BackHandler(enabled = shouldInterceptBack) {
+    when {
+        selectedAttraction != null -> viewModel.clearSelection()
+        showSearchPanel -> viewModel.setSearchPanelVisibility(false)
+        isSearchFieldFocused -> focusManager.clearFocus()
+        showCategoryCarousel && viewMode == ViewMode.MAP -> showCategoryCarousel = false
+        viewMode == ViewMode.LIST -> viewModel.toggleViewMode()
+    }
+}
+```
+
+### 3. Остальные экраны
+- **FavoritesScreen**: Простой возврат через `onNavigateBack()`
+- **SearchScreen**: Закрытие filter sheet или возврат
+- **DetailScreen**: Закрытие photo viewer или возврат
+
+**Prevention:**
+- Всегда добавлять `BackHandler` в новые Composable экраны
+- Учитывать иерархию UI элементов (modals → panels → screens)
+- Тестировать жест "назад" на каждом экране
+- Использовать `enabled` параметр для условной активации
+
+**Related Files:**
+- `MapScreenContainer.kt` - обработка Settings navigation
+- `MapScreen.kt` - многоуровневая обработка
+- `FavoritesScreen.kt` - простой возврат
+- `SearchScreen.kt` - обработка filter sheet
+- `AttractionDetailScreen.kt` - обработка photo viewer
+
+**Documentation:**
+- `Docs/fixes/BACK_GESTURE_FIX.md` - Полная документация с примерами
+
+---
+
+### BUG-007: Release APK крашится на загрузочном экране
+**Date:** 2025-09-30  
+**Stage:** Stage 11 (Pre-Launch Preparation)  
+**Severity:** Critical  
+**Status:** ✅ Resolved
+
+**Description:**
+После сборки release APK приложение вылетало или застревало на загрузочном экране (SplashScreen). Debug сборка работала нормально.
+
+**Steps to Reproduce:**
+1. Создать keystore: `keytool -genkey -v -keystore keystore/adygyes-release.keystore ...`
+2. Настроить keystore.properties
+3. Собрать release APK: `gradlew assembleFullRelease`
+4. Установить APK на устройство
+5. Запустить приложение
+6. Приложение крашится на splash screen или зависает
+
+**Expected Behavior:**
+Приложение должно запускаться и показывать карту с маркерами, как в debug сборке.
+
+**Actual Behavior:**
+- Приложение застревает на splash screen
+- Или крашится с exception при инициализации
+- Карта не загружается
+
+**Error Message/Stack Trace:**
+```
+FATAL EXCEPTION: main
+Process: com.adygyes.app, PID: xxxxx
+java.lang.NoClassDefFoundError: Failed resolution of: Lcom/yandex/mapkit/MapKitFactory;
+    at com.adygyes.app.AdygyesApplication.initializeMapKit
+```
+
+**Root Cause:**
+1. **КРИТИЧНО:** В `app/proguard-rules.pro` правила для Yandex MapKit были закомментированы:
+   ```proguard
+   #-keep class com.yandex.mapkit.** { *; }
+   #-keep class com.yandex.runtime.** { *; }
+   ```
+   ProGuard обфусцировал все классы MapKit, что делало их недоступными в runtime.
+
+2. Отсутствовали ProGuard правила для:
+   - Data models (сериализация ломалась)
+   - Room entities (база данных не работала)
+   - ViewModels (Hilt не мог их создать)
+   - Navigation Compose
+   - Coroutines
+
+3. Timber не инициализировался в release, вызывая NullPointerException при логировании.
+
+4. Все логи использовали Timber.d/e/w, который не работает в release.
+
+5. Отсутствовал `versionName` в build.gradle.kts.
+
+**Solution:**
+
+#### 1. Раскомментированы и расширены правила для Yandex MapKit:
+```proguard
+# app/proguard-rules.pro
+-keep class com.yandex.mapkit.** { *; }
+-keep class com.yandex.runtime.** { *; }
+-keep interface com.yandex.mapkit.** { *; }
+-keep interface com.yandex.runtime.** { *; }
+-dontwarn com.yandex.mapkit.**
+-dontwarn com.yandex.runtime.**
+```
+
+#### 2. Добавлены правила для всех data классов:
+```proguard
+-keep class com.adygyes.app.data.model.** { *; }
+-keep class com.adygyes.app.domain.model.** { *; }
+-keep class com.adygyes.app.data.local.entity.** { *; }
+-keep interface com.adygyes.app.data.local.dao.** { *; }
+-keep class com.adygyes.app.data.repository.** { *; }
+-keep class com.adygyes.app.domain.usecase.** { *; }
+-keep class com.adygyes.app.presentation.viewmodel.** { *; }
+```
+
+#### 3. Добавлены правила для Navigation, Coroutines, DataStore:
+```proguard
+-keep class androidx.navigation.** { *; }
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keep class androidx.datastore.*.** { *; }
+-keep class com.adygyes.app.BuildConfig { *; }
+```
+
+#### 4. Исправлена инициализация Timber в AdygyesApplication.kt:
+```kotlin
+private fun initializeTimber() {
+    try {
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        } else {
+            Timber.plant(object : Timber.Tree() {
+                override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {}
+            })
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("AdygyesApp", "Failed to initialize Timber", e)
+    }
+}
+```
+
+#### 5. Заменены все логи на безопасные версии:
+```kotlin
+if (BuildConfig.DEBUG) {
+    Timber.d("Message")
+} else {
+    android.util.Log.d("AdygyesApp", "Message")
+}
+```
+
+#### 6. Добавлен versionName:
+```kotlin
+// app/build.gradle.kts
+defaultConfig {
+    ...
+    versionCode = 1
+    versionName = "1.0.0"
+}
+```
+
+#### 7. Исправлен путь к keystore:
+```kotlin
+storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+```
+
+#### 8. Отключен проблемный lint:
+```kotlin
+lint {
+    disable += "NullSafeMutableLiveData"
+    checkReleaseBuilds = false
+    abortOnError = false
+}
+```
+
+**Testing:**
+```powershell
+# Остановить daemon
+.\gradlew --stop
+
+# Собрать release
+.\gradlew assembleFullRelease
+
+# APK: app\build\outputs\apk\full\release\app-full-release.apk
+```
+
+**Prevention:**
+1. ✅ Всегда тестировать release сборку перед публикацией
+2. ✅ Проверять proguard-rules.pro на закомментированные критические правила
+3. ✅ Использовать условное логирование с проверкой BuildConfig.DEBUG
+4. ✅ Добавлять ProGuard правила для всех библиотек сторонних производителей
+5. ✅ Заполнять versionName и versionCode
+6. ✅ Тестировать APK на реальном устройстве, не только в эмуляторе
+
+**Related Files:**
+- `app/proguard-rules.pro` - добавлены критические правила
+- `app/src/main/java/com/adygyes/app/AdygyesApplication.kt` - исправлена инициализация
+- `app/build.gradle.kts` - добавлен versionName, lint config, исправлен путь
+- `Docs/RELEASE_BUILD_FIXES.md` - детальное описание всех исправлений
+
+**Documentation:**
+- См. `Docs/RELEASE_BUILD_FIXES.md` для полного списка изменений
+
+---
+
+### BUG-025: White Text Color Issues in Light Theme
+**Date:** 2025-09-27  
+**Stage:** Stage 10 - Quality Assurance & Optimization  
+**Severity:** Medium  
+**Status:** ✅ Resolved  
+
+**Description:**
+In light theme mode, several UI components displayed white text on light backgrounds, causing poor readability. Issues were found in:
+1. RatingBar component - forced white text in compact mode
+2. AttractionsList component - white favorite icons in compact cards
+3. User reported white headers and tag text visibility issues
+
+**Steps to Reproduce:**
+1. Switch app to light theme
+2. Navigate to main screen with attraction list
+3. Observe rating text and favorite icons in compact card mode
+4. Check readability of text elements
+
+**Expected Behavior:**
+All text and icons should use appropriate theme colors for good contrast and readability in both light and dark themes.
+
+**Actual Behavior:**
+- Rating text was always white in compact mode regardless of theme
+- Favorite icons were always white in AttractionsList compact cards
+- Poor contrast in light theme
+
+**Root Cause:**
+Components had hardcoded `Color.White` values instead of using `MaterialTheme.colorScheme` colors that adapt to the current theme.
+
+**Solution:** ✅ IMPLEMENTED
+1. **Fixed RatingBar.kt:**
+   - Removed `if (compact) Color.White else MaterialTheme.colorScheme.onSurface` condition
+   - Changed to always use `MaterialTheme.colorScheme.onSurface`
+   - Removed `if (compact) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant` condition
+   - Changed to always use `MaterialTheme.colorScheme.onSurfaceVariant`
+
+2. **Fixed AttractionsList.kt:**
+   - Changed favorite icon tint from `Color.White` to `MaterialTheme.colorScheme.onSurface` for non-favorite state
+   - Kept green color for favorite state: `Color(0xFF4CAF50)`
+
+3. **Created ColorUtils.kt:**
+   - Added utility functions for adaptive colors based on theme
+   - `getOverlayTextColor()` - for text over dark overlays
+   - `getContentTextColor()` - for regular content text
+   - `getSecondaryTextColor()` - for secondary content text
+   - `getContentIconTint()` - for regular icons
+   - `getOverlayIconTint()` - for icons over dark overlays
+
+4. **Fixed AttractionCard.kt:**
+   - Made text colors adaptive to presence of image
+   - If image exists: uses overlay colors (white over dark gradient)
+   - If no image: uses theme colors (dark text in light theme, light text in dark theme)
+   - Added proper background handling for cards without images
+
+5. **Fixed TopAppBar colors in all screens:**
+   - **SettingsScreen.kt**: Added explicit colors for title, navigation icon, and container
+   - **SearchScreen.kt**: Added explicit colors for all TopAppBar elements
+   - **FavoritesScreen.kt**: Added explicit colors for title, navigation, and action icons
+   - All TopAppBars now use `MaterialTheme.colorScheme.onSurface` for text and icons
+
+6. **Verified Other Components:**
+   - CategoryChip.kt already has correct logic with `isColorDark()` function
+   - AttractionDetailScreen.kt uses default theme colors correctly
+   - SettingsComponents.kt already uses proper theme colors
+
+**Prevention:**
+- Always use `MaterialTheme.colorScheme` colors instead of hardcoded colors
+- Test UI components in both light and dark themes
+- Use conditional color logic only when necessary (e.g., over image backgrounds)
+
+**Related Files:**
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/theme/ColorUtils.kt` (created)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/RatingBar.kt` (fixed)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/AttractionsList.kt` (fixed)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/AttractionCard.kt` (fixed - adaptive colors)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/screens/settings/SettingsScreen.kt` (fixed TopAppBar)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/screens/search/SearchScreen.kt` (fixed TopAppBar)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/screens/favorites/FavoritesScreen.kt` (fixed TopAppBar)
+- ✅ `/app/src/main/java/com/adygyes/app/presentation/ui/components/CategoryChip.kt` (already correct)
+
+---
+
 ### BUG-021: Post-Marker Redesign Compilation Errors
 **Date:** 2025-09-24  
 **Stage:** Stage 9 - Map Marker Redesign  
@@ -973,9 +1309,37 @@ mapView.map.mapObjects.traverse(object : MapObjectVisitor { ... })
 ### Modified Files:
 - `/app/src/main/java/com/adygyes/app/presentation/ui/components/AccessibilityHelper.kt`
 - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/GeoObjectProvider.kt`
-- `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenTablet.kt`
+  - `/app/src/main/java/com/adygyes/app/presentation/ui/screens/map/MapScreenTablet.kt`
 
 ---
 
-*Last Updated: 2025-09-23*
+### BUG-025: Android Resource Merge Fails Due to .svg in res/drawable
+**Date:** 2025-09-25  
+**Stage:** Stage 4 - Splash Screen  
+**Severity:** High  
+**Status:** Resolved  
+
+**Description:**
+After adding splash screen assets, an `.svg` file was placed directly under `app/src/main/res/drawable/`, which Android resource merger does not accept. Only `.xml` (VectorDrawable) or raster images like `.png` are supported in `res/` folders. Additionally, the generated vector used `android:fillRule` which must be `android:fillType`.
+
+**Error Message/Stack Trace:**
+```
+E:\it\adyghyes_new\AdyhyesKOTLIN\app\src\main\res\drawable\ic_airplane.svg: Error: The file name must end with .xml or .png
+```
+
+  **Root Cause:**
+  - Invalid resource file `res/drawable/ic_airplane.svg` present in resources.
+   - Minor VectorDrawable attribute mismatch (`fillRule` instead of `fillType`).
+
+  **Solution:**
+  - Remove `app/src/main/res/drawable/ic_airplane.svg` from resources.
+  - Keep vector drawable `app/src/main/res/drawable/ic_airplane.xml` and set `android:fillType="evenOdd"`.
+
+  **Prevention:**
+  - Never commit raw `.svg` into `res/` folders. Convert to VectorDrawable `.xml` or export to `.png`.
+  - Validate vector attributes against VectorDrawable schema; use `fillType`, not `fillRule`.
+
+**Related Files:**
+- `app/src/main/res/drawable/ic_airplane.svg` (removed)
+- `app/src/main/res/drawable/ic_airplane.xml` (fixed)
 *Version: 1.0.0*

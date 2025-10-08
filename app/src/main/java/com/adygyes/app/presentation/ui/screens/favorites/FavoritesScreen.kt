@@ -1,5 +1,6 @@
 package com.adygyes.app.presentation.ui.screens.favorites
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -46,16 +47,28 @@ fun FavoritesScreen(
     
     val scope = rememberCoroutineScope()
     
+    // Handle back gesture
+    BackHandler(enabled = onNavigateBack != null) {
+        onNavigateBack?.invoke()
+    }
+    
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.nav_favorites)) },
+                title = { 
+                    Text(
+                        text = stringResource(R.string.nav_favorites),
+                        color = MaterialTheme.colorScheme.onSurface
+                    ) 
+                },
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -71,7 +84,8 @@ fun FavoritesScreen(
                             } else {
                                 Icons.Default.GridView
                             },
-                            contentDescription = "Toggle view"
+                            contentDescription = "Toggle view",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     
@@ -83,7 +97,8 @@ fun FavoritesScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "Sort"
+                                contentDescription = "Sort",
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                         
@@ -117,7 +132,13 @@ fun FavoritesScreen(
                             }
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -235,7 +256,8 @@ private fun FavoritesGridView(
                 attraction = attraction,
                 onClick = { onAttractionClick(attraction.id) },
                 onFavoriteClick = { onRemoveFavorite(attraction.id) },
-                modifier = Modifier.animateItem()
+                modifier = Modifier.animateItem(),
+                compactForFavorites = true
             )
         }
     }

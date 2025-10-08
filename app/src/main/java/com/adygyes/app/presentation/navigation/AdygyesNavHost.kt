@@ -1,20 +1,26 @@
 package com.adygyes.app.presentation.navigation
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.adygyes.app.presentation.ui.screens.map.MapScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.adygyes.app.presentation.ui.screens.splash.SplashScreen
+import com.adygyes.app.presentation.ui.screens.map.MapScreenContainer
 import com.adygyes.app.presentation.ui.screens.search.SearchScreen
 import com.adygyes.app.presentation.ui.screens.favorites.FavoritesScreen
-import com.adygyes.app.presentation.ui.screens.settings.SettingsScreen
 import com.adygyes.app.presentation.ui.screens.detail.AttractionDetailScreen
+import com.adygyes.app.presentation.viewmodel.MapViewModel
 
 /**
  * Main navigation host for Adygyes app
@@ -27,15 +33,57 @@ fun AdygyesNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = NavDestination.Map.route,
-        modifier = modifier.fillMaxSize()
+        startDestination = NavDestination.Splash.route,
+        modifier = modifier.fillMaxSize(),
+        // Disable default transitions - use per-screen transitions instead
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
-        // Main Map Screen
-        composable(NavDestination.Map.route) {
-            MapScreen(
-                navController = navController,
+        // Splash Screen
+        composable(
+            route = NavDestination.Splash.route,
+            enterTransition = {
+                fadeIn(animationSpec = tween(300))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            SplashScreen(
+                onNavigateToMain = {
+                    navController.navigate(NavDestination.Map.route) {
+                        popUpTo(NavDestination.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
+        // Main Map Screen Container - handles Map/Settings overlay like Map/List toggle
+        composable(
+            route = NavDestination.Map.route,
+            enterTransition = {
+                fadeIn()
+            },
+            exitTransition = {
+                fadeOut()
+            },
+            popEnterTransition = {
+                fadeIn()
+            },
+            popExitTransition = {
+                fadeOut()
+            }
+        ) { backStackEntry ->
+            // MapScreenContainer handles Map ↔ Settings animation internally
+            // (exactly like Map ↔ List toggle)
+            MapScreenContainer(
                 onAttractionClick = { attractionId ->
                     navController.navigate(NavDestination.AttractionDetail.createRoute(attractionId))
+                },
+                onNavigateToFavorites = {
+                    navController.navigate(NavDestination.Favorites.route)
                 }
             )
         }
@@ -63,21 +111,8 @@ fun AdygyesNavHost(
             )
         }
         
-        // Settings Screen
-        composable(NavDestination.Settings.route) {
-            SettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToAbout = {
-                    navController.navigate(NavDestination.AboutScreen.route)
-                },
-                onNavigateToPrivacy = {
-                    navController.navigate(NavDestination.PrivacyPolicy.route)
-                },
-                onNavigateToTerms = {
-                    navController.navigate(NavDestination.TermsOfUse.route)
-                }
-            )
-        }
+        // Note: Settings, About, Privacy, Terms are now handled inside MapScreenContainer
+        // They animate as overlays like List mode, not as navigation routes
         
         // Attraction Detail Screen
         composable(
@@ -87,6 +122,13 @@ fun AdygyesNavHost(
             )
         ) { backStackEntry ->
             val attractionId = backStackEntry.arguments?.getString("attractionId") ?: ""
+            
+            // Get MapViewModel from MapScreen's navigation entry
+            val mapBackStackEntry = remember(navController) {
+                navController.getBackStackEntry(NavDestination.Map.route)
+            }
+            val mapViewModel: MapViewModel = hiltViewModel(mapBackStackEntry)
+            
             AttractionDetailScreen(
                 attractionId = attractionId,
                 onBackClick = { navController.popBackStack() },
@@ -95,6 +137,20 @@ fun AdygyesNavHost(
                 },
                 onShareClick = {
                     // Will be implemented with share functionality
+                },
+                // Always show "Show on Map" button
+                onShowOnMap = {
+                    // Set attraction ID in MapViewModel
+                    mapViewModel.setAttractionToShowOnMap(attractionId)
+                    
+                    // Navigate to map and show this attraction
+                    navController.navigate(NavDestination.Map.route) {
+                        // Pop back to map (remove DetailScreen from backstack)
+                        popUpTo(NavDestination.Map.route) {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -121,16 +177,7 @@ fun AdygyesNavHost(
             // ThemeSettingsScreen will be implemented
         }
         
-        composable(NavDestination.AboutScreen.route) {
-            // AboutScreen will be implemented
-        }
-        
-        composable(NavDestination.PrivacyPolicy.route) {
-            // PrivacyPolicyScreen will be implemented
-        }
-        
-        composable(NavDestination.TermsOfUse.route) {
-            // TermsOfUseScreen will be implemented
-        }
+        // Note: About, Privacy, Terms screens removed from navigation
+        // They are now part of MapScreenContainer and animate like List mode overlay
     }
 }

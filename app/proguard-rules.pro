@@ -1,17 +1,44 @@
 # Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
 #
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
+#}
+
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
--keepattributes SourceFile,LineNumberTable
+#-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
--renamesourcefileattribute SourceFile
+#-renamesourcefileattribute SourceFile
+
+# ============================================
+# AGGRESSIVE OPTIMIZATION
+# ============================================
+-optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
+-optimizationpasses 5
+-allowaccessmodification
+-repackageclasses ''
+
+# Remove debug logs from release
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
+
+-assumenosideeffects class timber.log.Timber {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
 
 # Kotlin Serialization
 -keepattributes *Annotation*, InnerClasses
@@ -88,6 +115,57 @@
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
 
-# Yandex MapKit (will be uncommented in Stage 2)
-#-keep class com.yandex.mapkit.** { *; }
-#-keep class com.yandex.runtime.** { *; }
+# Yandex MapKit - CRITICAL for app to work!
+-keep class com.yandex.mapkit.** { *; }
+-keep class com.yandex.runtime.** { *; }
+-keep interface com.yandex.mapkit.** { *; }
+-keep interface com.yandex.runtime.** { *; }
+-dontwarn com.yandex.mapkit.**
+-dontwarn com.yandex.runtime.**
+
+# Data Models - Keep all data classes
+-keep class com.adygyes.app.data.model.** { *; }
+-keep class com.adygyes.app.domain.model.** { *; }
+
+# Room Database entities and DAOs
+-keep class com.adygyes.app.data.local.entity.** { *; }
+-keep interface com.adygyes.app.data.local.dao.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+
+# Repository and UseCase classes
+-keep class com.adygyes.app.data.repository.** { *; }
+-keep class com.adygyes.app.domain.usecase.** { *; }
+
+# ViewModels - ensure all are kept
+-keep class com.adygyes.app.presentation.viewmodel.** { *; }
+
+# Navigation Compose
+-keep class androidx.navigation.** { *; }
+-keepclassmembers class androidx.navigation.** { *; }
+
+# Kotlin Coroutines
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+
+# DataStore
+-keep class androidx.datastore.*.** { *; }
+
+# Keep BuildConfig
+-keep class com.adygyes.app.BuildConfig { *; }
+
+# Gson rules removed - using kotlinx.serialization instead
+
+# Prevent obfuscation of Parcelable
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
+
+# Keep generic signatures for reflection
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses

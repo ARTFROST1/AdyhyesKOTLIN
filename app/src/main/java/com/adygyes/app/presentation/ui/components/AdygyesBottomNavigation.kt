@@ -2,6 +2,7 @@ package com.adygyes.app.presentation.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -51,7 +52,8 @@ fun AdygyesBottomNavigation(
                             stringResource(R.string.switch_to_list_view)
                         } else {
                             stringResource(R.string.switch_to_map_view)
-                        }
+                        },
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             },
@@ -68,13 +70,21 @@ fun AdygyesBottomNavigation(
                             stringResource(R.string.nav_list)
                         } else {
                             stringResource(R.string.nav_map)
-                        }
+                        },
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             },
-            selected = true, // Always selected as it's a toggle
+            selected = false,
             onClick = onViewModeToggle,
-            alwaysShowLabel = true
+            alwaysShowLabel = true,
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+                indicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            )
         )
         
         // Favorites
@@ -93,16 +103,27 @@ fun AdygyesBottomNavigation(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.FavoriteBorder,
-                        contentDescription = stringResource(R.string.nav_favorites)
+                        contentDescription = stringResource(R.string.nav_favorites),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             },
             label = { 
-                Text(stringResource(R.string.nav_favorites))
+                Text(
+                    text = stringResource(R.string.nav_favorites),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             },
             selected = false,
             onClick = onFavoritesClick,
-            alwaysShowLabel = true
+            alwaysShowLabel = true,
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+                indicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            )
         )
         
         // Settings
@@ -110,15 +131,26 @@ fun AdygyesBottomNavigation(
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Settings,
-                    contentDescription = stringResource(R.string.nav_settings)
+                    contentDescription = stringResource(R.string.nav_settings),
+                    tint = MaterialTheme.colorScheme.primary
                 )
             },
             label = { 
-                Text(stringResource(R.string.nav_settings))
+                Text(
+                    text = stringResource(R.string.nav_settings),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             },
             selected = false,
             onClick = onSettingsClick,
-            alwaysShowLabel = true
+            alwaysShowLabel = true,
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+                indicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            )
         )
     }
 }

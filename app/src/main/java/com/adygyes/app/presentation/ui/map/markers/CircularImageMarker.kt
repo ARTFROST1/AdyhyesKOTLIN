@@ -140,13 +140,7 @@ fun CircularImageMarker(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        color = MarkerColors.getColorForCategory(
-                            category = attraction.category,
-                            isDark = false // Will be updated with theme
-                        ),
-                        shape = CircleShape
-                    )
+                    // Transparent background by default
                     .border(
                         width = finalBorderWidth,
                         color = Color.White,
@@ -154,20 +148,19 @@ fun CircularImageMarker(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-            // Load image or show fallback
+            // Load image (no emoji or colored fallback)
             var isLoading by remember { mutableStateOf(true) }
             var hasError by remember { mutableStateOf(false) }
             
-            if (showLoadingIndicator && isLoading && !hasError) {
+            val imageUrl = attraction.images.firstOrNull()
+
+            if (showLoadingIndicator && imageUrl != null && isLoading && !hasError) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(size * 0.4f),
                     color = Color.White,
                     strokeWidth = 2.dp
                 )
             }
-            
-            // Try to load image if URL exists
-            val imageUrl = attraction.images.firstOrNull()
             
             if (imageUrl != null && !hasError) {
                 AsyncImage(
@@ -195,15 +188,7 @@ fun CircularImageMarker(
                     }
                 )
             }
-            
-            // Show category emoji as fallback
-            if (imageUrl == null || hasError) {
-                Text(
-                    text = getCategoryEmoji(attraction.category),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White
-                )
-            }
+            // No emoji fallback — keep marker transparent if no image
         }
     }
     } // End of else block for visual mode
@@ -244,7 +229,7 @@ object MarkerDimensions {
 object MarkerColors {
     fun getColorForCategory(category: AttractionCategory, isDark: Boolean): Color {
         return when (category) {
-            AttractionCategory.NATURE -> if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
+            AttractionCategory.NATURE -> if (isDark) Color(0xFF2E7D32) else Color(0xFF0C5329)
             AttractionCategory.CULTURE -> if (isDark) Color(0xFFAB47BC) else Color(0xFF9C27B0)
             AttractionCategory.HISTORY -> if (isDark) Color(0xFF8D6E63) else Color(0xFF795548)
             AttractionCategory.ADVENTURE -> if (isDark) Color(0xFFFF7043) else Color(0xFFFF5722)
