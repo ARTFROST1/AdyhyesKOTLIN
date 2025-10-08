@@ -111,60 +111,44 @@ jobs:
     - name: 📝 Generate release notes
       id: release_notes
       run: |
-        cat > release_notes.md << 'EOF'
-        ## 🎉 AdygGIS v${{ steps.version.outputs.version }}
-        
-        ### ✨ Основные возможности:
-        - 🗺️ **Интерактивная карта Адыгеи** с достопримечательностями
-        - 🔍 **Умный поиск** и фильтрация по категориям  
-        - ⭐ **Система избранного** для сохранения мест
-        - 📍 **Навигация** до любой точки через Яндекс.Карты
-        - 📸 **Галереи фотографий** и подробные описания
-        - 🌓 **Темная и светлая темы**
-        - 💾 **Работает без интернета** для сохраненных мест
-        
-        ### 🔧 Технические улучшения:
-        - Премиальная система анимации маркеров
-        - Двухслойная архитектура маркеров (100% надежность кликов)
-        - Система кэширования изображений
-        - Автоматическая кластеризация маркеров
-        - Полная локализация на русский язык
-        
-        ### 📱 Совместимость:
-        - Android 10+ (API 29+)
-        - Размер: ~15-20 МБ
-        - Поддержка arm64-v8a, armeabi-v7a, x86_64
-        
-        ---
-        
-        **📧 Поддержка:** [ВАШ_EMAIL]  
-        **🐛 Баги:** [GitHub Issues](https://github.com/ВАШЕ_ИМЯ/AdyhyesKOTLIN/issues)  
-        **⭐ Понравилось?** Оставьте отзыв в Google Play!
-        EOF
+        # Use template file and replace version placeholder
+        sed "s/{{VERSION}}/${{ steps.version.outputs.version }}/g" .github/release-template.md > release_notes.md
+        echo "✅ Release notes generated from template"
         
     - name: 🔍 Find build files
       id: find_files
       run: |
-        APK_FILE=$(find app/build/outputs/apk -name "*.apk" -type f | head -1)
+        # Find AAB file
         AAB_FILE=$(find app/build/outputs/bundle -name "*.aab" -type f | head -1)
         
-        echo "Found APK: $APK_FILE"
-        echo "Found AAB: $AAB_FILE"
+        # Find ARM64 APK (modern phones)
+        ARM64_APK=$(find app/build/outputs/apk -name "*arm64-v8a*.apk" -type f | head -1)
         
-        echo "apk_file=$APK_FILE" >> $GITHUB_OUTPUT
+        # Find Universal APK (compatibility)
+        UNIVERSAL_APK=$(find app/build/outputs/apk -name "*universal*.apk" -type f | head -1)
+        
+        echo "Found AAB: $AAB_FILE"
+        echo "Found ARM64 APK: $ARM64_APK"
+        echo "Found Universal APK: $UNIVERSAL_APK"
+        
         echo "aab_file=$AAB_FILE" >> $GITHUB_OUTPUT
+        echo "arm64_apk=$ARM64_APK" >> $GITHUB_OUTPUT
+        echo "universal_apk=$UNIVERSAL_APK" >> $GITHUB_OUTPUT
         
         # Verify files exist
-        if [ ! -f "$APK_FILE" ]; then
-          echo "❌ APK file not found!"
-          exit 1
-        fi
         if [ ! -f "$AAB_FILE" ]; then
           echo "❌ AAB file not found!"
           exit 1
         fi
+        if [ ! -f "$ARM64_APK" ]; then
+          echo "❌ ARM64 APK file not found!"
+          exit 1
+        fi
+        if [ ! -f "$UNIVERSAL_APK" ]; then
+          echo "⚠️ Universal APK not found, will skip"
+        fi
         
-        echo "✅ Both files found successfully"
+        echo "✅ Required files found successfully"
         
     - name: 🚀 Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -175,19 +159,27 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          ${{ steps.find_files.outputs.apk_file }}
           ${{ steps.find_files.outputs.aab_file }}
+          ${{ steps.find_files.outputs.arm64_apk }}
+          ${{ steps.find_files.outputs.universal_apk }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: 📊 Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AdygGIS-v${{ steps.version.outputs.version }}-APK
-        path: ${{ steps.find_files.outputs.apk_file }}
         
     - name: 📱 Upload AAB artifact
       uses: actions/upload-artifact@v4
       with:
         name: AdygGIS-v${{ steps.version.outputs.version }}-AAB
         path: ${{ steps.find_files.outputs.aab_file }}
+        
+    - name: 📊 Upload ARM64 APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AdygGIS-v${{ steps.version.outputs.version }}-ARM64-APK
+        path: ${{ steps.find_files.outputs.arm64_apk }}
+        
+    - name: 📦 Upload Universal APK artifact
+      uses: actions/upload-artifact@v4
+      if: steps.find_files.outputs.universal_apk != ''
+      with:
+        name: AdygGIS-v${{ steps.version.outputs.version }}-Universal-APK
+        path: ${{ steps.find_files.outputs.universal_apk }}
